@@ -1,0 +1,121 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+    background: #0a0c12;
+    color: #eef2ff;
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.main-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #141824;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #3e445e;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #f97316;
+}
+
+/* ========== PORTRAIT MODE LAYOUT REARRANGEMENT ========== */
+/* For portrait orientation: player below header, channels at bottom */
+@media (max-width: 640px) and (orientation: portrait) {
+    .main-layout {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    /* Player area goes below header (already first in column) */
+    .player-area {
+        order: 1;
+        flex: 0 0 auto;
+        min-height: auto;
+        padding-bottom: 0;
+    }
+    
+    /* Sidebar moves to bottom */
+    .channel-sidebar {
+        order: 2;
+        width: 100%;
+        flex: 1;
+        border-right: none;
+        border-top: 1px solid #202433;
+        margin-top: 0;
+        min-height: 0;
+    }
+}
+
+@media (max-width: 640px) and (orientation: landscape) {
+    .main-layout {
+        flex-direction: row;
+        gap: 0;
+    }
+    
+    .channel-sidebar {
+        width: 320px;
+        max-height: 100%;
+        border-right: 1px solid #202433;
+        border-top: none;
+    }
+    
+    .player-area {
+        flex: 1;
+    }
+}
+
+/* For tablets in portrait */
+@media (min-width: 641px) and (max-width: 1024px) and (orientation: portrait) {
+    .main-layout {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .player-area {
+        order: 1;
+        flex: 0 0 auto;
+        min-height: auto;
+        padding-bottom: 0;
+    }
+    
+    .channel-sidebar {
+        order: 2;
+        width: 100%;
+        flex: 1;
+        border-right: none;
+        border-top: 1px solid #202433;
+        margin-top: 0;
+        min-height: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .main-layout {
+        flex-direction: column;
+        gap: 0;
+    }
+}
