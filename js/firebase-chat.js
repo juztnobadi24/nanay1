@@ -125,7 +125,6 @@ class FirebaseChat {
                 // Check if user already has notifications
                 const userNotifications = await this.notificationsCollection
                     .where('userId', '==', this.userId)
-                    .limit(100)
                     .get();
                 
                 if (userNotifications.empty) {
@@ -172,6 +171,7 @@ class FirebaseChat {
                         newNotifications.forEach(notif => {
                             this.notifications.push(notif);
                         });
+                        this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
                         this.updateNotificationBadge();
                     }
                 } else {
@@ -182,11 +182,37 @@ class FirebaseChat {
                         notif.id = doc.id;
                         this.notifications.push(notif);
                     });
+                    this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
                     this.updateNotificationBadge();
                 }
             } catch (error) {
                 console.error("Error loading existing notifications:", error);
+                if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                    console.warn("⚠️ Firestore index required. Loading notifications without ordering...");
+                    await this.loadNotificationsWithoutOrdering();
+                }
             }
+        }
+    }
+    
+    async loadNotificationsWithoutOrdering() {
+        try {
+            const snapshot = await this.notificationsCollection
+                .where('userId', '==', this.userId)
+                .get();
+            
+            snapshot.forEach(doc => {
+                const notif = doc.data();
+                notif.id = doc.id;
+                if (!this.notifications.some(n => n.id === notif.id)) {
+                    this.notifications.push(notif);
+                }
+            });
+            this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
+            this.updateNotificationBadge();
+            console.log(`✅ Loaded ${this.notifications.length} notifications without index`);
+        } catch (error) {
+            console.error("Error loading notifications without ordering:", error);
         }
     }
     
@@ -359,16 +385,18 @@ class FirebaseChat {
                 console.log("✅ Message listener attached");
             } catch (error) {
                 console.error("❌ Error attaching message listener:", error);
+                if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                    console.warn("⚠️ Firestore index required for messages. You can create it using the link in the console.");
+                }
             }
         }
         
-        // Listen for user-specific notifications (personal copies)
+        // Listen for user-specific notifications (personal copies) - SIMPLIFIED to avoid index requirement
         if (this.notificationsCollection) {
             try {
+                // Use a simpler query that doesn't require a composite index
                 this.notificationListener = this.notificationsCollection
                     .where('userId', '==', this.userId)
-                    .orderBy('timestamp', 'desc')
-                    .limit(100)
                     .onSnapshot((snapshot) => {
                         snapshot.docChanges().forEach((change) => {
                             if (change.type === 'added') {
@@ -378,12 +406,29 @@ class FirebaseChat {
                                     console.log("🔔 New notification received:", notification.title);
                                     this.onNewNotification(notification);
                                 }
+                            } else if (change.type === 'modified') {
+                                const notification = change.doc.data();
+                                notification.id = change.doc.id;
+                                const index = this.notifications.findIndex(n => n.id === notification.id);
+                                if (index !== -1) {
+                                    this.notifications[index].read = notification.read;
+                                    this.updateNotificationBadge();
+                                }
                             }
                         });
                     });
-                console.log("✅ Notification listener attached");
+                console.log("✅ Notification listener attached (simplified query)");
             } catch (error) {
                 console.error("❌ Error attaching notification listener:", error);
+                if (error.code === 'failed-precondition' && error.message.includes('index')) {
+                    console.warn("⚠️ Firestore index required for notifications. Please create the index.");
+                    const indexUrl = error.message.match(/https:\/\/console\.firebase\.google\.com[^\s]+/);
+                    if (indexUrl) {
+                        console.log("🔗 Create index here:", indexUrl[0]);
+                    }
+                    // Fallback: Load notifications without real-time listener
+                    this.loadNotificationsWithoutListener();
+                }
             }
         }
         
@@ -397,7 +442,6 @@ class FirebaseChat {
                         snapshot.docChanges().forEach(async (change) => {
                             if (change.type === 'added') {
                                 const globalNotification = change.doc.data();
-                                // Check if this user already has this notification
                                 const alreadyReceived = this.notifications.some(
                                     n => n.notificationId === globalNotification.notificationId
                                 );
@@ -416,6 +460,28 @@ class FirebaseChat {
         }
         
         this.updateUserLastSeen();
+    }
+    
+    async loadNotificationsWithoutListener() {
+        try {
+            console.log("📥 Loading notifications without real-time listener...");
+            const snapshot = await this.notificationsCollection
+                .where('userId', '==', this.userId)
+                .get();
+            
+            snapshot.forEach(doc => {
+                const notif = doc.data();
+                notif.id = doc.id;
+                if (!this.notifications.some(n => n.id === notif.id)) {
+                    this.notifications.push(notif);
+                }
+            });
+            this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
+            this.updateNotificationBadge();
+            console.log(`✅ Loaded ${this.notifications.length} notifications`);
+        } catch (error) {
+            console.error("Error loading notifications:", error);
+        }
     }
     
     async createNotificationForUser(globalNotification) {
@@ -485,6 +551,7 @@ class FirebaseChat {
         const exists = this.notifications.some(n => n.id === notification.id);
         if (!exists) {
             this.notifications.unshift(notification);
+            this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
             this.updateBadge();
             this.updateNotificationBadge();
             this.showBrowserNotification(notification);
@@ -670,8 +737,6 @@ class FirebaseChat {
         if (!this.mockMode && this.notificationsCollection) {
             try {
                 const snapshot = await this.notificationsCollection
-                    .orderBy('timestamp', 'desc')
-                    .limit(100)
                     .get();
                 
                 const notifications = [];
@@ -681,6 +746,7 @@ class FirebaseChat {
                         ...doc.data()
                     });
                 });
+                notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
                 return notifications;
             } catch (error) {
                 console.error("Error getting all notifications:", error);
