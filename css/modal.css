@@ -1,0 +1,565 @@
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #1a1f2e 0%, #0f1222 100%);
+    border-radius: 28px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 85vh;
+    overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid #2d3246;
+    animation: slideUp 0.3s ease;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid #2d3246;
+    background: rgba(249, 115, 22, 0.05);
+}
+
+.modal-header h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #f97316;
+}
+
+.modal-header h3 i {
+    margin-right: 8px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #9aa2bf;
+    transition: all 0.2s ease;
+    line-height: 1;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.modal-close:hover {
+    color: #f97316;
+    background: rgba(249, 115, 22, 0.1);
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    max-height: calc(85vh - 70px);
+}
+
+/* Device Info Section */
+.device-info {
+    margin-bottom: 1.5rem;
+}
+
+.device-info h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #eef2ff;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #f97316;
+    display: inline-block;
+}
+
+.device-info h4 i {
+    color: #f97316;
+    margin-right: 8px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #2d3246;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 500;
+    color: #9aa2bf;
+    font-size: 0.9rem;
+}
+
+.info-value {
+    color: #eef2ff;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Settings Section */
+.settings-section {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #2d3246;
+}
+
+.settings-section h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #eef2ff;
+    margin-bottom: 1rem;
+}
+
+.settings-section h4 i {
+    color: #f97316;
+    margin-right: 8px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #2d3246;
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-label {
+    font-size: 0.9rem;
+    color: #eef2ff;
+}
+
+.setting-description {
+    font-size: 0.7rem;
+    color: #9aa2bf;
+    margin-top: 2px;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #2d3246;
+    transition: 0.3s;
+    border-radius: 22px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #f97316;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+}
+
+/* Select Dropdown */
+.setting-select {
+    background: #1a1e2c;
+    border: 1px solid #2d3246;
+    border-radius: 8px;
+    padding: 6px 10px;
+    color: #eef2ff;
+    font-size: 0.8rem;
+    cursor: pointer;
+    outline: none;
+    flex-shrink: 0;
+}
+
+.setting-select:hover {
+    border-color: #f97316;
+}
+
+.setting-select option {
+    background: #1a1e2c;
+    color: #eef2ff;
+}
+
+/* Button */
+.settings-btn {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    border: none;
+    border-radius: 40px;
+    padding: 10px 20px;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+.settings-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(249, 115, 22, 0.3);
+}
+
+/* Info Note */
+.info-note {
+    background: rgba(249, 115, 22, 0.1);
+    border-left: 3px solid #f97316;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin: 12px 0;
+    font-size: 0.75rem;
+    color: #9aa2bf;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-note i {
+    color: #f97316;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.info-note span {
+    flex: 1;
+    line-height: 1.4;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ========== MOBILE PHONE STYLES (max-width: 640px) ========== */
+@media (max-width: 640px) {
+    .modal-content {
+        width: 92%;
+        max-width: 92%;
+        border-radius: 20px;
+        max-height: 80vh;
+    }
+    
+    .modal-header {
+        padding: 0.8rem 1rem;
+    }
+    
+    .modal-header h3 {
+        font-size: 1rem;
+    }
+    
+    .modal-header h3 i {
+        font-size: 0.9rem;
+    }
+    
+    .modal-close {
+        width: 28px;
+        height: 28px;
+        font-size: 1.5rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+        max-height: calc(80vh - 56px);
+    }
+    
+    /* Device Info - Compact */
+    .device-info {
+        margin-bottom: 1rem;
+    }
+    
+    .device-info h4 {
+        font-size: 0.85rem;
+        margin-bottom: 0.6rem;
+        padding-bottom: 0.3rem;
+    }
+    
+    .device-info h4 i {
+        font-size: 0.8rem;
+    }
+    
+    .info-row {
+        padding: 0.5rem 0;
+    }
+    
+    .info-label {
+        font-size: 0.75rem;
+    }
+    
+    .info-value {
+        font-size: 0.75rem;
+    }
+    
+    /* Settings Section - Compact */
+    .settings-section {
+        margin-top: 1rem;
+        padding-top: 0.8rem;
+    }
+    
+    .settings-section h4 {
+        font-size: 0.85rem;
+        margin-bottom: 0.6rem;
+    }
+    
+    .settings-section h4 i {
+        font-size: 0.8rem;
+    }
+    
+    .setting-item {
+        padding: 0.5rem 0;
+    }
+    
+    .setting-label {
+        font-size: 0.8rem;
+    }
+    
+    .setting-description {
+        font-size: 0.65rem;
+    }
+    
+    /* Toggle Switch - Smaller */
+    .toggle-switch {
+        width: 38px;
+        height: 20px;
+    }
+    
+    .toggle-slider {
+        border-radius: 20px;
+    }
+    
+    .toggle-slider:before {
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(18px);
+    }
+    
+    /* Select Dropdown - Smaller */
+    .setting-select {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+    
+    /* Button - Smaller */
+    .settings-btn {
+        padding: 8px 16px;
+        font-size: 0.8rem;
+        margin-top: 0.8rem;
+    }
+    
+    /* Info Note - Smaller */
+    .info-note {
+        padding: 6px 10px;
+        margin: 10px 0;
+        font-size: 0.65rem;
+    }
+    
+    .info-note i {
+        font-size: 0.8rem;
+    }
+}
+
+/* ========== SMALL MOBILE (max-width: 480px) ========== */
+@media (max-width: 480px) {
+    .modal-content {
+        width: 95%;
+        max-width: 95%;
+        border-radius: 18px;
+        max-height: 85vh;
+    }
+    
+    .modal-header {
+        padding: 0.7rem 0.9rem;
+    }
+    
+    .modal-header h3 {
+        font-size: 0.95rem;
+    }
+    
+    .modal-body {
+        padding: 0.8rem;
+        max-height: calc(85vh - 52px);
+    }
+    
+    .info-row {
+        padding: 0.4rem 0;
+    }
+    
+    .info-label, .info-value {
+        font-size: 0.7rem;
+    }
+    
+    .setting-label {
+        font-size: 0.75rem;
+    }
+    
+    .setting-description {
+        font-size: 0.6rem;
+    }
+    
+    .toggle-switch {
+        width: 34px;
+        height: 18px;
+    }
+    
+    .toggle-slider:before {
+        height: 12px;
+        width: 12px;
+        left: 3px;
+        bottom: 3px;
+    }
+    
+    input:checked + .toggle-slider:before {
+        transform: translateX(16px);
+    }
+    
+    .setting-select {
+        padding: 3px 6px;
+        font-size: 0.65rem;
+    }
+    
+    .settings-btn {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+    
+    .info-note {
+        padding: 5px 8px;
+        font-size: 0.6rem;
+    }
+}
+
+/* ========== LANDSCAPE MODE ON MOBILE ========== */
+@media (max-width: 640px) and (orientation: landscape) {
+    .modal-content {
+        max-height: 90vh;
+        width: 85%;
+        max-width: 85%;
+    }
+    
+    .modal-body {
+        max-height: calc(90vh - 60px);
+    }
+    
+    .device-info h4 {
+        font-size: 0.8rem;
+    }
+    
+    .info-row {
+        padding: 0.35rem 0;
+    }
+    
+    .info-label, .info-value {
+        font-size: 0.7rem;
+    }
+    
+    .setting-item {
+        padding: 0.4rem 0;
+    }
+    
+    .setting-label {
+        font-size: 0.75rem;
+    }
+    
+    .setting-description {
+        font-size: 0.6rem;
+    }
+}
+
+/* ========== TABLET STYLES (641px - 1024px) ========== */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .modal-content {
+        max-width: 450px;
+    }
+    
+    .modal-header {
+        padding: 1rem 1.2rem;
+    }
+    
+    .modal-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .modal-body {
+        padding: 1.2rem;
+    }
+}
+
+/* ========== DESKTOP/LAPTOP STYLES (min-width: 1025px) ========== */
+@media (min-width: 1025px) {
+    .modal-content {
+        max-width: 500px;
+    }
+}
