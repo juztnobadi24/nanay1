@@ -30,7 +30,6 @@ class PlayerComponent {
         this.errorMessageDiv = document.getElementById("errorMessage");
         this.videoContainer = document.getElementById("videoContainer");
         
-        // Remove controls from video player
         if (this.videoPlayer) {
             this.videoPlayer.removeAttribute("controls");
             this.videoPlayer.controls = false;
@@ -47,7 +46,6 @@ class PlayerComponent {
     async destroyPlayers() {
         this.isLoading = false;
         
-        // Stop and clear video element
         if (this.videoPlayer) {
             try {
                 this.videoPlayer.pause();
@@ -58,7 +56,6 @@ class PlayerComponent {
             }
         }
         
-        // Destroy Shaka player
         if (this.shakaPlayer) {
             try {
                 await this.shakaPlayer.destroy();
@@ -68,7 +65,6 @@ class PlayerComponent {
             this.shakaPlayer = null;
         }
         
-        // Destroy HLS player
         if (this.hlsPlayer) {
             try {
                 this.hlsPlayer.destroy();
@@ -84,7 +80,10 @@ class PlayerComponent {
     async initShaka() {
         if (this.shakaPlayer) return this.shakaPlayer;
         if (typeof shaka !== "undefined") {
-            this.shakaPlayer = new shaka.Player(this.videoPlayer);
+            // Use attach method instead of passing mediaElement to constructor
+            this.shakaPlayer = new shaka.Player();
+            await this.shakaPlayer.attach(this.videoPlayer);
+            
             await this.shakaPlayer.configure({
                 drm: {
                     servers: {},
@@ -97,10 +96,12 @@ class PlayerComponent {
                     retryParameters: { maxAttempts: 3 }
                 }
             });
+            
             this.shakaPlayer.addEventListener("error", (event) => {
                 console.error("Shaka error", event.detail);
                 showError("Playback error: " + (event.detail?.message || "DRM or stream issue"));
             });
+            
             this.isShakaInitialized = true;
             return this.shakaPlayer;
         }
@@ -113,8 +114,15 @@ class PlayerComponent {
         // Clear any existing players first
         await this.destroyPlayers();
         
-        const isDash = url.includes(".mpd") || url.includes("manifest.mpd");
-        const isHls = url.includes(".m3u8");
+        // Check if URL is accessible (try to handle HTTP vs HTTPS)
+        let finalUrl = url;
+        
+        // If the site is HTTPS but stream is HTTP, try to keep HTTP (browser may block)
+        // For now, we'll keep the original URL and let the browser handle it
+        // The meta tag will try to upgrade, but if that fails, we'll use the original
+        
+        const isDash = finalUrl.includes(".mpd") || finalUrl.includes("manifest.mpd");
+        const isHls = finalUrl.includes(".m3u8");
         
         try {
             if (isDash) {
@@ -142,9 +150,8 @@ class PlayerComponent {
                     await player.configure({ drm: { clearKeys: {} } });
                 }
                 
-                await player.load(url);
+                await player.load(finalUrl);
                 
-                // Force play
                 setTimeout(() => {
                     if (this.videoPlayer && !this.videoPlayer.paused) {
                         this.videoPlayer.play().catch(e => console.warn("Play attempt:", e));
@@ -194,10 +201,9 @@ class PlayerComponent {
                             }
                         });
                         
-                        this.hlsPlayer.loadSource(url);
+                        this.hlsPlayer.loadSource(finalUrl);
                         this.hlsPlayer.attachMedia(this.videoPlayer);
                         
-                        // Fallback timeout
                         setTimeout(() => {
                             if (!resolved) {
                                 resolved = true;
@@ -215,7 +221,7 @@ class PlayerComponent {
                     });
                 } 
                 else if (this.videoPlayer.canPlayType("application/vnd.apple.mpegurl")) {
-                    this.videoPlayer.src = url;
+                    this.videoPlayer.src = finalUrl;
                     await this.videoPlayer.play();
                     return true;
                 } else {
@@ -224,7 +230,7 @@ class PlayerComponent {
             }
             else {
                 console.log("Loading direct stream (MP3/audio)");
-                this.videoPlayer.src = url;
+                this.videoPlayer.src = finalUrl;
                 await this.videoPlayer.play();
                 return true;
             }
@@ -241,7 +247,6 @@ class PlayerComponent {
             return false;
         }
         
-        // Prevent multiple simultaneous loads
         if (this.isLoading) {
             console.log("Already loading a channel, skipping...");
             return false;
@@ -253,25 +258,17 @@ class PlayerComponent {
             console.log("Switching to channel:", channel.name);
             this.currentChannel = channel;
             
-            // Clear DRM notice if it exists (not used anymore)
-            if (this.drmNoticeSpan) {
-                this.drmNoticeSpan.innerHTML = '';
-            }
-            
-            // Get DRM config and headers
             let drmConfig = null;
             let headers = null;
             if (channel.drm) drmConfig = channel.drm;
             if (channel.headers) headers = channel.headers;
             
-            // Load and play the stream
             const success = await this.loadStream(channel.streamUrl, drmConfig, headers);
             
             if (success) {
                 window.activeChannelId = channel.id;
                 console.log("Channel playing successfully:", channel.name);
                 
-                // Update sidebar active state
                 if (window.sidebarComponent) {
                     window.sidebarComponent.updateActiveChannel(channel.id);
                 }
@@ -285,7 +282,6 @@ class PlayerComponent {
             showError(`Error playing ${channel.name}: ${error.message}`);
             return false;
         } finally {
-            // Reset loading flag after a delay
             setTimeout(() => {
                 this.isLoading = false;
             }, 500);
