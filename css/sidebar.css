@@ -1,0 +1,641 @@
+/* Sidebar Component Styles */
+.channel-sidebar {
+    width: 420px;
+    background: #0c0f17;
+    border-right: 1px solid #202433;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    position: relative;
+}
+
+.sidebar-header {
+    padding: 1.5rem 1.5rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    background: #0c0f17;
+}
+
+/* Filter Row with Search Icon - Keep in one row on desktop */
+.filter-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: nowrap;
+    width: 100%;
+}
+
+.filter-group {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.filter-btn {
+    background: transparent;
+    border: none;
+    color: #9aa2bf;
+    padding: 8px 16px;
+    border-radius: 40px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.filter-btn:hover {
+    color: #f97316;
+    background: rgba(249, 115, 22, 0.1);
+}
+
+.filter-btn.active {
+    background: #f97316;
+    color: white;
+}
+
+/* Categories Dropdown Button */
+.categories-dropdown {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.dropdown-btn {
+    background: transparent;
+    border: none;
+    color: #9aa2bf;
+    padding: 8px 16px;
+    border-radius: 40px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.dropdown-btn i {
+    font-size: 0.75rem;
+    transition: transform 0.3s ease;
+}
+
+.dropdown-btn:hover {
+    color: #f97316;
+    background: rgba(249, 115, 22, 0.1);
+}
+
+.dropdown-btn.active {
+    background: #f97316;
+    color: white;
+}
+
+.dropdown-btn.active i {
+    color: white;
+}
+
+.dropdown-btn.open i {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 180px;
+    background: #1a1e2c;
+    border: 1px solid #2d3246;
+    border-radius: 16px;
+    padding: 8px 0;
+    z-index: 100;
+    display: none;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #eef2ff;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.dropdown-item:hover {
+    background: #2a2f45;
+    color: #f97316;
+}
+
+.dropdown-item.active {
+    background: #f97316;
+    color: white;
+}
+
+/* Favorites Button */
+.favorites-btn {
+    background: transparent;
+    border: none;
+    color: #9aa2bf;
+    padding: 8px 16px;
+    border-radius: 40px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.favorites-btn i {
+    font-size: 0.85rem;
+}
+
+.favorites-btn:hover {
+    color: #ffc107;
+    background: rgba(255, 193, 7, 0.1);
+}
+
+.favorites-btn.active {
+    background: #ffc107;
+    color: #1a1e2c;
+}
+
+.favorites-btn.active i {
+    color: #1a1e2c;
+}
+
+/* Search Icon Button */
+.search-icon-btn {
+    background: transparent;
+    border: none;
+    color: #9aa2bf;
+    padding: 8px 12px;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.search-icon-btn:hover {
+    color: #f97316;
+    background: rgba(249, 115, 22, 0.1);
+}
+
+.search-icon-btn.active {
+    color: #f97316;
+    background: rgba(249, 115, 22, 0.15);
+}
+
+/* Search Input Container (Initially hidden) */
+.search-input-container {
+    display: none;
+    animation: slideDown 0.3s ease;
+    margin-top: 10px;
+}
+
+.search-input-container.show {
+    display: block;
+}
+
+.search-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.search-input-wrapper i {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9aa2bf;
+    font-size: 1rem;
+}
+
+.search-input-field {
+    width: 100%;
+    background: #1a1e2c;
+    border: 1px solid #2d3246;
+    border-radius: 40px;
+    padding: 10px 16px 10px 44px;
+    color: #eef2ff;
+    font-size: 0.85rem;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.search-input-field:focus {
+    background: #1e2438;
+    border-color: #f97316;
+}
+
+.search-input-field::placeholder {
+    color: #6a6f8a;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Channel List */
+.channel-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem 0.75rem 1rem 0.75rem;
+    scroll-behavior: smooth;
+}
+
+.channel-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.8rem 1rem;
+    margin: 4px 0;
+    border-radius: 16px;
+    background: #111520;
+    transition: all 0.15s ease;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+}
+
+.channel-item:hover {
+    background: #1e2538;
+    transform: translateX(2px);
+}
+
+.channel-item.active {
+    background: #2a2f45;
+    border-left-color: #f97316;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.channel-logo {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #1a1e2c, #0f1119);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #ffbc6e;
+    text-transform: uppercase;
+    flex-shrink: 0;
+    font-family: monospace;
+}
+
+.channel-info-side {
+    flex: 1;
+    overflow: hidden;
+}
+
+.channel-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.channel-category {
+    font-size: 0.7rem;
+    color: #9aa2bf;
+    margin-top: 4px;
+}
+
+.favorite-icon {
+    color: #ffc107;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.favorite-icon:hover {
+    transform: scale(1.1);
+}
+
+.favorite-icon.far {
+    color: #6a6f8a;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 2rem;
+    color: #9aa2bf;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #9aa2bf;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Scroll to Top Button - Positioned within Sidebar */
+.scroll-to-top {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    color: white;
+    font-size: 1.1rem;
+}
+
+.scroll-to-top.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.scroll-to-top:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(249, 115, 22, 0.4);
+}
+
+.scroll-to-top:active {
+    transform: translateY(0);
+}
+
+/* Animation for the button */
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+.scroll-to-top.show {
+    animation: bounce 0.5s ease;
+}
+
+/* ========== DESKTOP/LAPTOP LARGE SCREENS ========== */
+@media (min-width: 1025px) {
+    .filter-row {
+        gap: 8px;
+    }
+    
+    .filter-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+    
+    .dropdown-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+    
+    .favorites-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+    
+    .scroll-to-top {
+        bottom: 20px;
+        right: 20px;
+        width: 44px;
+        height: 44px;
+    }
+}
+
+/* ========== TABLET AND SMALLER DESKTOP ========== */
+@media (max-width: 1024px) {
+    .channel-sidebar {
+        width: 320px;
+    }
+    
+    .filter-row {
+        gap: 6px;
+    }
+    
+    .filter-btn, .dropdown-btn, .favorites-btn {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+    
+    .search-icon-btn {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+    }
+}
+
+/* ========== PORTRAIT MODE SIDEBAR ADJUSTMENTS ========== */
+@media (max-width: 640px) and (orientation: portrait) {
+    .channel-sidebar {
+        width: 100%;
+        flex: 1;
+        border-right: none;
+        border-top: 1px solid #202433;
+        margin-top: 0;
+        padding-top: 0;
+        min-height: 0;
+    }
+    
+    .sidebar-header {
+        padding: 0.6rem 1rem 0.4rem;
+        margin-top: 0;
+    }
+    
+    .filter-row {
+        margin-bottom: 8px;
+        margin-top: 0;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .filter-group {
+        flex: 1;
+        justify-content: space-between;
+        min-width: auto;
+    }
+    
+    .filter-btn, .dropdown-btn, .favorites-btn {
+        padding: 5px 12px;
+        font-size: 0.7rem;
+    }
+    
+    .search-icon-btn {
+        padding: 5px 8px;
+        font-size: 0.9rem;
+    }
+    
+    .channel-list {
+        padding: 0.25rem 0.5rem 0.5rem 0.5rem;
+    }
+    
+    .channel-item {
+        padding: 0.5rem 0.7rem;
+        gap: 8px;
+    }
+    
+    .channel-logo {
+        width: 36px;
+        height: 36px;
+        font-size: 0.8rem;
+        border-radius: 10px;
+    }
+    
+    .channel-name {
+        font-size: 0.8rem;
+    }
+    
+    .channel-category {
+        font-size: 0.6rem;
+    }
+    
+    .dropdown-menu {
+        min-width: 140px;
+    }
+    
+    .dropdown-item {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+    
+    .scroll-to-top {
+        bottom: 15px;
+        right: 15px;
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) and (orientation: portrait) {
+    .channel-sidebar {
+        width: 100%;
+        flex: 1;
+        border-right: none;
+        border-top: 1px solid #202433;
+        margin-top: 0;
+        padding-top: 0;
+        min-height: 0;
+    }
+    
+    .sidebar-header {
+        padding: 0.8rem 1.2rem 0.6rem;
+        margin-top: 0;
+        border-bottom: 2px solid #f97316;
+        background: linear-gradient(135deg, #1a1f2e 0%, #131724 100%);
+    }
+    
+    .channel-item {
+        padding: 0.6rem 1rem;
+    }
+    
+    .scroll-to-top {
+        bottom: 20px;
+        right: 20px;
+        width: 44px;
+        height: 44px;
+    }
+}
+
+@media (max-width: 640px) and (orientation: landscape) {
+    .channel-sidebar {
+        width: 320px;
+        max-height: 100%;
+    }
+    
+    .filter-row {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
+    .filter-group {
+        flex: 1;
+        justify-content: space-between;
+    }
+    
+    .scroll-to-top {
+        bottom: 12px;
+        right: 12px;
+        width: 38px;
+        height: 38px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .channel-sidebar {
+        width: 100%;
+        flex: 1;
+        border-right: none;
+        border-bottom: 1px solid #202433;
+    }
+    
+    .filter-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .filter-group {
+        flex: 1;
+        justify-content: space-between;
+    }
+}
+
+/* Custom scrollbar for channel list */
+.channel-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.channel-list::-webkit-scrollbar-track {
+    background: #141824;
+    border-radius: 10px;
+}
+
+.channel-list::-webkit-scrollbar-thumb {
+    background: #3e445e;
+    border-radius: 10px;
+}
+
+.channel-list::-webkit-scrollbar-thumb:hover {
+    background: #f97316;
+}
