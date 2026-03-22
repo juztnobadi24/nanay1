@@ -1,0 +1,282 @@
+// ======================== SETTINGS MODAL ========================
+
+class SettingsModal {
+    constructor() {
+        this.modal = null;
+        this.isOpen = false;
+        this.deviceInfo = this.getDeviceInfo();
+        
+        // Check if auto-fullscreen setting exists, if not, set default based on device
+        const savedAutoFullscreen = localStorage.getItem('autoFullscreen');
+        if (savedAutoFullscreen === null) {
+            // Default: ON for mobile devices, OFF for desktop
+            this.autoFullscreen = this.deviceInfo.isMobile || this.deviceInfo.isTablet;
+            localStorage.setItem('autoFullscreen', this.autoFullscreen);
+        } else {
+            this.autoFullscreen = savedAutoFullscreen === 'true';
+        }
+        
+        this.qualityPreference = localStorage.getItem('qualityPreference') || 'auto';
+    }
+    
+    getDeviceInfo() {
+        const ua = navigator.userAgent;
+        const screenWidth = window.innerWidth;
+        const screenHeight = window.innerHeight;
+        
+        // Detect device type
+        let deviceType = 'Unknown';
+        let isMobile = false;
+        let isTablet = false;
+        
+        if (/Mobi|Android|iPhone|iPad|iPod/i.test(ua)) {
+            isMobile = true;
+            if (/iPad|Tablet/i.test(ua) || (screenWidth >= 768 && screenWidth <= 1024)) {
+                deviceType = 'Tablet';
+                isTablet = true;
+                isMobile = false;
+            } else {
+                deviceType = 'Mobile Phone';
+            }
+        } else {
+            deviceType = 'Desktop / Laptop';
+        }
+        
+        // Detect OS
+        let os = 'Unknown';
+        if (/Windows/i.test(ua)) os = 'Windows';
+        else if (/Mac/i.test(ua)) os = 'macOS';
+        else if (/Linux/i.test(ua)) os = 'Linux';
+        else if (/Android/i.test(ua)) os = 'Android';
+        else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+        
+        // Detect Browser
+        let browser = 'Unknown';
+        if (/Edg/i.test(ua)) browser = 'Microsoft Edge';
+        else if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) browser = 'Google Chrome';
+        else if (/Firefox/i.test(ua)) browser = 'Mozilla Firefox';
+        else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Apple Safari';
+        else if (/Opera|OPR/i.test(ua)) browser = 'Opera';
+        
+        return {
+            deviceType,
+            os,
+            browser,
+            screenSize: `${screenWidth} x ${screenHeight}`,
+            isMobile,
+            isTablet,
+            isDesktop: !isMobile && !isTablet
+        };
+    }
+    
+    createModal() {
+        // Remove existing modal if any
+        const existingModal = document.getElementById('settingsModal');
+        if (existingModal) existingModal.remove();
+        
+        const modalHTML = `
+            <div id="settingsModal" class="modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-cog"></i> Settings</h3>
+                        <button class="modal-close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="device-info">
+                            <h4><i class="fas fa-mobile-alt"></i> Device Information</h4>
+                            <div class="info-row">
+                                <span class="info-label">Device Type:</span>
+                                <span class="info-value" id="deviceType">${this.deviceInfo.deviceType}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Operating System:</span>
+                                <span class="info-value" id="deviceOS">${this.deviceInfo.os}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Browser:</span>
+                                <span class="info-value" id="deviceBrowser">${this.deviceInfo.browser}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Screen Resolution:</span>
+                                <span class="info-value" id="screenSize">${this.deviceInfo.screenSize}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Viewport:</span>
+                                <span class="info-value" id="viewportSize">${window.innerWidth} x ${window.innerHeight}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h4><i class="fas fa-sliders-h"></i> Playback Settings</h4>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">Auto Fullscreen (Landscape)</div>
+                                    <div class="setting-description">Automatically enter fullscreen when rotating to landscape on mobile</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="autoFullscreenToggle" ${this.autoFullscreen ? 'checked' : ''}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">Video Quality</div>
+                                    <div class="setting-description">Preferred video quality for streaming</div>
+                                </div>
+                                <select id="qualitySelect" class="setting-select">
+                                    <option value="auto" ${this.qualityPreference === 'auto' ? 'selected' : ''}>Auto</option>
+                                    <option value="1080p" ${this.qualityPreference === '1080p' ? 'selected' : ''}>1080p (Full HD)</option>
+                                    <option value="720p" ${this.qualityPreference === '720p' ? 'selected' : ''}>720p (HD)</option>
+                                    <option value="480p" ${this.qualityPreference === '480p' ? 'selected' : ''}>480p (SD)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="info-note">
+                            <i class="fas fa-info-circle"></i> 
+                            <span>Auto fullscreen is ${this.autoFullscreen ? 'ENABLED' : 'DISABLED'} for your ${this.deviceInfo.isMobile ? 'mobile device' : (this.deviceInfo.isTablet ? 'tablet' : 'desktop')}.</span>
+                            ${this.autoFullscreen ? '<span style="color:#f97316;"> Rotate your device to landscape to test.</span>' : ''}
+                        </div>
+                        
+                        <button id="applySettingsBtn" class="settings-btn">
+                            <i class="fas fa-check"></i> Apply Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        this.modal = document.getElementById('settingsModal');
+        this.attachEvents();
+    }
+    
+    attachEvents() {
+        if (!this.modal) return;
+        
+        // Close button
+        const closeBtn = this.modal.querySelector('.modal-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.close());
+        }
+        
+        // Click outside to close
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) {
+                this.close();
+            }
+        });
+        
+        // Apply button
+        const applyBtn = document.getElementById('applySettingsBtn');
+        if (applyBtn) {
+            applyBtn.addEventListener('click', () => this.applySettings());
+        }
+        
+        // Listen for window resize to update viewport size
+        window.addEventListener('resize', () => {
+            if (this.isOpen) {
+                const viewportSpan = document.getElementById('viewportSize');
+                if (viewportSpan) {
+                    viewportSpan.textContent = `${window.innerWidth} x ${window.innerHeight}`;
+                }
+                const screenSizeSpan = document.getElementById('screenSize');
+                if (screenSizeSpan) {
+                    screenSizeSpan.textContent = `${screen.width} x ${screen.height}`;
+                }
+            }
+        });
+        
+        // ESC key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isOpen) {
+                this.close();
+            }
+        });
+    }
+    
+    open() {
+        if (!this.modal) this.createModal();
+        this.modal.classList.add('show');
+        this.isOpen = true;
+        document.body.style.overflow = 'hidden';
+    }
+    
+    close() {
+        if (this.modal) {
+            this.modal.classList.remove('show');
+            this.isOpen = false;
+            document.body.style.overflow = '';
+        }
+    }
+    
+    applySettings() {
+        const autoFullscreenToggle = document.getElementById('autoFullscreenToggle');
+        const qualitySelect = document.getElementById('qualitySelect');
+        
+        if (autoFullscreenToggle) {
+            this.autoFullscreen = autoFullscreenToggle.checked;
+            localStorage.setItem('autoFullscreen', this.autoFullscreen);
+        }
+        
+        if (qualitySelect) {
+            this.qualityPreference = qualitySelect.value;
+            localStorage.setItem('qualityPreference', this.qualityPreference);
+        }
+        
+        // Show success message with status
+        this.showToast(`Settings applied! Auto fullscreen is now ${this.autoFullscreen ? 'ON' : 'OFF'}`);
+        
+        // Close modal after a short delay
+        setTimeout(() => {
+            this.close();
+        }, 1500);
+    }
+    
+    showToast(message) {
+        // Remove existing toast
+        const existingToast = document.querySelector('.settings-toast');
+        if (existingToast) existingToast.remove();
+        
+        const toast = document.createElement('div');
+        toast.className = 'settings-toast';
+        toast.innerHTML = `
+            <i class="fas fa-check-circle"></i>
+            <span>${message}</span>
+        `;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f97316;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+        `;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 2000);
+    }
+    
+    getSettings() {
+        return {
+            autoFullscreen: this.autoFullscreen,
+            qualityPreference: this.qualityPreference,
+            deviceInfo: this.deviceInfo
+        };
+    }
+}
+
+window.SettingsModal = SettingsModal;
