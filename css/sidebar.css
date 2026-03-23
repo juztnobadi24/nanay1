@@ -18,40 +18,37 @@
     background: #0c0f17;
 }
 
-/* Filter Row - Equal spacing everywhere */
+/* Filter Row - Centered with equal gaps */
 .filter-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 0;
+    justify-content: center;
+    gap: 8px;
     margin-bottom: 8px;
     flex-wrap: nowrap;
     width: 100%;
 }
 
-/* All buttons in filter row - equal spacing */
-.filter-row > * {
-    flex: 1;
-    text-align: center;
+/* All filter buttons container */
+.filter-buttons-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .filter-btn {
     background: transparent;
     border: none;
     color: #9aa2bf;
-    padding: 8px 0;
+    padding: 8px 16px;
     border-radius: 40px;
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
-    flex-shrink: 0;
-    width: 100%;
 }
 
 .filter-btn:hover {
@@ -67,26 +64,22 @@
 /* Categories Dropdown Button */
 .categories-dropdown {
     position: relative;
-    flex-shrink: 0;
-    width: 100%;
 }
 
 .dropdown-btn {
     background: transparent;
     border: none;
     color: #9aa2bf;
-    padding: 8px 0;
+    padding: 8px 16px;
     border-radius: 40px;
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 6px;
     transition: all 0.2s ease;
     white-space: nowrap;
-    width: 100%;
 }
 
 .dropdown-btn i {
@@ -154,18 +147,16 @@
     background: transparent;
     border: none;
     color: #9aa2bf;
-    padding: 8px 0;
+    padding: 8px 16px;
     border-radius: 40px;
     font-size: 0.85rem;
     font-weight: 500;
     cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 6px;
     transition: all 0.2s ease;
     white-space: nowrap;
-    width: 100%;
 }
 
 .favorites-btn i {
@@ -191,7 +182,7 @@
     background: transparent;
     border: none;
     color: #9aa2bf;
-    padding: 8px 0;
+    padding: 8px 12px;
     border-radius: 40px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -199,8 +190,6 @@
     align-items: center;
     justify-content: center;
     font-size: 1rem;
-    flex-shrink: 0;
-    width: 100%;
 }
 
 .search-icon-btn:hover {
@@ -426,21 +415,17 @@
 
 /* ========== DESKTOP/LAPTOP LARGE SCREENS ========== */
 @media (min-width: 1025px) {
-    .sidebar-header {
-        padding: 1.5rem 1.5rem 1rem;
-    }
-    
     .filter-row {
         gap: 12px;
     }
     
-    .filter-row > * {
-        margin: 0;
+    .filter-btn, .dropdown-btn, .favorites-btn {
+        padding: 8px 18px;
+        font-size: 0.85rem;
     }
     
-    .filter-btn, .dropdown-btn, .favorites-btn, .search-icon-btn {
-        padding: 8px 0;
-        font-size: 0.85rem;
+    .search-icon-btn {
+        padding: 8px 12px;
     }
     
     .scroll-to-top {
@@ -457,17 +442,18 @@
         width: 320px;
     }
     
-    .sidebar-header {
-        padding: 1rem 1rem 0.8rem;
-    }
-    
     .filter-row {
         gap: 8px;
     }
     
-    .filter-btn, .dropdown-btn, .favorites-btn, .search-icon-btn {
-        padding: 6px 0;
+    .filter-btn, .dropdown-btn, .favorites-btn {
+        padding: 6px 12px;
         font-size: 0.75rem;
+    }
+    
+    .search-icon-btn {
+        padding: 6px 10px;
+        font-size: 0.9rem;
     }
 }
 
@@ -484,22 +470,25 @@
     }
     
     .sidebar-header {
-        padding: 0.6rem 0.8rem 0.5rem;
+        padding: 0.6rem 1rem 0.4rem;
         margin-top: 0;
     }
     
     .filter-row {
+        margin-bottom: 8px;
+        margin-top: 0;
         gap: 6px;
-        margin-bottom: 6px;
+        flex-wrap: wrap;
     }
     
-    .filter-btn, .dropdown-btn, .favorites-btn, .search-icon-btn {
-        padding: 5px 0;
+    .filter-btn, .dropdown-btn, .favorites-btn {
+        padding: 5px 10px;
         font-size: 0.7rem;
     }
     
-    .dropdown-btn i, .favorites-btn i {
-        font-size: 0.65rem;
+    .search-icon-btn {
+        padding: 5px 8px;
+        font-size: 0.85rem;
     }
     
     .channel-list {
@@ -544,78 +533,6 @@
     }
 }
 
-/* ========== SMALL MOBILE (max-width: 480px) ========== */
-@media (max-width: 480px) {
-    .sidebar-header {
-        padding: 0.5rem 0.6rem 0.4rem;
-    }
-    
-    .filter-row {
-        gap: 5px;
-    }
-    
-    .filter-btn, .dropdown-btn, .favorites-btn, .search-icon-btn {
-        padding: 4px 0;
-        font-size: 0.65rem;
-    }
-    
-    .dropdown-btn i, .favorites-btn i {
-        font-size: 0.6rem;
-    }
-    
-    .search-icon-btn {
-        font-size: 0.75rem;
-    }
-    
-    .channel-list {
-        padding: 0.2rem 0.4rem 0.4rem 0.4rem;
-    }
-    
-    .channel-item {
-        padding: 0.45rem 0.6rem;
-        gap: 6px;
-    }
-    
-    .channel-logo {
-        width: 32px;
-        height: 32px;
-        font-size: 0.75rem;
-        border-radius: 8px;
-    }
-    
-    .channel-name {
-        font-size: 0.75rem;
-    }
-    
-    .channel-category {
-        font-size: 0.55rem;
-    }
-    
-    .favorite-icon {
-        font-size: 0.75rem;
-    }
-}
-
-/* ========== EXTRA SMALL MOBILE (max-width: 380px) ========== */
-@media (max-width: 380px) {
-    .filter-row {
-        gap: 4px;
-    }
-    
-    .filter-btn, .dropdown-btn, .favorites-btn, .search-icon-btn {
-        padding: 3px 0;
-        font-size: 0.6rem;
-    }
-    
-    .dropdown-btn i, .favorites-btn i {
-        font-size: 0.55rem;
-    }
-    
-    .search-icon-btn {
-        font-size: 0.7rem;
-    }
-}
-
 @media (min-width: 641px) and (max-width: 1024px) and (orientation: portrait) {
     .channel-sidebar {
         width: 100%;
@@ -628,18 +545,18 @@
     }
     
     .sidebar-header {
-        padding: 0.8rem 1rem 0.6rem;
+        padding: 0.8rem 1.2rem 0.6rem;
         margin-top: 0;
         border-bottom: 2px solid #f97316;
         background: linear-gradient(135deg, #1a1f2e 0%, #131724 100%);
     }
     
     .filter-row {
-        gap: 10px;
+        gap: 8px;
     }
     
-    .filter-btn, .dropdown-btn, .favorites-btn, .search-icon-btn {
-        padding: 6px 0;
+    .filter-btn, .dropdown-btn, .favorites-btn {
+        padding: 6px 14px;
         font-size: 0.75rem;
     }
     
@@ -661,17 +578,19 @@
         max-height: 100%;
     }
     
-    .sidebar-header {
-        padding: 0.5rem 0.8rem;
-    }
-    
     .filter-row {
         gap: 6px;
+        flex-wrap: wrap;
     }
     
-    .filter-btn, .dropdown-btn, .favorites-btn, .search-icon-btn {
-        padding: 4px 0;
+    .filter-btn, .dropdown-btn, .favorites-btn {
+        padding: 4px 8px;
         font-size: 0.7rem;
+    }
+    
+    .search-icon-btn {
+        padding: 4px 6px;
+        font-size: 0.8rem;
     }
     
     .scroll-to-top {
@@ -692,7 +611,8 @@
     }
     
     .filter-row {
-        gap: 6px;
+        gap: 8px;
+        flex-wrap: wrap;
     }
 }
 
