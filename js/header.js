@@ -8,6 +8,18 @@ class HeaderComponent {
         this.currentMode = "tv";
         this.settingsModal = null;
     }
+    
+    hideAddressBar() {
+        // Function to hide browser address bar
+        window.scrollTo(0, 1);
+        
+        // For iOS, ensure it stays hidden
+        if (navigator.userAgent.match(/iPhone|iPad|iPod/i)) {
+            setTimeout(() => {
+                window.scrollTo(0, 1);
+            }, 50);
+        }
+    }
 
     render() {
         if (!this.container) return;
@@ -57,9 +69,17 @@ class HeaderComponent {
         const notificationBtn = document.getElementById("notificationBtn");
         const settingsBtn = document.getElementById("settingsBtn");
         
+        // Helper function to remove active class from all header icons
+        const removeActiveFromIcons = () => {
+            [messageBtn, notificationBtn, settingsBtn].forEach(icon => {
+                if (icon) icon.classList.remove('active');
+            });
+        };
+        
         // Mode toggle functionality
         if (this.modeToggle) {
             this.modeToggle.addEventListener("click", (e) => {
+                this.hideAddressBar();
                 if (e.target.classList && e.target.classList.contains("toggle-label")) {
                     return;
                 }
@@ -73,6 +93,7 @@ class HeaderComponent {
         // TV/Radio label clicks
         this.toggleLabels.forEach(label => {
             label.addEventListener("click", () => {
+                this.hideAddressBar();
                 if (label.classList.contains("tv-label") && window.currentMode !== "tv") {
                     if (typeof window.onModeChange === "function") window.onModeChange("tv");
                 } else if (label.classList.contains("radio-label") && window.currentMode !== "radio") {
@@ -81,16 +102,10 @@ class HeaderComponent {
             });
         });
         
-        // Helper function to remove active class from all header icons
-        function removeActiveFromIcons() {
-            [messageBtn, notificationBtn, settingsBtn].forEach(icon => {
-                if (icon) icon.classList.remove('active');
-            });
-        }
-        
-        // Message button - Opens chat modal (removed the old error message)
+        // Message button - Opens chat modal
         if (messageBtn) {
             messageBtn.addEventListener("click", () => {
+                this.hideAddressBar();
                 removeActiveFromIcons();
                 messageBtn.classList.add('active');
                 
@@ -98,7 +113,6 @@ class HeaderComponent {
                 if (window.chatUI) {
                     window.chatUI.open();
                 } else if (window.firebaseChat && window.firebaseChat.isInitialized) {
-                    // If chat exists but UI not created, try to initialize
                     console.log("Opening chat...");
                 } else {
                     console.log("Chat not ready yet. Please wait...");
@@ -117,6 +131,7 @@ class HeaderComponent {
         // Notification button - Opens notifications modal
         if (notificationBtn) {
             notificationBtn.addEventListener("click", () => {
+                this.hideAddressBar();
                 removeActiveFromIcons();
                 notificationBtn.classList.add('active');
                 
@@ -138,6 +153,7 @@ class HeaderComponent {
         // Settings button
         if (settingsBtn) {
             settingsBtn.addEventListener("click", () => {
+                this.hideAddressBar();
                 removeActiveFromIcons();
                 settingsBtn.classList.add('active');
                 
@@ -156,6 +172,12 @@ class HeaderComponent {
                     }
                 }, 100);
             });
+        }
+        
+        // Also hide address bar on header container click/touch
+        if (this.container) {
+            this.container.addEventListener('click', () => this.hideAddressBar());
+            this.container.addEventListener('touchstart', () => this.hideAddressBar());
         }
     }
     
@@ -177,6 +199,9 @@ class HeaderComponent {
                 label.classList.remove("active");
             }
         });
+        
+        // Hide address bar when mode changes
+        this.hideAddressBar();
     }
 }
 
