@@ -929,8 +929,6 @@ class ChatUI {
         
         const userInfo = this.chatService.getUserInfo();
         
-        const deviceDisplay = userInfo.deviceId ? userInfo.deviceId : 'unknown';
-        
         const modalHTML = `
             <div id="chatModal" class="modal chat-modal">
                 <div class="modal-content" style="padding: 0;">
@@ -943,7 +941,6 @@ class ChatUI {
                             <div class="user-info-left">
                                 <i class="fas fa-user-circle"></i>
                                 <span>You are: <strong>${escapeHtml(userInfo.name)}</strong></span>
-                                ${userInfo.deviceId ? `<span class="device-info"><i class="fas fa-mobile-alt"></i> ${escapeHtml(deviceDisplay)}</span>` : ''}
                             </div>
                             <div class="user-info-right">
                                 ${userInfo.isAdmin ? '<span class="admin-badge"><i class="fas fa-crown"></i> Admin</span>' : ''}
