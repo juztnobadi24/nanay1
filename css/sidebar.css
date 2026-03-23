@@ -18,7 +18,7 @@
     background: #0c0f17;
 }
 
-/* Filter Row - Centered with equal gaps */
+/* Filter Row with Search Icon - Keep in one row on desktop */
 .filter-row {
     display: flex;
     align-items: center;
@@ -27,15 +27,6 @@
     margin-bottom: 8px;
     flex-wrap: nowrap;
     width: 100%;
-}
-
-/* All filter buttons container */
-.filter-buttons-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: wrap;
 }
 
 .filter-btn {
@@ -265,6 +256,7 @@
     overflow-y: auto;
     padding: 0.5rem 0.75rem 1rem 0.75rem;
     scroll-behavior: smooth;
+    scrollbar-gutter: stable;
 }
 
 .channel-item {
@@ -362,7 +354,7 @@
     opacity: 0.5;
 }
 
-/* Scroll to Top Button - Positioned within Sidebar */
+/* Scroll to Top Button - Positioned within Sidebar with safe area insets */
 .scroll-to-top {
     position: absolute;
     bottom: 20px;
@@ -397,6 +389,14 @@
 
 .scroll-to-top:active {
     transform: translateY(0);
+}
+
+/* iOS safe area support for notches and home indicators */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .scroll-to-top {
+        bottom: calc(20px + env(safe-area-inset-bottom));
+        right: calc(20px + env(safe-area-inset-right));
+    }
 }
 
 /* Animation for the button */
@@ -455,6 +455,20 @@
         padding: 6px 10px;
         font-size: 0.9rem;
     }
+    
+    .scroll-to-top {
+        bottom: 18px;
+        right: 18px;
+        width: 42px;
+        height: 42px;
+    }
+    
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+        .scroll-to-top {
+            bottom: calc(18px + env(safe-area-inset-bottom));
+            right: calc(18px + env(safe-area-inset-right));
+        }
+    }
 }
 
 /* ========== PORTRAIT MODE SIDEBAR ADJUSTMENTS ========== */
@@ -467,6 +481,7 @@
         margin-top: 0;
         padding-top: 0;
         min-height: 0;
+        padding-bottom: env(safe-area-inset-bottom, 0);
     }
     
     .sidebar-header {
@@ -525,14 +540,96 @@
     }
     
     .scroll-to-top {
-        bottom: 15px;
-        right: 15px;
+        bottom: 16px;
+        right: 16px;
         width: 40px;
         height: 40px;
         font-size: 1rem;
     }
+    
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+        .scroll-to-top {
+            bottom: calc(16px + env(safe-area-inset-bottom));
+            right: calc(16px + env(safe-area-inset-right));
+        }
+    }
 }
 
+/* ========== SMALL MOBILE (max-width: 480px) ========== */
+@media (max-width: 480px) {
+    .sidebar-header {
+        padding: 0.5rem 0.8rem 0.4rem;
+    }
+    
+    .filter-row {
+        gap: 5px;
+    }
+    
+    .filter-btn, .dropdown-btn, .favorites-btn {
+        padding: 4px 8px;
+        font-size: 0.65rem;
+    }
+    
+    .search-icon-btn {
+        padding: 4px 6px;
+        font-size: 0.8rem;
+    }
+    
+    .scroll-to-top {
+        bottom: 14px;
+        right: 14px;
+        width: 38px;
+        height: 38px;
+        font-size: 0.9rem;
+    }
+    
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+        .scroll-to-top {
+            bottom: calc(14px + env(safe-area-inset-bottom));
+            right: calc(14px + env(safe-area-inset-right));
+        }
+    }
+}
+
+/* ========== LANDSCAPE MODE ========== */
+@media (max-width: 640px) and (orientation: landscape) {
+    .channel-sidebar {
+        width: 320px;
+        max-height: 100%;
+    }
+    
+    .filter-row {
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn, .dropdown-btn, .favorites-btn {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+    
+    .search-icon-btn {
+        padding: 4px 6px;
+        font-size: 0.8rem;
+    }
+    
+    .scroll-to-top {
+        bottom: 12px;
+        right: 12px;
+        width: 36px;
+        height: 36px;
+        font-size: 0.85rem;
+    }
+    
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+        .scroll-to-top {
+            bottom: calc(12px + env(safe-area-inset-bottom));
+            right: calc(12px + env(safe-area-inset-right));
+        }
+    }
+}
+
+/* Tablet Portrait Mode */
 @media (min-width: 641px) and (max-width: 1024px) and (orientation: portrait) {
     .channel-sidebar {
         width: 100%;
@@ -542,6 +639,7 @@
         margin-top: 0;
         padding-top: 0;
         min-height: 0;
+        padding-bottom: env(safe-area-inset-bottom, 0);
     }
     
     .sidebar-header {
@@ -570,49 +668,12 @@
         width: 44px;
         height: 44px;
     }
-}
-
-@media (max-width: 640px) and (orientation: landscape) {
-    .channel-sidebar {
-        width: 320px;
-        max-height: 100%;
-    }
     
-    .filter-row {
-        gap: 6px;
-        flex-wrap: wrap;
-    }
-    
-    .filter-btn, .dropdown-btn, .favorites-btn {
-        padding: 4px 8px;
-        font-size: 0.7rem;
-    }
-    
-    .search-icon-btn {
-        padding: 4px 6px;
-        font-size: 0.8rem;
-    }
-    
-    .scroll-to-top {
-        bottom: 12px;
-        right: 12px;
-        width: 38px;
-        height: 38px;
-        font-size: 0.9rem;
-    }
-}
-
-@media (max-width: 640px) {
-    .channel-sidebar {
-        width: 100%;
-        flex: 1;
-        border-right: none;
-        border-bottom: 1px solid #202433;
-    }
-    
-    .filter-row {
-        gap: 8px;
-        flex-wrap: wrap;
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+        .scroll-to-top {
+            bottom: calc(20px + env(safe-area-inset-bottom));
+            right: calc(20px + env(safe-area-inset-right));
+        }
     }
 }
 
