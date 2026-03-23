@@ -14,6 +14,11 @@ class PlayerComponent {
         this.isShakaInitialized = false;
         this.currentChannel = null;
         this.isLoading = false;
+        
+        // Fullscreen button elements
+        this.fullscreenBtn = null;
+        this.fullscreenTimeout = null;
+        this.isFullscreenBtnVisible = false;
     }
     
     render() {
@@ -22,6 +27,9 @@ class PlayerComponent {
         this.container.innerHTML = `
             <div class="video-container" id="videoContainer">
                 <video id="videoPlayer" playsinline disablePictureInPicture autoplay></video>
+                <button class="fullscreen-toggle-btn" id="fullscreenToggleBtn">
+                    <i class="fas fa-expand"></i>
+                </button>
             </div>
             <div class="error-message" id="errorMessage"></div>
         `;
@@ -37,11 +45,147 @@ class PlayerComponent {
             this.videoPlayer.autoplay = true;
         }
         
+        // Setup fullscreen button
+        this.setupFullscreenButton();
+        
         window.domElements = {
             ...window.domElements,
             videoPlayer: this.videoPlayer,
             errorMessage: this.errorMessageDiv
         };
+    }
+    
+    setupFullscreenButton() {
+        this.fullscreenBtn = document.getElementById('fullscreenToggleBtn');
+        if (!this.fullscreenBtn) return;
+        
+        // Initially hide the button
+        this.hideFullscreenButton();
+        
+        // Add click event to toggle fullscreen
+        this.fullscreenBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleFullscreen();
+        });
+        
+        // Show button when video container is touched/clicked
+        if (this.videoContainer) {
+            this.videoContainer.addEventListener('click', (e) => {
+                // Don't hide if clicking the button itself
+                if (e.target === this.fullscreenBtn || this.fullscreenBtn.contains(e.target)) {
+                    return;
+                }
+                this.showFullscreenButton();
+            });
+            
+            this.videoContainer.addEventListener('touchstart', (e) => {
+                // Don't hide if touching the button itself
+                if (e.target === this.fullscreenBtn || this.fullscreenBtn.contains(e.target)) {
+                    return;
+                }
+                this.showFullscreenButton();
+            });
+        }
+        
+        // Also show button when video player is clicked/touched
+        if (this.videoPlayer) {
+            this.videoPlayer.addEventListener('click', () => {
+                this.showFullscreenButton();
+            });
+            
+            this.videoPlayer.addEventListener('touchstart', () => {
+                this.showFullscreenButton();
+            });
+        }
+        
+        // Update button icon when fullscreen changes
+        document.addEventListener('fullscreenchange', () => this.updateFullscreenButtonIcon());
+        document.addEventListener('webkitfullscreenchange', () => this.updateFullscreenButtonIcon());
+        document.addEventListener('mozfullscreenchange', () => this.updateFullscreenButtonIcon());
+    }
+    
+    showFullscreenButton() {
+        if (!this.fullscreenBtn) return;
+        
+        // Clear existing timeout
+        if (this.fullscreenTimeout) {
+            clearTimeout(this.fullscreenTimeout);
+        }
+        
+        // Show button
+        this.fullscreenBtn.classList.add('show');
+        this.isFullscreenBtnVisible = true;
+        
+        // Hide after 5 seconds
+        this.fullscreenTimeout = setTimeout(() => {
+            this.hideFullscreenButton();
+        }, 5000);
+    }
+    
+    hideFullscreenButton() {
+        if (!this.fullscreenBtn) return;
+        
+        this.fullscreenBtn.classList.remove('show');
+        this.isFullscreenBtnVisible = false;
+        
+        if (this.fullscreenTimeout) {
+            clearTimeout(this.fullscreenTimeout);
+            this.fullscreenTimeout = null;
+        }
+    }
+    
+    updateFullscreenButtonIcon() {
+        if (!this.fullscreenBtn) return;
+        
+        const isFullscreen = !!(document.fullscreenElement || 
+                                document.webkitFullscreenElement || 
+                                document.mozFullScreenElement);
+        
+        if (isFullscreen) {
+            this.fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+            this.fullscreenBtn.title = 'Exit Fullscreen';
+        } else {
+            this.fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+            this.fullscreenBtn.title = 'Enter Fullscreen';
+        }
+    }
+    
+    toggleFullscreen() {
+        if (!this.videoContainer) return;
+        
+        const isFullscreen = !!(document.fullscreenElement || 
+                                document.webkitFullscreenElement || 
+                                document.mozFullScreenElement);
+        
+        if (isFullscreen) {
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        } else {
+            // Enter fullscreen on video container
+            const element = this.videoContainer;
+            const requestMethod = element.requestFullscreen || 
+                                 element.webkitRequestFullscreen || 
+                                 element.mozRequestFullScreen || 
+                                 element.msRequestFullscreen;
+            
+            if (requestMethod) {
+                requestMethod.call(element);
+            }
+        }
+        
+        // Update button icon
+        this.updateFullscreenButtonIcon();
+        
+        // Show button temporarily after toggle
+        this.showFullscreenButton();
     }
     
     async destroyPlayers() {
