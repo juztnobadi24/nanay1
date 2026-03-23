@@ -9,6 +9,7 @@ class FullscreenManager {
         this.isVideoFullscreen = false;
         this.isWebsiteFullscreen = false;
         this.orientationHandler = this.handleOrientationChange.bind(this);
+        this.resizeTimer = null;
     }
     
     init(videoContainer, videoPlayer, sidebar, header) {
@@ -26,50 +27,86 @@ class FullscreenManager {
         document.addEventListener('webkitfullscreenchange', this.handleFullscreenChange.bind(this));
         document.addEventListener('mozfullscreenchange', this.handleFullscreenChange.bind(this));
         
-        // Check initial orientation
+        // Listen for video play events to handle auto-fullscreen
+        if (this.videoPlayer) {
+            this.videoPlayer.addEventListener('play', () => {
+                // Small delay to let video start playing
+                setTimeout(() => this.checkAndApplyFullscreen(), 100);
+            });
+        }
+        
+        // Check initial orientation after a short delay
         setTimeout(() => this.checkAndApplyFullscreen(), 500);
         
         console.log("Fullscreen Manager initialized");
     }
     
     handleOrientationChange() {
-        setTimeout(() => {
+        console.log("Orientation change detected");
+        
+        // Clear any pending resize timer
+        if (this.resizeTimer) {
+            clearTimeout(this.resizeTimer);
+        }
+        
+        // Wait for the orientation change to complete and layout to stabilize
+        this.resizeTimer = setTimeout(() => {
             this.checkAndApplyFullscreen();
-        }, 200);
+            this.resizeTimer = null;
+        }, 300);
     }
     
     checkAndApplyFullscreen() {
         const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        const isLandscape = window.innerWidth > window.innerHeight;
         
-        if (!isMobile) return;
+        // For desktop, don't auto-fullscreen
+        if (!isMobile) {
+            console.log("Desktop device - no auto-fullscreen");
+            return;
+        }
+        
+        const isLandscape = window.innerWidth > window.innerHeight;
         
         // Get user settings
         const autoFullscreen = localStorage.getItem('autoFullscreen') === 'true';
         const portraitFullscreen = localStorage.getItem('mobileFullscreenPortrait') !== 'false';
         
-        console.log(`Orientation: ${isLandscape ? 'Landscape' : 'Portrait'}, AutoFullscreen: ${autoFullscreen}, PortraitFullscreen: ${portraitFullscreen}`);
+        // Default autoFullscreen to true for mobile if not set
+        const finalAutoFullscreen = autoFullscreen === null ? true : autoFullscreen;
+        
+        console.log(`Orientation: ${isLandscape ? 'Landscape' : 'Portrait'}, AutoFullscreen: ${finalAutoFullscreen}, PortraitFullscreen: ${portraitFullscreen}`);
         
         if (isLandscape) {
             // LANDSCAPE MODE: Video fullscreen if enabled
-            if (autoFullscreen && !this.isVideoFullscreen) {
-                // Exit website fullscreen first
-                if (this.isWebsiteFullscreen) {
-                    this.exitWebsiteFullscreen();
-                }
+            if (finalAutoFullscreen && !this.isVideoFullscreen && !this.isWebsiteFullscreen) {
+                console.log("Entering video fullscreen (landscape)");
                 this.enterVideoFullscreen();
-            } else if (!autoFullscreen && this.isVideoFullscreen) {
+            } else if (!finalAutoFullscreen && this.isVideoFullscreen) {
+                console.log("Exiting video fullscreen (auto-fullscreen disabled)");
                 this.exitVideoFullscreen();
+            } else if (this.isWebsiteFullscreen) {
+                // If in website fullscreen and landscape, switch to video fullscreen
+                console.log("Switching from website fullscreen to video fullscreen");
+                this.exitWebsiteFullscreen();
+                setTimeout(() => {
+                    if (finalAutoFullscreen) {
+                        this.enterVideoFullscreen();
+                    }
+                }, 100);
             }
         } else {
-            // PORTRAIT MODE: Website fullscreen if enabled
-            if (portraitFullscreen && !this.isWebsiteFullscreen) {
-                // Exit video fullscreen first
-                if (this.isVideoFullscreen) {
-                    this.exitVideoFullscreen();
-                }
+            // PORTRAIT MODE: Exit video fullscreen and optionally enter website fullscreen
+            if (this.isVideoFullscreen) {
+                console.log("Exiting video fullscreen (portrait mode)");
+                this.exitVideoFullscreen();
+            }
+            
+            // Check if we should enter website fullscreen
+            if (portraitFullscreen && !this.isWebsiteFullscreen && !document.fullscreenElement) {
+                console.log("Entering website fullscreen (portrait)");
                 this.enterWebsiteFullscreen();
             } else if (!portraitFullscreen && this.isWebsiteFullscreen) {
+                console.log("Exiting website fullscreen (portrait fullscreen disabled)");
                 this.exitWebsiteFullscreen();
             }
         }
@@ -81,25 +118,37 @@ class FullscreenManager {
             return;
         }
         
+        // Don't enter if already in fullscreen
+        if (document.fullscreenElement === this.videoContainer) {
+            console.log("Already in video fullscreen");
+            return;
+        }
+        
         console.log("Entering video fullscreen...");
         
         // Hide sidebar and header
         if (this.sidebar) this.sidebar.style.display = 'none';
         if (this.header) this.header.style.display = 'none';
         
+        // Add class for styling
+        document.body.classList.add('video-fullscreen-mode');
+        
         // Request fullscreen on video container
         const element = this.videoContainer;
         
-        if (element.requestFullscreen) {
-            element.requestFullscreen().catch(err => {
+        const fullscreenPromise = element.requestFullscreen ? element.requestFullscreen() :
+                                  element.webkitRequestFullscreen ? element.webkitRequestFullscreen() :
+                                  element.mozRequestFullScreen ? element.mozRequestFullScreen() :
+                                  element.msRequestFullscreen ? element.msRequestFullscreen() : null;
+        
+        if (fullscreenPromise) {
+            fullscreenPromise.catch(err => {
                 console.error("Video fullscreen failed:", err);
+                // Restore UI if fullscreen fails
+                if (this.sidebar) this.sidebar.style.display = '';
+                if (this.header) this.header.style.display = '';
+                document.body.classList.remove('video-fullscreen-mode');
             });
-        } else if (element.webkitRequestFullscreen) {
-            element.webkitRequestFullscreen();
-        } else if (element.mozRequestFullScreen) {
-            element.mozRequestFullScreen();
-        } else if (element.msRequestFullscreen) {
-            element.msRequestFullscreen();
         }
         
         this.isVideoFullscreen = true;
@@ -109,24 +158,30 @@ class FullscreenManager {
     exitVideoFullscreen() {
         console.log("Exiting video fullscreen...");
         
-        // Exit fullscreen
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-            document.mozCancelFullScreen();
-        } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
+        // Exit fullscreen if video container is fullscreen
+        if (document.fullscreenElement === this.videoContainer || 
+            document.webkitFullscreenElement === this.videoContainer ||
+            document.mozFullScreenElement === this.videoContainer) {
+            
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
         }
         
         // Restore sidebar and header
         if (this.sidebar) this.sidebar.style.display = '';
         if (this.header) this.header.style.display = '';
+        document.body.classList.remove('video-fullscreen-mode');
         
         this.isVideoFullscreen = false;
         
-        // Reapply website fullscreen if needed
+        // After exiting, check if we need to reapply any fullscreen
         setTimeout(() => {
             this.checkAndApplyFullscreen();
         }, 100);
@@ -135,19 +190,24 @@ class FullscreenManager {
     enterWebsiteFullscreen() {
         console.log("Entering website fullscreen...");
         
+        // Don't enter if already in fullscreen
+        if (document.fullscreenElement === document.documentElement) {
+            console.log("Already in website fullscreen");
+            return;
+        }
+        
         // Request fullscreen on document element
         const element = document.documentElement;
         
-        if (element.requestFullscreen) {
-            element.requestFullscreen().catch(err => {
+        const fullscreenPromise = element.requestFullscreen ? element.requestFullscreen() :
+                                  element.webkitRequestFullscreen ? element.webkitRequestFullscreen() :
+                                  element.mozRequestFullScreen ? element.mozRequestFullScreen() :
+                                  element.msRequestFullscreen ? element.msRequestFullscreen() : null;
+        
+        if (fullscreenPromise) {
+            fullscreenPromise.catch(err => {
                 console.error("Website fullscreen failed:", err);
             });
-        } else if (element.webkitRequestFullscreen) {
-            element.webkitRequestFullscreen();
-        } else if (element.mozRequestFullScreen) {
-            element.mozRequestFullScreen();
-        } else if (element.msRequestFullscreen) {
-            element.msRequestFullscreen();
         }
         
         this.isWebsiteFullscreen = true;
@@ -158,62 +218,66 @@ class FullscreenManager {
     exitWebsiteFullscreen() {
         console.log("Exiting website fullscreen...");
         
-        // Exit fullscreen
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-            document.mozCancelFullScreen();
-        } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
+        // Exit fullscreen if document is fullscreen
+        if (document.fullscreenElement === document.documentElement ||
+            document.webkitFullscreenElement === document.documentElement ||
+            document.mozFullScreenElement === document.documentElement) {
+            
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
         }
         
         this.isWebsiteFullscreen = false;
         document.body.classList.remove('website-fullscreen');
-        
-        // Reapply video fullscreen if needed
-        setTimeout(() => {
-            this.checkAndApplyFullscreen();
-        }, 100);
     }
     
     handleFullscreenChange() {
-        const isFullscreen = !!(
-            document.fullscreenElement ||
-            document.webkitFullscreenElement ||
-            document.mozFullScreenElement ||
-            document.msFullscreenElement
-        );
+        const fsElement = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
+        const isFullscreen = !!fsElement;
         
-        console.log("Fullscreen change event, isFullscreen:", isFullscreen);
+        console.log("Fullscreen change event, isFullscreen:", isFullscreen, "fsElement:", fsElement);
         
         if (!isFullscreen) {
-            // We exited fullscreen, reset states
+            // We exited fullscreen completely
+            const wasVideoFullscreen = this.isVideoFullscreen;
+            const wasWebsiteFullscreen = this.isWebsiteFullscreen;
+            
             this.isVideoFullscreen = false;
             this.isWebsiteFullscreen = false;
             document.body.classList.remove('website-fullscreen');
+            document.body.classList.remove('video-fullscreen-mode');
             
             // Restore UI
             if (this.sidebar) this.sidebar.style.display = '';
             if (this.header) this.header.style.display = '';
             
-            // Reapply correct mode
+            // If we exited due to orientation change, let orientation handler handle it
+            // Otherwise, reapply based on current orientation
             setTimeout(() => {
                 this.checkAndApplyFullscreen();
-            }, 200);
+            }, 100);
         } else {
-            // Check which element is fullscreen
-            const fsElement = document.fullscreenElement || document.webkitFullscreenElement;
-            
+            // We entered fullscreen on some element
             if (fsElement === this.videoContainer) {
                 this.isVideoFullscreen = true;
                 this.isWebsiteFullscreen = false;
                 console.log("Video is fullscreen");
+                
+                // Ensure UI is hidden when video is fullscreen
+                if (this.sidebar) this.sidebar.style.display = 'none';
+                if (this.header) this.header.style.display = 'none';
             } else if (fsElement === document.documentElement) {
                 this.isWebsiteFullscreen = true;
                 this.isVideoFullscreen = false;
                 console.log("Website is fullscreen");
+                document.body.classList.add('website-fullscreen');
             }
         }
     }
@@ -234,12 +298,36 @@ class FullscreenManager {
             } else {
                 this.enterWebsiteFullscreen();
             }
+        } else {
+            // Desktop - toggle website fullscreen
+            if (this.isWebsiteFullscreen) {
+                this.exitWebsiteFullscreen();
+            } else {
+                this.enterWebsiteFullscreen();
+            }
         }
     }
     
     destroy() {
         window.removeEventListener('orientationchange', this.orientationHandler);
         window.removeEventListener('resize', this.orientationHandler);
+        
+        if (this.resizeTimer) {
+            clearTimeout(this.resizeTimer);
+        }
+        
+        // Exit any active fullscreen
+        if (this.isVideoFullscreen || this.isWebsiteFullscreen) {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+        
+        // Restore UI
+        if (this.sidebar) this.sidebar.style.display = '';
+        if (this.header) this.header.style.display = '';
+        document.body.classList.remove('website-fullscreen');
+        document.body.classList.remove('video-fullscreen-mode');
     }
 }
 
