@@ -54,43 +54,75 @@
     transform: rotate(90deg);
 }
 
-/* Chat User Info Bar */
+/* Chat User Info Bar - Single Row Layout */
 .chat-user-info {
-    padding: 10px 1rem;
+    padding: 8px 1rem;
     background: #1a1e2c;
     border-bottom: 1px solid #2d3246;
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.8rem;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.75rem;
     color: #9aa2bf;
     flex-wrap: wrap;
 }
 
-.chat-user-info i {
-    color: #f97316;
-    font-size: 0.9rem;
+.user-info-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
 }
 
-.chat-user-info strong {
+.user-info-left i {
+    color: #f97316;
+    font-size: 0.85rem;
+}
+
+.user-info-left strong {
     color: #eef2ff;
+    font-weight: 600;
+}
+
+.device-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    color: #9aa2bf;
+    background: rgba(249, 115, 22, 0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+}
+
+.device-info i {
+    font-size: 0.7rem;
+    color: #f97316;
+}
+
+.user-info-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .admin-badge {
     background: linear-gradient(135deg, #f97316, #ea580c);
-    padding: 2px 8px;
+    padding: 4px 10px;
     border-radius: 20px;
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     color: white;
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    margin-left: 8px;
+    font-weight: 500;
 }
 
 .admin-badge i {
     color: white;
-    font-size: 0.6rem;
+    font-size: 0.65rem;
 }
 
 /* Logout Admin Button */
@@ -98,15 +130,15 @@
     background: rgba(249, 115, 22, 0.2);
     border: 1px solid rgba(249, 115, 22, 0.3);
     color: #f97316;
-    padding: 4px 10px;
+    padding: 4px 12px;
     border-radius: 20px;
     font-size: 0.7rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-left: auto;
     display: flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
 }
 
 .logout-admin-btn:hover {
@@ -721,8 +753,8 @@
 /* Mobile Responsive */
 @media (max-width: 640px) {
     .chat-modal .modal-content {
-        width: 80%;
-        height: 60vh;
+        width: 95%;
+        height: 85vh;
     }
     
     .chat-header {
@@ -733,14 +765,40 @@
         font-size: 1rem;
     }
     
+    /* Mobile Chat User Info - Single Row with smaller elements */
     .chat-user-info {
-        padding: 8px 12px;
+        padding: 6px 10px;
+        gap: 8px;
+    }
+    
+    .user-info-left {
         gap: 6px;
+    }
+    
+    .user-info-left i {
+        font-size: 0.75rem;
+    }
+    
+    .user-info-left strong {
         font-size: 0.7rem;
     }
     
-    .logout-admin-btn {
+    .device-info {
         padding: 3px 8px;
+        font-size: 0.6rem;
+    }
+    
+    .device-info i {
+        font-size: 0.6rem;
+    }
+    
+    .admin-badge {
+        padding: 3px 8px;
+        font-size: 0.6rem;
+    }
+    
+    .logout-admin-btn {
+        padding: 3px 10px;
         font-size: 0.65rem;
     }
     
@@ -791,7 +849,7 @@
     }
     
     .notifications-modal .modal-content {
-        width: 80%;
+        width: 95%;
         margin: 10px auto;
     }
     
