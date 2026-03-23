@@ -163,3 +163,37 @@
         font-size: 0.75rem;
     }
 }
+/* Video fullscreen mode */
+.video-fullscreen-mode .video-container {
+    background: #000;
+}
+
+.video-fullscreen-mode #videoPlayer {
+    object-fit: contain;
+}
+
+/* Ensure proper fullscreen behavior */
+:fullscreen .video-container,
+:-webkit-full-screen .video-container,
+:-moz-full-screen .video-container {
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+:fullscreen #videoPlayer,
+:-webkit-full-screen #videoPlayer,
+:-moz-full-screen #videoPlayer {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* Smooth transitions for fullscreen changes */
+.video-container,
+#videoPlayer,
+.channel-sidebar,
+.header {
+    transition: all 0.2s ease;
+}
