@@ -12,6 +12,7 @@ class SidebarComponent {
         this.dropdownOpen = false;
         this.searchOpen = false;
         this.scrollToTopBtn = null;
+        this.paddingObserver = null;
     }
     
     hideAddressBar() {
@@ -26,25 +27,45 @@ class SidebarComponent {
         }
     }
     
-    updateScrollToTopPosition() {
-        if (!this.scrollToTopBtn) return;
+    ensureChannelListPadding() {
+        if (!this.channelListDiv) return;
         
-        // Get safe area insets
+        // Add padding to bottom of channel list to ensure last item isn't behind button
+        const buttonHeight = this.scrollToTopBtn ? this.scrollToTopBtn.offsetHeight : 44;
         const safeAreaBottom = window.innerHeight - document.documentElement.clientHeight;
-        const safeAreaRight = window.innerWidth - document.documentElement.clientWidth;
+        const extraPadding = Math.max(20, safeAreaBottom + 10);
+        this.channelListDiv.style.paddingBottom = `${buttonHeight + extraPadding}px`;
+    }
+    
+    setupChannelListPadding() {
+        if (!this.channelListDiv) return;
         
-        // Apply safe area insets to button position
-        if (safeAreaBottom > 0) {
-            this.scrollToTopBtn.style.bottom = `${20 + safeAreaBottom}px`;
-        } else {
-            this.scrollToTopBtn.style.bottom = '';
+        // Initial padding
+        this.ensureChannelListPadding();
+        
+        // Observe when channel list content changes
+        if (this.paddingObserver) {
+            this.paddingObserver.disconnect();
         }
         
-        if (safeAreaRight > 0) {
-            this.scrollToTopBtn.style.right = `${20 + safeAreaRight}px`;
-        } else {
-            this.scrollToTopBtn.style.right = '';
-        }
+        this.paddingObserver = new MutationObserver(() => {
+            this.ensureChannelListPadding();
+        });
+        
+        this.paddingObserver.observe(this.channelListDiv, {
+            childList: true,
+            subtree: true,
+            attributes: true
+        });
+        
+        // Also update on window resize and orientation change
+        window.addEventListener('resize', () => {
+            setTimeout(() => this.ensureChannelListPadding(), 100);
+        });
+        
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.ensureChannelListPadding(), 100);
+        });
     }
     
     render() {
@@ -90,6 +111,7 @@ class SidebarComponent {
         
         this.attachEvents();
         this.createScrollToTopButton();
+        this.setupChannelListPadding();
     }
     
     createScrollToTopButton() {
@@ -111,7 +133,8 @@ class SidebarComponent {
         }
         
         // Add click event
-        this.scrollToTopBtn.addEventListener('click', () => {
+        this.scrollToTopBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             this.hideAddressBar();
             this.scrollToTop();
         });
@@ -125,25 +148,20 @@ class SidebarComponent {
         }
         
         // Update position on orientation change and resize
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => this.updateScrollToTopPosition(), 100);
-        });
+        const updatePosition = () => {
+            setTimeout(() => {
+                if (this.scrollToTopBtn && this.scrollToTopBtn.classList.contains('show')) {
+                    this.ensureChannelListPadding();
+                }
+            }, 50);
+        };
         
-        window.addEventListener('resize', () => {
-            setTimeout(() => this.updateScrollToTopPosition(), 100);
-        });
+        window.addEventListener('orientationchange', updatePosition);
+        window.addEventListener('resize', updatePosition);
         
         // Also update on fullscreen changes
-        document.addEventListener('fullscreenchange', () => {
-            setTimeout(() => this.updateScrollToTopPosition(), 100);
-        });
-        
-        document.addEventListener('webkitfullscreenchange', () => {
-            setTimeout(() => this.updateScrollToTopPosition(), 100);
-        });
-        
-        // Initial position update
-        setTimeout(() => this.updateScrollToTopPosition(), 100);
+        document.addEventListener('fullscreenchange', updatePosition);
+        document.addEventListener('webkitfullscreenchange', updatePosition);
         
         // Initial check
         setTimeout(() => this.toggleScrollToTopButton(), 100);
@@ -154,11 +172,13 @@ class SidebarComponent {
         
         // Check if channel list is scrolled down more than 100px
         const scrollTop = this.channelListDiv.scrollTop;
+        const isScrolled = scrollTop > 100;
         
-        if (scrollTop > 100) {
+        if (isScrolled) {
             this.scrollToTopBtn.classList.add('show');
-            // Update position when showing
-            this.updateScrollToTopPosition();
+            // Ensure button is on top
+            this.scrollToTopBtn.style.zIndex = '1000';
+            this.ensureChannelListPadding();
         } else {
             this.scrollToTopBtn.classList.remove('show');
         }
@@ -174,12 +194,14 @@ class SidebarComponent {
         });
         
         // Optional: Add a small visual feedback
-        this.scrollToTopBtn.style.transform = 'scale(0.9)';
-        setTimeout(() => {
-            if (this.scrollToTopBtn) {
-                this.scrollToTopBtn.style.transform = '';
-            }
-        }, 200);
+        if (this.scrollToTopBtn) {
+            this.scrollToTopBtn.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                if (this.scrollToTopBtn) {
+                    this.scrollToTopBtn.style.transform = '';
+                }
+            }, 200);
+        }
         
         // Also scroll sidebar if needed
         if (this.container && this.container.scrollTop > 0) {
@@ -584,8 +606,11 @@ class SidebarComponent {
             this.channelListDiv.scrollTop = 0;
         }
         
-        // Reset scroll-to-top button visibility
-        setTimeout(() => this.toggleScrollToTopButton(), 50);
+        // Reset scroll-to-top button visibility and update padding
+        setTimeout(() => {
+            this.toggleScrollToTopButton();
+            this.ensureChannelListPadding();
+        }, 50);
     }
     
     updateActiveChannel(channelId) {
