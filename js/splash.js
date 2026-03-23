@@ -3,7 +3,7 @@
 class SplashScreen {
     constructor(options = {}) {
         this.duration = options.duration || 3000; // 3 seconds default
-        this.logoPath = options.logoPath || 'images/juztlogosplash.webp';
+        this.logoPath = options.logoPath || 'juztlogosplash.webp';
         this.onComplete = options.onComplete || null;
         this.splashElement = null;
         this.isVisible = true;
@@ -143,7 +143,7 @@ function initSplashScreen(options = {}) {
     
     const defaultOptions = {
         duration: 3000, // 3 seconds default
-        logoPath: 'images/juztlogosplash.webp',
+        logoPath: 'juztlogosplash.webp',
         onComplete: () => {
             console.log('Splash screen completed');
         }
