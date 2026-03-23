@@ -11,10 +11,29 @@ body {
     overflow: hidden;
 }
 
+/* Additional styles for hiding address bar */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+}
+
 .app-container {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Ensure video container doesn't cause overflow */
+.video-container {
+    max-width: 100%;
     overflow: hidden;
 }
 
@@ -119,6 +138,7 @@ body {
         gap: 0;
     }
 }
+
 /* Website Fullscreen Styles */
 .website-fullscreen {
     overflow: hidden;
@@ -146,14 +166,20 @@ body {
 .video-container {
     transition: all 0.3s ease;
 }
-/* Website Fullscreen Styles */
-.website-fullscreen {
+
+/* Improve fullscreen experience */
+:fullscreen .app-container,
+:-webkit-full-screen .app-container,
+:-moz-full-screen .app-container {
     overflow: hidden;
+    height: 100%;
 }
 
-.website-fullscreen .app-container {
-    height: 100vh;
-    overflow: hidden;
+/* Hide scrollbar on iOS for cleaner look */
+@supports (-webkit-touch-callout: none) {
+    .app-container {
+        height: -webkit-fill-available;
+    }
 }
 
 /* Ensure proper styling in fullscreen */
@@ -175,32 +201,13 @@ body {
 :-moz-full-screen .channel-sidebar {
     display: flex !important;
 }
-/* Hide browser chrome on interaction */
-html {
+
+/* Additional scroll behavior for smooth address bar hiding */
+.app-container {
     scroll-behavior: smooth;
 }
 
-/* Ensure the app takes full height for fullscreen mode */
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-}
-
-/* For fullscreen mode to hide address bar */
-:fullscreen {
-    overflow: auto;
-}
-
-:-webkit-full-screen {
-    overflow: auto;
-}
-
-:-moz-full-screen {
-    overflow: auto;
-}
-
-/* Prevent pull-to-refresh and overscroll */
+/* Prevent pull-to-refresh on iOS */
 body {
     overscroll-behavior: none;
     position: fixed;
@@ -209,10 +216,14 @@ body {
     overflow: hidden;
 }
 
-.app-container {
-    overflow-y: auto;
-    height: 100%;
-    -webkit-overflow-scrolling: touch;
+/* Ensure video container maintains aspect ratio */
+.video-container {
+    position: relative;
+    background: #000;
+    border-radius: 28px;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.6);
 }
 
 /* Hide scrollbar on mobile for cleaner look */
@@ -224,4 +235,9 @@ body {
     .app-container {
         scrollbar-width: none;
     }
+}
+
+/* Ensure content doesn't shift when address bar hides */
+.main-layout {
+    transition: height 0.2s ease;
 }
