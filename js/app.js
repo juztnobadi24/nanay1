@@ -1,3 +1,5 @@
+// ======================== APP.JS - COMPLETE UPDATED VERSION ========================
+
 // ======================== MAIN APPLICATION ========================
 
 let headerComponent;
@@ -108,16 +110,13 @@ async function onChannelSelect(channel) {
         
         if (success) {
             console.log("Channel playing successfully:", channel.name);
-            // No longer sending "Now Playing" notification
         } else {
             console.error("Failed to play channel:", channel.name);
             showError(`Failed to play ${channel.name}. Check stream URL.`);
-            // No longer sending "Playback Error" notification
         }
     } catch (error) {
         console.error("Error playing channel:", error);
         showError(`Error playing ${channel.name}: ${error.message}`);
-        // No longer sending error notification
     } finally {
         // Reset switching flag after a delay
         setTimeout(() => {
@@ -135,7 +134,6 @@ function initFirebaseFeatures() {
             try {
                 initFirebaseChat();
                 console.log("Firebase Chat initialized successfully");
-                // No longer sending welcome notifications
             } catch (error) {
                 console.error("Failed to initialize Firebase Chat:", error);
             }
@@ -197,6 +195,24 @@ async function initApp() {
     
     // Initialize Firebase features (chat & notifications)
     initFirebaseFeatures();
+    
+    // Force check orientation after a short delay to ensure layout is ready
+    setTimeout(() => {
+        if (fullscreenManager) {
+            fullscreenManager.checkAndApplyFullscreen();
+        }
+    }, 1000);
+    
+    // Also listen for video play to trigger fullscreen check
+    if (playerComponent && playerComponent.videoPlayer) {
+        playerComponent.videoPlayer.addEventListener('play', () => {
+            setTimeout(() => {
+                if (fullscreenManager) {
+                    fullscreenManager.checkAndApplyFullscreen();
+                }
+            }, 200);
+        });
+    }
     
     // Log app initialization
     console.log("JUZT IPTV App Initialized");
