@@ -10,6 +10,7 @@ class FullscreenManager {
         this.orientationHandler = this.handleOrientationChange.bind(this);
         this.resizeTimer = null;
         this.lastOrientation = null;
+        this.isEnteringFullscreen = false;
     }
     
     init(videoContainer, videoPlayer, sidebar, header) {
@@ -30,24 +31,10 @@ class FullscreenManager {
         document.addEventListener('webkitfullscreenchange', this.handleFullscreenChange.bind(this));
         document.addEventListener('mozfullscreenchange', this.handleFullscreenChange.bind(this));
         
-        // Listen for video play events to handle auto-fullscreen
-        if (this.videoPlayer) {
-            this.videoPlayer.addEventListener('play', () => {
-                console.log("Video playing, checking fullscreen...");
-                setTimeout(() => this.checkAndApplyFullscreen(), 100);
-            });
-            
-            // Also check when video loads
-            this.videoPlayer.addEventListener('loadeddata', () => {
-                console.log("Video loaded, checking fullscreen...");
-                setTimeout(() => this.checkAndApplyFullscreen(), 100);
-            });
-        }
-        
-        // Check initial orientation after a short delay
+        // Check initial orientation
         setTimeout(() => this.checkAndApplyFullscreen(), 500);
         
-        console.log("Fullscreen Manager initialized");
+        console.log("Fullscreen Manager initialized - Auto fullscreen on landscape");
     }
     
     handleOrientationChange() {
@@ -58,17 +45,17 @@ class FullscreenManager {
             clearTimeout(this.resizeTimer);
         }
         
-        // Wait for the orientation change to complete and layout to stabilize
+        // Wait for orientation change to complete
         this.resizeTimer = setTimeout(() => {
             this.checkAndApplyFullscreen();
             this.resizeTimer = null;
-        }, 200);
+        }, 150);
     }
     
     checkAndApplyFullscreen() {
         const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         
-        // For desktop, don't auto-fullscreen
+        // For desktop, do nothing
         if (!isMobile) {
             console.log("Desktop device - no auto-fullscreen");
             return;
@@ -83,49 +70,21 @@ class FullscreenManager {
             this.lastOrientation = currentOrientation;
         }
         
-        // Get user settings - auto fullscreen for landscape only
-        const autoFullscreen = localStorage.getItem('autoFullscreen');
-        // Default to true for mobile if not set
-        const finalAutoFullscreen = autoFullscreen === null ? true : autoFullscreen === 'true';
-        
-        console.log(`Orientation: ${isLandscape ? 'LANDSCAPE' : 'PORTRAIT'}, AutoFullscreen: ${finalAutoFullscreen}, Currently in fullscreen: ${!!document.fullscreenElement}`);
-        
         if (isLandscape) {
-            // LANDSCAPE MODE: Go to video fullscreen if enabled
-            if (finalAutoFullscreen) {
-                // Check if we're already in fullscreen with video
-                const isVideoFullscreenNow = document.fullscreenElement === this.videoContainer;
-                
-                if (!isVideoFullscreenNow) {
-                    console.log("LANDSCAPE: Entering video fullscreen...");
-                    this.enterVideoFullscreen();
-                } else {
-                    console.log("LANDSCAPE: Already in video fullscreen");
-                }
-                
-                // If we're in any other fullscreen mode, exit it first
-                if (document.fullscreenElement && document.fullscreenElement !== this.videoContainer) {
-                    console.log("LANDSCAPE: Exiting other fullscreen mode");
-                    this.exitFullscreen();
-                    // Re-enter video fullscreen after exit
-                    setTimeout(() => {
-                        if (finalAutoFullscreen && document.fullscreenElement !== this.videoContainer) {
-                            this.enterVideoFullscreen();
-                        }
-                    }, 100);
-                }
+            // LANDSCAPE MODE: Enter video fullscreen
+            const isVideoFullscreenNow = document.fullscreenElement === this.videoContainer;
+            
+            if (!isVideoFullscreenNow && !this.isEnteringFullscreen) {
+                console.log("LANDSCAPE: Entering video fullscreen...");
+                this.enterVideoFullscreen();
             } else {
-                // Auto-fullscreen disabled, make sure we're not in fullscreen
-                if (document.fullscreenElement) {
-                    console.log("LANDSCAPE: Auto-fullscreen disabled, exiting fullscreen");
-                    this.exitFullscreen();
-                }
+                console.log("LANDSCAPE: Already in video fullscreen");
             }
         } else {
-            // PORTRAIT MODE: Exit any fullscreen immediately
-            if (document.fullscreenElement) {
-                console.log("PORTRAIT: Exiting fullscreen");
-                this.exitFullscreen();
+            // PORTRAIT MODE: Exit video fullscreen
+            if (document.fullscreenElement === this.videoContainer || this.isVideoFullscreen) {
+                console.log("PORTRAIT: Exiting video fullscreen...");
+                this.exitVideoFullscreen();
             }
         }
     }
@@ -143,9 +102,17 @@ class FullscreenManager {
             return;
         }
         
+        // Prevent multiple simultaneous entries
+        if (this.isEnteringFullscreen) {
+            console.log("Already entering fullscreen, skipping...");
+            return;
+        }
+        
+        this.isEnteringFullscreen = true;
+        
         console.log("Entering video fullscreen...");
         
-        // Hide sidebar and header immediately for better UX
+        // Hide sidebar and header
         if (this.sidebar) this.sidebar.style.display = 'none';
         if (this.header) this.header.style.display = 'none';
         
@@ -165,6 +132,7 @@ class FullscreenManager {
                 fullscreenPromise.then(() => {
                     console.log("Video fullscreen entered successfully");
                     this.isVideoFullscreen = true;
+                    this.isEnteringFullscreen = false;
                 }).catch(err => {
                     console.error("Video fullscreen failed:", err);
                     // Restore UI if fullscreen fails
@@ -172,10 +140,12 @@ class FullscreenManager {
                     if (this.header) this.header.style.display = '';
                     document.body.classList.remove('video-fullscreen-mode');
                     this.isVideoFullscreen = false;
+                    this.isEnteringFullscreen = false;
                 });
             } else {
                 // Fallback for browsers without Promise support
                 this.isVideoFullscreen = true;
+                this.isEnteringFullscreen = false;
             }
         };
         
@@ -185,6 +155,9 @@ class FullscreenManager {
     
     exitVideoFullscreen() {
         console.log("Exiting video fullscreen...");
+        
+        // Reset entering flag
+        this.isEnteringFullscreen = false;
         
         // Exit fullscreen if video container is fullscreen
         if (document.fullscreenElement === this.videoContainer || 
@@ -212,62 +185,30 @@ class FullscreenManager {
         document.body.classList.remove('video-fullscreen-mode');
         
         this.isVideoFullscreen = false;
-        
-        // After exiting, check if we need to apply portrait fullscreen
-        setTimeout(() => {
-            const isLandscape = window.innerWidth > window.innerHeight;
-            if (!isLandscape) {
-                this.checkAndApplyFullscreen();
-            }
-        }, 150);
-    }
-    
-    exitFullscreen() {
-        console.log("Exiting fullscreen...");
-        
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-            document.mozCancelFullScreen();
-        } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
-        }
-        
-        this.isVideoFullscreen = false;
-        
-        // Restore UI
-        if (this.sidebar) this.sidebar.style.display = '';
-        if (this.header) this.header.style.display = '';
-        document.body.classList.remove('video-fullscreen-mode');
-        document.body.classList.remove('website-fullscreen');
     }
     
     handleFullscreenChange() {
         const fsElement = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement;
         const isFullscreen = !!fsElement;
         
-        console.log("Fullscreen change event, isFullscreen:", isFullscreen, "fsElement:", fsElement ? fsElement.tagName : 'none');
+        console.log("Fullscreen change event, isFullscreen:", isFullscreen);
         
         if (!isFullscreen) {
-            // We exited fullscreen completely
-            console.log("Exited fullscreen completely");
-            
+            // We exited fullscreen
+            console.log("Exited fullscreen");
             this.isVideoFullscreen = false;
-            document.body.classList.remove('video-fullscreen-mode');
-            document.body.classList.remove('website-fullscreen');
+            this.isEnteringFullscreen = false;
             
             // Restore UI
             if (this.sidebar) this.sidebar.style.display = '';
             if (this.header) this.header.style.display = '';
+            document.body.classList.remove('video-fullscreen-mode');
             
-            // Check if we need to re-enter based on current orientation
+            // Check if we're in landscape after exit (should re-enter)
             setTimeout(() => {
                 const isLandscape = window.innerWidth > window.innerHeight;
                 if (isLandscape) {
-                    // If we're in landscape and exited, re-enter video fullscreen
-                    console.log("Re-checking fullscreen after exit...");
+                    console.log("Still in landscape after exit, re-entering fullscreen");
                     this.checkAndApplyFullscreen();
                 }
             }, 100);
@@ -284,31 +225,6 @@ class FullscreenManager {
         }
     }
     
-    toggleFullscreen() {
-        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        
-        if (isMobile) {
-            if (this.isVideoFullscreen) {
-                this.exitVideoFullscreen();
-            } else {
-                this.enterVideoFullscreen();
-            }
-        } else {
-            // Desktop - toggle website fullscreen (optional)
-            if (document.fullscreenElement) {
-                this.exitFullscreen();
-            } else {
-                // For desktop, just do website fullscreen
-                const element = document.documentElement;
-                if (element.requestFullscreen) {
-                    element.requestFullscreen();
-                } else if (element.webkitRequestFullscreen) {
-                    element.webkitRequestFullscreen();
-                }
-            }
-        }
-    }
-    
     destroy() {
         window.removeEventListener('orientationchange', this.orientationHandler);
         window.removeEventListener('resize', this.orientationHandler);
@@ -319,14 +235,13 @@ class FullscreenManager {
         
         // Exit any active fullscreen
         if (this.isVideoFullscreen) {
-            this.exitFullscreen();
+            this.exitVideoFullscreen();
         }
         
         // Restore UI
         if (this.sidebar) this.sidebar.style.display = '';
         if (this.header) this.header.style.display = '';
         document.body.classList.remove('video-fullscreen-mode');
-        document.body.classList.remove('website-fullscreen');
     }
 }
 
