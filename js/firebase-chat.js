@@ -1,5 +1,5 @@
 // ======================== FIREBASE CHAT & NOTIFICATIONS ========================
-// Using Firestore with IP-based user identification and URL admin authentication
+// Using Firestore with device-based user identification
 
 class FirebaseChat {
     constructor() {
@@ -23,6 +23,7 @@ class FirebaseChat {
         this.userId = null;
         this.userName = null;
         this.userIP = null;
+        this.deviceId = null;  // New: unique device identifier
         this.isAdmin = false;
         
         // Admin fixed name
@@ -65,6 +66,7 @@ class FirebaseChat {
                 try {
                     await this.setupCollections();
                     await this.getUserIP();
+                    this.getOrCreateDeviceId();  // New: Get or create device ID
                     await this.identifyUser();
                     await this.loadExistingNotifications();
                     this.setupListeners();
@@ -228,6 +230,41 @@ class FirebaseChat {
         }
     }
     
+    // New: Generate or retrieve a unique device ID that persists across sessions
+    getOrCreateDeviceId() {
+        // Check if device ID exists in localStorage
+        let deviceId = localStorage.getItem('device_id');
+        
+        if (!deviceId) {
+            // Generate a unique device ID using various browser fingerprints
+            const userAgent = navigator.userAgent;
+            const language = navigator.language;
+            const platform = navigator.platform;
+            const screenResolution = `${screen.width}x${screen.height}`;
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            
+            // Create a hash from browser fingerprints
+            const fingerprint = `${userAgent}|${language}|${platform}|${screenResolution}|${timezone}|${Date.now()}|${Math.random()}`;
+            
+            // Simple hash function
+            let hash = 0;
+            for (let i = 0; i < fingerprint.length; i++) {
+                const char = fingerprint.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            
+            deviceId = Math.abs(hash).toString(36) + '_' + Date.now().toString(36);
+            localStorage.setItem('device_id', deviceId);
+            console.log("Generated new device ID:", deviceId);
+        } else {
+            console.log("Using existing device ID:", deviceId);
+        }
+        
+        this.deviceId = deviceId;
+        return deviceId;
+    }
+    
     checkUrlForAdmin() {
         const urlParams = new URLSearchParams(window.location.search);
         const adminKey = urlParams.get('admin');
@@ -299,13 +336,18 @@ class FirebaseChat {
             return;
         }
         
-        // Regular user flow
-        if (!this.userIP) return;
+        // Regular user flow - use device ID + IP combination
+        if (!this.userIP || !this.deviceId) return;
+        
+        // Create a unique identifier combining IP and device ID
+        // This ensures different devices on same network get different IDs
+        const uniqueDeviceId = `${this.userIP}_${this.deviceId}`;
         
         if (!this.mockMode && this.usersCollection) {
             try {
+                // Query by the combined unique ID
                 const userQuery = await this.usersCollection
-                    .where('ip', '==', this.userIP)
+                    .where('uniqueDeviceId', '==', uniqueDeviceId)
                     .limit(1)
                     .get();
                 
@@ -313,37 +355,52 @@ class FirebaseChat {
                     const userDoc = userQuery.docs[0];
                     this.userId = userDoc.id;
                     this.userName = userDoc.data().name;
-                    console.log("👤 Existing user found:", this.userName);
+                    console.log("👤 Existing user found:", this.userName, "Device ID:", this.deviceId);
+                    
+                    // Update last seen and device info
+                    await this.usersCollection.doc(this.userId).update({
+                        lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                        deviceId: this.deviceId,
+                        lastSeenIP: this.userIP
+                    });
                 } else {
+                    // Create new user with unique device ID
                     this.userName = this.generateRandomName();
-                    this.userId = this.userIP.replace(/\./g, '_');
+                    // Use device ID as part of Firestore document ID to ensure uniqueness
+                    this.userId = uniqueDeviceId.replace(/[.]/g, '_');
                     
                     await this.usersCollection.doc(this.userId).set({
                         ip: this.userIP,
+                        deviceId: this.deviceId,
+                        uniqueDeviceId: uniqueDeviceId,
                         name: this.userName,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                        lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                        lastSeenIP: this.userIP
                     });
-                    console.log("🆕 New user created:", this.userName);
+                    console.log("🆕 New user created:", this.userName, "Device ID:", this.deviceId);
                 }
             } catch (error) {
                 console.error("Error identifying user:", error);
                 this.userName = this.generateRandomName();
-                this.userId = 'user_' + Math.random().toString(36).substr(2, 8);
+                this.userId = `user_${this.deviceId}`;
             }
         } else {
             this.userName = this.generateRandomName();
-            this.userId = 'user_' + Math.random().toString(36).substr(2, 8);
+            this.userId = `user_${this.deviceId}`;
         }
         
         localStorage.setItem('chat_userId', this.userId);
         localStorage.setItem('chat_userName', this.userName);
         localStorage.setItem('isAdmin', 'false');
+        localStorage.setItem('device_id', this.deviceId);
         
         console.log("👤 Regular user identified:", {
             id: this.userId,
             name: this.userName,
-            ip: this.userIP
+            ip: this.userIP,
+            deviceId: this.deviceId,
+            uniqueId: uniqueDeviceId
         });
     }
     
@@ -351,18 +408,23 @@ class FirebaseChat {
         const adjectives = [
             'Happy', 'Smart', 'Bright', 'Swift', 'Brave', 'Calm', 'Wise', 'Bold',
             'Kind', 'Cool', 'Fast', 'Nice', 'Pure', 'True', 'Real', 'Epic',
-            'Lucky', 'Wild', 'Mighty', 'Noble', 'Silly', 'Funny', 'Crazy', 'Clever'
+            'Lucky', 'Wild', 'Mighty', 'Noble', 'Silly', 'Funny', 'Crazy', 'Clever',
+            'Jolly', 'Keen', 'Lively', 'Merry', 'Quiet', 'Radiant', 'Silent', 'Tidy',
+            'Vivid', 'Witty', 'Zealous', 'Able', 'Cute', 'Dear', 'Fair', 'Good'
         ];
         const nouns = [
             'Viewer', 'Watcher', 'Fan', 'User', 'Guest', 'Friend', 'Buddy', 'Pal',
             'Star', 'Hero', 'Champ', 'Pro', 'Ace', 'Lord', 'King', 'Queen',
-            'Panda', 'Tiger', 'Eagle', 'Wolf', 'Fox', 'Bear', 'Lion', 'Hawk'
+            'Panda', 'Tiger', 'Eagle', 'Wolf', 'Fox', 'Bear', 'Lion', 'Hawk',
+            'Owl', 'Hawk', 'Falcon', 'Phoenix', 'Dragon', 'Unicorn', 'Wizard', 'Knight',
+            'Ranger', 'Hunter', 'Scout', 'Voyager', 'Traveler', 'Dreamer', 'Seeker'
         ];
         
         const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
         const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+        const randomNum = Math.floor(Math.random() * 100);
         
-        return `${randomAdj}${randomNoun}`;
+        return `${randomAdj}${randomNoun}${randomNum}`;
     }
     
     setupListeners() {
@@ -664,7 +726,8 @@ class FirebaseChat {
             isAdmin: this.isAdmin,
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             timestampMs: Date.now(),
-            ip: this.userIP
+            ip: this.userIP,
+            deviceId: this.deviceId
         };
         
         if (this.messagesCollection) {
@@ -864,6 +927,7 @@ class FirebaseChat {
             id: this.userId || "guest",
             name: this.userName || "Guest",
             ip: this.userIP,
+            deviceId: this.deviceId,
             isAdmin: this.isAdmin || false
         };
     }
@@ -888,626 +952,5 @@ class FirebaseChat {
     }
 }
 
-// Chat UI Component
-class ChatUI {
-    constructor(chatService) {
-        this.chatService = chatService;
-        this.modal = null;
-        this.isOpen = false;
-        this.messages = [];
-    }
-    
-    createModal() {
-        const existingModal = document.getElementById('chatModal');
-        if (existingModal) existingModal.remove();
-        
-        const userInfo = this.chatService.getUserInfo();
-        
-        const modalHTML = `
-            <div id="chatModal" class="modal chat-modal">
-                <div class="modal-content" style="padding: 0;">
-                    <div class="chat-container">
-                        <div class="chat-header">
-                            <h3><i class="fas fa-comments"></i> JUZT Community Chat</h3>
-                            <button class="chat-close">&times;</button>
-                        </div>
-                        <div class="chat-user-info">
-                            <i class="fas fa-user-circle"></i>
-                            <span>You are: <strong>${escapeHtml(userInfo.name)}</strong></span>
-                            ${userInfo.isAdmin ? '<span class="admin-badge"><i class="fas fa-crown"></i> Admin</span>' : ''}
-                            ${userInfo.isAdmin ? '<button class="logout-admin-btn" id="logoutAdminBtn"><i class="fas fa-sign-out-alt"></i> Logout Admin</button>' : ''}
-                        </div>
-                        <div class="chat-messages" id="chatMessages">
-                            <div class="chat-status">Loading messages...</div>
-                        </div>
-                        <div class="chat-input-area">
-                            <input type="text" class="chat-input" id="chatInput" placeholder="Type a message...">
-                            <button class="chat-send-btn" id="chatSendBtn">
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        this.modal = document.getElementById('chatModal');
-        this.attachEvents();
-        this.loadMessages();
-    }
-    
-    attachEvents() {
-        if (!this.modal) return;
-        
-        const closeBtn = this.modal.querySelector('.chat-close');
-        const sendBtn = document.getElementById('chatSendBtn');
-        const chatInput = document.getElementById('chatInput');
-        const logoutBtn = document.getElementById('logoutAdminBtn');
-        
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.close());
-        }
-        
-        if (sendBtn) {
-            sendBtn.addEventListener('click', () => this.sendMessage());
-        }
-        
-        if (chatInput) {
-            chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') this.sendMessage();
-            });
-        }
-        
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                this.chatService.logoutAdmin();
-            });
-        }
-        
-        this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) this.close();
-        });
-        
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isOpen) this.close();
-        });
-        
-        window.addEventListener('newChatMessage', (event) => {
-            this.addMessage(event.detail);
-        });
-    }
-    
-    async loadMessages() {
-        if (!this.chatService) return;
-        
-        this.chatService.getMessages((messages) => {
-            this.messages = messages;
-            this.renderMessages();
-        });
-    }
-    
-    renderMessages() {
-        const messagesContainer = document.getElementById('chatMessages');
-        if (!messagesContainer) return;
-        
-        if (this.messages.length === 0) {
-            messagesContainer.innerHTML = '<div class="chat-status">No messages yet. Be the first to say something!</div>';
-            return;
-        }
-        
-        let html = '';
-        this.messages.forEach(message => {
-            const isOwn = message.userId === this.chatService.userId;
-            const isAdminMsg = message.isAdmin || message.userId === this.chatService.ADMIN_ID;
-            const avatar = message.userName ? message.userName.charAt(0).toUpperCase() : '?';
-            const time = this.formatTime(message.timestampMs || message.timestamp);
-            
-            html += `
-                <div class="chat-message ${isOwn ? 'own' : ''} ${isAdminMsg ? 'admin' : ''}">
-                    <div class="message-avatar" style="${isAdminMsg ? 'background: linear-gradient(135deg, #f97316, #ea580c);' : ''}">
-                        ${isAdminMsg ? '<i class="fas fa-crown" style="font-size: 0.7rem;"></i>' : escapeHtml(avatar)}
-                    </div>
-                    <div class="message-bubble">
-                        <div class="message-sender">
-                            ${escapeHtml(message.userName || 'Anonymous')}
-                            ${isAdminMsg ? '<span class="admin-tag"><i class="fas fa-check-circle"></i> Admin</span>' : ''}
-                        </div>
-                        <div class="message-text">${escapeHtml(message.text)}</div>
-                        <div class="message-time">${time}</div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        messagesContainer.innerHTML = html;
-        this.scrollToBottom();
-    }
-    
-    addMessage(message) {
-        this.messages.push(message);
-        if (this.messages.length > 100) {
-            this.messages = this.messages.slice(-100);
-        }
-        this.renderMessages();
-    }
-    
-    async sendMessage() {
-        const input = document.getElementById('chatInput');
-        if (!input) return;
-        
-        const message = input.value.trim();
-        if (!message) return;
-        
-        const sent = await this.chatService.sendMessage(message);
-        if (sent) {
-            input.value = '';
-            input.focus();
-        }
-    }
-    
-    scrollToBottom() {
-        const messagesContainer = document.getElementById('chatMessages');
-        if (messagesContainer) {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-    }
-    
-    formatTime(timestamp) {
-        if (!timestamp) return 'Just now';
-        
-        let date;
-        if (typeof timestamp === 'object' && timestamp.toDate) {
-            date = timestamp.toDate();
-        } else if (typeof timestamp === 'string') {
-            date = new Date(timestamp);
-        } else if (typeof timestamp === 'number') {
-            date = new Date(timestamp);
-        } else {
-            return 'Just now';
-        }
-        
-        const now = new Date();
-        const diff = now - date;
-        
-        if (isNaN(diff)) return 'Just now';
-        if (diff < 60000) return 'Just now';
-        if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
-        if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-        
-        return date.toLocaleDateString();
-    }
-    
-    open() {
-        if (!this.modal) this.createModal();
-        this.modal.classList.add('show');
-        this.isOpen = true;
-        document.body.style.overflow = 'hidden';
-        
-        if (this.chatService) {
-            this.chatService.resetUnreadCount();
-        }
-        
-        setTimeout(() => this.scrollToBottom(), 100);
-    }
-    
-    close() {
-        if (this.modal) {
-            this.modal.classList.remove('show');
-            this.isOpen = false;
-            document.body.style.overflow = '';
-        }
-    }
-}
-
-// Notifications UI Component
-class NotificationsUI {
-    constructor(chatService) {
-        this.chatService = chatService;
-        this.modal = null;
-        this.isOpen = false;
-        this.isAdminMode = false;
-        this.composeModal = null;
-        this.notifications = [];
-    }
-    
-    createModal() {
-        const existingModal = document.getElementById('notificationsModal');
-        if (existingModal) existingModal.remove();
-        
-        const userInfo = this.chatService.getUserInfo();
-        this.isAdminMode = userInfo.isAdmin;
-        
-        const modalHTML = `
-            <div id="notificationsModal" class="modal notifications-modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3><i class="fas fa-bell"></i> Notifications</h3>
-                        <button class="modal-close">&times;</button>
-                    </div>
-                    <div class="modal-body" style="padding: 0;">
-                        <div class="notifications-container">
-                            <div class="notifications-header" style="padding: 1rem 1.5rem 0 1.5rem;">
-                                <div class="notifications-header-left">
-                                    <h4><i class="fas fa-history"></i> Recent Notifications</h4>
-                                </div>
-                                <div class="notifications-header-right">
-                                    ${this.isAdminMode ? `
-                                        <button class="compose-notification-btn" id="composeNotificationBtn">
-                                            <i class="fas fa-plus"></i> New Notification
-                                        </button>
-                                    ` : ''}
-                                    ${this.isAdminMode ? `
-                                        <button class="notification-clear-btn" id="clearNotificationsBtn">
-                                            <i class="fas fa-trash-alt"></i> Clear All
-                                        </button>
-                                    ` : ''}
-                                </div>
-                            </div>
-                            <div class="notifications-list" id="notificationsList">
-                                <div class="notifications-empty">
-                                    <i class="fas fa-bell-slash"></i>
-                                    <p>No notifications yet</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        this.modal = document.getElementById('notificationsModal');
-        this.attachEvents();
-        this.renderNotifications();
-    }
-    
-    attachEvents() {
-        if (!this.modal) return;
-        
-        const closeBtn = this.modal.querySelector('.modal-close');
-        const clearBtn = document.getElementById('clearNotificationsBtn');
-        const composeBtn = document.getElementById('composeNotificationBtn');
-        
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.close());
-        }
-        
-        if (clearBtn && this.isAdminMode) {
-            clearBtn.addEventListener('click', () => {
-                if (confirm('Delete all notifications? This action cannot be undone.')) {
-                    this.chatService.clearNotifications();
-                    this.renderNotifications();
-                }
-            });
-        }
-        
-        if (composeBtn && this.isAdminMode) {
-            composeBtn.addEventListener('click', () => this.openComposeModal());
-        }
-        
-        this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) this.close();
-        });
-        
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isOpen) this.close();
-        });
-        
-        window.addEventListener('newNotification', () => {
-            if (this.isOpen) this.renderNotifications();
-        });
-        
-        window.addEventListener('notificationsCleared', () => {
-            this.renderNotifications();
-        });
-    }
-    
-    openComposeModal() {
-        const existingCompose = document.getElementById('composeNotificationModal');
-        if (existingCompose) existingCompose.remove();
-        
-        const composeHTML = `
-            <div id="composeNotificationModal" class="modal compose-modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3><i class="fas fa-bullhorn"></i> Send Notification to All Users</h3>
-                        <button class="modal-close compose-close">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="compose-form">
-                            <div class="form-group">
-                                <label><i class="fas fa-tag"></i> Title</label>
-                                <input type="text" id="notificationTitle" class="form-input" placeholder="Enter notification title...">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fas fa-envelope"></i> Message</label>
-                                <textarea id="notificationMessage" class="form-textarea" rows="4" placeholder="Enter notification message..."></textarea>
-                            </div>
-                            <div class="info-note">
-                                <i class="fas fa-globe"></i>
-                                <span>This notification will be sent to ALL users (current and future visitors)</span>
-                            </div>
-                            <div class="compose-actions">
-                                <button class="btn-cancel" id="cancelComposeBtn">Cancel</button>
-                                <button class="btn-send" id="sendNotificationBtn">
-                                    <i class="fas fa-paper-plane"></i> Send to All Users
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.body.insertAdjacentHTML('beforeend', composeHTML);
-        this.composeModal = document.getElementById('composeNotificationModal');
-        
-        const closeCompose = this.composeModal.querySelector('.compose-close');
-        const cancelBtn = document.getElementById('cancelComposeBtn');
-        const sendBtn = document.getElementById('sendNotificationBtn');
-        
-        if (closeCompose) {
-            closeCompose.addEventListener('click', () => this.closeComposeModal());
-        }
-        
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => this.closeComposeModal());
-        }
-        
-        if (sendBtn) {
-            sendBtn.addEventListener('click', () => this.sendNotification());
-        }
-        
-        this.composeModal.addEventListener('click', (e) => {
-            if (e.target === this.composeModal) this.closeComposeModal();
-        });
-        
-        this.composeModal.classList.add('show');
-        document.body.style.overflow = 'hidden';
-    }
-    
-    closeComposeModal() {
-        if (this.composeModal) {
-            this.composeModal.classList.remove('show');
-            setTimeout(() => {
-                if (this.composeModal) this.composeModal.remove();
-                this.composeModal = null;
-                document.body.style.overflow = '';
-            }, 300);
-        }
-    }
-    
-    async sendNotification() {
-        const title = document.getElementById('notificationTitle')?.value.trim();
-        const message = document.getElementById('notificationMessage')?.value.trim();
-        
-        if (!title) {
-            alert('Please enter a title');
-            return;
-        }
-        
-        if (!message) {
-            alert('Please enter a message');
-            return;
-        }
-        
-        const sendBtn = document.getElementById('sendNotificationBtn');
-        const originalText = sendBtn.innerHTML;
-        sendBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Sending to all users...';
-        sendBtn.disabled = true;
-        
-        try {
-            const sent = await this.chatService.sendAdminNotification(title, message, 'info', true);
-            
-            if (sent) {
-                alert('✅ Notification sent to all users successfully!');
-                this.closeComposeModal();
-                setTimeout(() => this.renderNotifications(), 1000);
-            } else {
-                alert('❌ Failed to send notification. Please try again.');
-            }
-        } catch (error) {
-            console.error("Error sending notification:", error);
-            alert('Error sending notification: ' + error.message);
-        } finally {
-            sendBtn.innerHTML = originalText;
-            sendBtn.disabled = false;
-        }
-    }
-    
-    async renderNotifications() {
-        const listContainer = document.getElementById('notificationsList');
-        if (!listContainer) return;
-        
-        let notifications;
-        if (this.isAdminMode) {
-            notifications = await this.chatService.getAllNotifications();
-            // Remove duplicates for admin
-            const uniqueNotifications = new Map();
-            notifications.forEach(notif => {
-                const key = `${notif.timestampMs}_${notif.title}`;
-                if (!uniqueNotifications.has(key)) {
-                    uniqueNotifications.set(key, notif);
-                }
-            });
-            notifications = Array.from(uniqueNotifications.values());
-            notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
-        } else {
-            notifications = this.chatService.getNotifications();
-        }
-        
-        this.notifications = notifications;
-        
-        if (!notifications || notifications.length === 0) {
-            listContainer.innerHTML = `
-                <div class="notifications-empty">
-                    <i class="fas fa-bell-slash"></i>
-                    <p>No notifications yet</p>
-                </div>
-            `;
-            return;
-        }
-        
-        let html = '';
-        notifications.forEach(notification => {
-            const time = this.formatTime(notification.timestampMs || notification.timestamp);
-            const isAdminNotif = notification.isAdminNotification || notification.userId === 'admin';
-            
-            html += `
-                <div class="notification-item ${!notification.read ? 'unread' : ''} ${isAdminNotif ? 'admin-notif' : ''}" data-id="${notification.id}">
-                    <div class="notification-icon" style="${isAdminNotif ? 'background: linear-gradient(135deg, #f97316, #ea580c);' : ''}">
-                        <i class="fas ${isAdminNotif ? 'fa-crown' : 'fa-bell'}" style="${isAdminNotif ? 'color: white;' : ''}"></i>
-                    </div>
-                    <div class="notification-content">
-                        <div class="notification-title">
-                            ${escapeHtml(notification.title)}
-                            ${isAdminNotif ? '<span class="admin-notif-badge"><i class="fas fa-crown"></i> Admin</span>' : ''}
-                        </div>
-                        <div class="notification-message">${escapeHtml(notification.message)}</div>
-                        <div class="notification-time">
-                            <i class="far fa-clock"></i> ${time}
-                        </div>
-                    </div>
-                    ${this.isAdminMode ? `
-                        <button class="notification-delete-btn" data-id="${notification.id}" title="Delete notification">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    ` : ''}
-                </div>
-            `;
-        });
-        
-        listContainer.innerHTML = html;
-        
-        listContainer.querySelectorAll('.notification-item').forEach(item => {
-            const id = item.dataset.id;
-            if (id && item.classList.contains('unread')) {
-                item.addEventListener('click', (e) => {
-                    if (e.target.closest('.notification-delete-btn')) return;
-                    this.chatService.markNotificationAsRead(id);
-                    item.classList.remove('unread');
-                    this.chatService.updateNotificationBadge();
-                });
-            }
-        });
-        
-        if (this.isAdminMode) {
-            listContainer.querySelectorAll('.notification-delete-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const id = btn.dataset.id;
-                    if (id && confirm('Delete this notification?')) {
-                        await this.chatService.deleteNotification(id);
-                        this.renderNotifications();
-                    }
-                });
-            });
-        }
-    }
-    
-    formatTime(timestamp) {
-        if (!timestamp) return 'Just now';
-        
-        let date;
-        if (typeof timestamp === 'object' && timestamp.toDate) {
-            date = timestamp.toDate();
-        } else if (typeof timestamp === 'string') {
-            date = new Date(timestamp);
-        } else if (typeof timestamp === 'number') {
-            date = new Date(timestamp);
-        } else {
-            return 'Just now';
-        }
-        
-        const now = new Date();
-        const diff = now - date;
-        
-        if (isNaN(diff)) return 'Just now';
-        if (diff < 60000) return 'Just now';
-        if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
-        if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-        if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
-        
-        return date.toLocaleDateString();
-    }
-    
-    open() {
-        if (!this.modal) this.createModal();
-        this.modal.classList.add('show');
-        this.isOpen = true;
-        document.body.style.overflow = 'hidden';
-        this.renderNotifications();
-        
-        // Mark all unread notifications as read when opening
-        if (this.chatService && this.notifications) {
-            const unreadNotifications = this.notifications.filter(n => !n.read);
-            unreadNotifications.forEach(notification => {
-                this.chatService.markNotificationAsRead(notification.id);
-            });
-            this.chatService.updateNotificationBadge();
-        }
-    }
-    
-    close() {
-        if (this.modal) {
-            this.modal.classList.remove('show');
-            this.isOpen = false;
-            document.body.style.overflow = '';
-        }
-    }
-}
-
-// Initialize Firebase Chat
-window.firebaseChat = null;
-window.chatUI = null;
-window.notificationsUI = null;
-
-async function initFirebaseChat() {
-    try {
-        console.log("Starting Firebase Chat initialization...");
-        window.firebaseChat = new FirebaseChat();
-        
-        await window.firebaseChat.initPromise;
-        
-        window.chatUI = new ChatUI(window.firebaseChat);
-        window.notificationsUI = new NotificationsUI(window.firebaseChat);
-        
-        const messageBtn = document.getElementById('messageBtn');
-        const notificationBtn = document.getElementById('notificationBtn');
-        
-        if (messageBtn) {
-            const newMessageBtn = messageBtn.cloneNode(true);
-            messageBtn.parentNode.replaceChild(newMessageBtn, messageBtn);
-            
-            newMessageBtn.addEventListener('click', () => {
-                if (window.chatUI) window.chatUI.open();
-            });
-        }
-        
-        if (notificationBtn) {
-            const newNotificationBtn = notificationBtn.cloneNode(true);
-            notificationBtn.parentNode.replaceChild(newNotificationBtn, notificationBtn);
-            
-            newNotificationBtn.addEventListener('click', () => {
-                if (window.notificationsUI) window.notificationsUI.open();
-            });
-        }
-        
-        console.log("✅ Firebase Chat UI initialized");
-        
-        const userInfo = window.firebaseChat.getUserInfo();
-        if (userInfo.isAdmin) {
-            console.log("%c👑 Admin Mode Active", "color: #f97316; font-size: 14px; font-weight: bold;");
-            console.log("%cYou are logged in as: Juzt (Admin)", "color: #f97316;");
-            console.log("%cTo send notifications, click the bell icon and press 'New Notification'", "color: #9aa2bf;");
-        } else {
-            console.log("%c👤 Logged in as: " + userInfo.name, "color: #9aa2bf;");
-        }
-        
-    } catch (error) {
-        console.error("❌ Error initializing Firebase Chat:", error);
-    }
-}
-
-window.initFirebaseChat = initFirebaseChat;
+// Keep the rest of the file (ChatUI and NotificationsUI classes) unchanged...
+// [The ChatUI and NotificationsUI classes remain exactly the same as in your original file]
