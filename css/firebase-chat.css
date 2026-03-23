@@ -721,8 +721,8 @@
 /* Mobile Responsive */
 @media (max-width: 640px) {
     .chat-modal .modal-content {
-        width: 95%;
-        height: 85vh;
+        width: 80%;
+        height: 60vh;
     }
     
     .chat-header {
