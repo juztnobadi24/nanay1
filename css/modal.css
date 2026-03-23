@@ -302,8 +302,8 @@ input:checked + .toggle-slider:before {
 /* ========== MOBILE PHONE STYLES (max-width: 640px) ========== */
 @media (max-width: 640px) {
     .modal-content {
-        width: 92%;
-        max-width: 92%;
+        width: 90%;
+        max-width: 90%;
         border-radius: 20px;
         max-height: 80vh;
     }
@@ -434,8 +434,8 @@ input:checked + .toggle-slider:before {
 /* ========== SMALL MOBILE (max-width: 480px) ========== */
 @media (max-width: 480px) {
     .modal-content {
-        width: 95%;
-        max-width: 95%;
+        width: 90%;
+        max-width: 90%;
         border-radius: 18px;
         max-height: 85vh;
     }
