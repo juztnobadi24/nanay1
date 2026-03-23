@@ -146,3 +146,32 @@ body {
 .video-container {
     transition: all 0.3s ease;
 }
+/* Website Fullscreen Styles */
+.website-fullscreen {
+    overflow: hidden;
+}
+
+.website-fullscreen .app-container {
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Ensure proper styling in fullscreen */
+:fullscreen .app-container,
+:-webkit-full-screen .app-container,
+:-moz-full-screen .app-container {
+    height: 100vh;
+    overflow: hidden;
+}
+
+:fullscreen .header,
+:-webkit-full-screen .header,
+:-moz-full-screen .header {
+    display: flex !important;
+}
+
+:fullscreen .channel-sidebar,
+:-webkit-full-screen .channel-sidebar,
+:-moz-full-screen .channel-sidebar {
+    display: flex !important;
+}
