@@ -54,7 +54,7 @@
     transform: rotate(90deg);
 }
 
-/* Chat User Info Bar - Single Row Layout - FIXED */
+/* Chat User Info Bar - Single Row Layout - ALL ELEMENTS ON SAME ROW */
 .chat-user-info {
     padding: 8px 1rem;
     background: #1a1e2c;
@@ -66,16 +66,16 @@
     font-size: 0.75rem;
     color: #9aa2bf;
     flex-wrap: nowrap;
-    overflow-x: auto;
     min-height: 48px;
+    overflow-x: auto;
 }
 
 .user-info-left {
     display: flex;
     align-items: center;
     gap: 8px;
-    flex: 1;
     flex-wrap: nowrap;
+    flex-shrink: 1;
     min-width: 0;
 }
 
@@ -85,8 +85,12 @@
     flex-shrink: 0;
 }
 
-.user-info-left span {
+.user-info-left > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .user-info-left strong {
@@ -106,6 +110,7 @@
     border-radius: 20px;
     white-space: nowrap;
     flex-shrink: 0;
+    margin-left: 0;
 }
 
 .device-info i {
@@ -803,7 +808,7 @@
         font-size: 0.7rem;
     }
     
-    .user-info-left span:not(.device-info) {
+    .user-info-left > span {
         white-space: nowrap;
     }
     
