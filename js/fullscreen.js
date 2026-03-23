@@ -9,7 +9,6 @@ class FullscreenManager {
         this.isVideoFullscreen = false;
         this.orientationHandler = this.handleOrientationChange.bind(this);
         this.resizeTimer = null;
-        this.lastOrientation = null;
         this.isEnteringFullscreen = false;
     }
     
@@ -18,9 +17,6 @@ class FullscreenManager {
         this.videoPlayer = videoPlayer;
         this.sidebar = sidebar;
         this.header = header;
-        
-        // Store initial orientation
-        this.lastOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
         
         // Listen for orientation changes
         window.addEventListener('orientationchange', this.orientationHandler);
@@ -31,10 +27,10 @@ class FullscreenManager {
         document.addEventListener('webkitfullscreenchange', this.handleFullscreenChange.bind(this));
         document.addEventListener('mozfullscreenchange', this.handleFullscreenChange.bind(this));
         
-        // Check initial orientation
-        setTimeout(() => this.checkAndApplyFullscreen(), 500);
+        // Check initial orientation after a short delay
+        setTimeout(() => this.checkOrientation(), 500);
         
-        console.log("Fullscreen Manager initialized - Auto fullscreen on landscape");
+        console.log("Fullscreen Manager initialized - Video fullscreen on landscape only");
     }
     
     handleOrientationChange() {
@@ -47,12 +43,12 @@ class FullscreenManager {
         
         // Wait for orientation change to complete
         this.resizeTimer = setTimeout(() => {
-            this.checkAndApplyFullscreen();
+            this.checkOrientation();
             this.resizeTimer = null;
         }, 150);
     }
     
-    checkAndApplyFullscreen() {
+    checkOrientation() {
         const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         
         // For desktop, do nothing
@@ -62,26 +58,19 @@ class FullscreenManager {
         }
         
         const isLandscape = window.innerWidth > window.innerHeight;
-        const currentOrientation = isLandscape ? 'landscape' : 'portrait';
-        
-        // Log orientation change
-        if (this.lastOrientation !== currentOrientation) {
-            console.log(`Orientation changed: ${this.lastOrientation} -> ${currentOrientation}`);
-            this.lastOrientation = currentOrientation;
-        }
         
         if (isLandscape) {
-            // LANDSCAPE MODE: Enter video fullscreen
+            // LANDSCAPE: Enter video fullscreen
             const isVideoFullscreenNow = document.fullscreenElement === this.videoContainer;
             
             if (!isVideoFullscreenNow && !this.isEnteringFullscreen) {
                 console.log("LANDSCAPE: Entering video fullscreen...");
                 this.enterVideoFullscreen();
-            } else {
+            } else if (isVideoFullscreenNow) {
                 console.log("LANDSCAPE: Already in video fullscreen");
             }
         } else {
-            // PORTRAIT MODE: Exit video fullscreen
+            // PORTRAIT: Exit video fullscreen
             if (document.fullscreenElement === this.videoContainer || this.isVideoFullscreen) {
                 console.log("PORTRAIT: Exiting video fullscreen...");
                 this.exitVideoFullscreen();
@@ -204,12 +193,12 @@ class FullscreenManager {
             if (this.header) this.header.style.display = '';
             document.body.classList.remove('video-fullscreen-mode');
             
-            // Check if we're in landscape after exit (should re-enter)
+            // Check if we're still in landscape after exit (should re-enter)
             setTimeout(() => {
                 const isLandscape = window.innerWidth > window.innerHeight;
                 if (isLandscape) {
                     console.log("Still in landscape after exit, re-entering fullscreen");
-                    this.checkAndApplyFullscreen();
+                    this.checkOrientation();
                 }
             }, 100);
         } else {
