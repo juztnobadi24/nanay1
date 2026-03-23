@@ -14,6 +14,13 @@ class PlayerComponent {
         this.isShakaInitialized = false;
         this.currentChannel = null;
         this.isLoading = false;
+        
+        // CORS proxy to convert HTTP to HTTPS
+        // You can use a public proxy or deploy your own
+        this.proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        // Alternative proxies (try if one doesn't work):
+        // this.proxyUrl = 'https://api.allorigins.win/raw?url=';
+        // this.proxyUrl = 'https://corsproxy.io/?';
     }
     
     render() {
@@ -41,6 +48,23 @@ class PlayerComponent {
             videoPlayer: this.videoPlayer,
             errorMessage: this.errorMessageDiv
         };
+    }
+    
+    // Convert HTTP stream URL to HTTPS using proxy
+    convertToProxiedUrl(url) {
+        // If already HTTPS, return as is
+        if (url.startsWith('https://')) {
+            return url;
+        }
+        
+        // If HTTP, use proxy to convert
+        if (url.startsWith('http://')) {
+            // Encode the original URL
+            const encodedUrl = encodeURIComponent(url);
+            return `${this.proxyUrl}${encodedUrl}`;
+        }
+        
+        return url;
     }
     
     async destroyPlayers() {
@@ -80,7 +104,6 @@ class PlayerComponent {
     async initShaka() {
         if (this.shakaPlayer) return this.shakaPlayer;
         if (typeof shaka !== "undefined") {
-            // Use attach method instead of passing mediaElement to constructor
             this.shakaPlayer = new shaka.Player();
             await this.shakaPlayer.attach(this.videoPlayer);
             
@@ -111,15 +134,12 @@ class PlayerComponent {
     async loadStream(url, drmConfig = null, headers = null) {
         console.log("Loading stream:", url);
         
+        // Convert HTTP to HTTPS using proxy
+        let finalUrl = this.convertToProxiedUrl(url);
+        console.log("Proxied URL:", finalUrl);
+        
         // Clear any existing players first
         await this.destroyPlayers();
-        
-        // Check if URL is accessible (try to handle HTTP vs HTTPS)
-        let finalUrl = url;
-        
-        // If the site is HTTPS but stream is HTTP, try to keep HTTP (browser may block)
-        // For now, we'll keep the original URL and let the browser handle it
-        // The meta tag will try to upgrade, but if that fails, we'll use the original
         
         const isDash = finalUrl.includes(".mpd") || finalUrl.includes("manifest.mpd");
         const isHls = finalUrl.includes(".m3u8");
