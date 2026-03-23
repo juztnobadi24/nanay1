@@ -119,3 +119,30 @@ body {
         gap: 0;
     }
 }
+/* Website Fullscreen Styles */
+.website-fullscreen {
+    overflow: hidden;
+}
+
+.website-fullscreen .app-container {
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* When in website fullscreen, optimize for portrait mode */
+.website-fullscreen .header {
+    background: linear-gradient(135deg, #0f1222 0%, #11141f 100%);
+}
+
+.website-fullscreen .channel-sidebar {
+    background: #0c0f17;
+}
+
+/* Transition for smooth fullscreen changes */
+.app-container,
+.header,
+.channel-sidebar,
+.player-area,
+.video-container {
+    transition: all 0.3s ease;
+}
