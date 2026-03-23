@@ -302,8 +302,8 @@ input:checked + .toggle-slider:before {
 /* ========== MOBILE PHONE STYLES (max-width: 640px) ========== */
 @media (max-width: 640px) {
     .modal-content {
-        width: 90%;
-        max-width: 90%;
+        width: 80%;
+        max-width: 80%;
         border-radius: 20px;
         max-height: 80vh;
     }
@@ -435,7 +435,7 @@ input:checked + .toggle-slider:before {
 @media (max-width: 480px) {
     .modal-content {
         width: 90%;
-        max-width: 90%;
+        max-width: 80%;
         border-radius: 18px;
         max-height: 85vh;
     }
@@ -505,8 +505,8 @@ input:checked + .toggle-slider:before {
 @media (max-width: 640px) and (orientation: landscape) {
     .modal-content {
         max-height: 90vh;
-        width: 85%;
-        max-width: 85%;
+        width: 80%;
+        max-width: 80%;
     }
     
     .modal-body {
