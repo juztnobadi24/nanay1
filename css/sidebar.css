@@ -354,7 +354,7 @@
     opacity: 0.5;
 }
 
-/* Scroll to Top Button - Positioned within Sidebar with safe area insets */
+/* Scroll to Top Button - Positioned with safe zone for phone navigation */
 .scroll-to-top {
     position: absolute;
     bottom: 20px;
@@ -368,13 +368,14 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
+    z-index: 100;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     color: white;
     font-size: 1.1rem;
+    pointer-events: auto;
 }
 
 .scroll-to-top.show {
@@ -391,11 +392,68 @@
     transform: translateY(0);
 }
 
-/* iOS safe area support for notches and home indicators */
+/* Mobile specific - ensure button is above navigation bars */
+@media (max-width: 768px) {
+    .scroll-to-top {
+        bottom: 20px;
+        right: 20px;
+        width: 44px;
+        height: 44px;
+        z-index: 1000;
+    }
+}
+
+/* For devices with bottom navigation bar (Android) */
+@media (max-width: 768px) and (orientation: portrait) {
+    .scroll-to-top {
+        bottom: calc(20px + constant(safe-area-inset-bottom));
+        bottom: calc(20px + env(safe-area-inset-bottom));
+        right: calc(20px + constant(safe-area-inset-right));
+        right: calc(20px + env(safe-area-inset-right));
+    }
+}
+
+/* For iOS devices with home indicator */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
     .scroll-to-top {
         bottom: calc(20px + env(safe-area-inset-bottom));
         right: calc(20px + env(safe-area-inset-right));
+    }
+}
+
+/* For landscape mode on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .scroll-to-top {
+        bottom: 12px;
+        right: 12px;
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+        .scroll-to-top {
+            bottom: calc(12px + env(safe-area-inset-bottom));
+            right: calc(12px + env(safe-area-inset-right));
+        }
+    }
+}
+
+/* For very small phones */
+@media (max-width: 480px) {
+    .scroll-to-top {
+        bottom: 16px;
+        right: 16px;
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+        .scroll-to-top {
+            bottom: calc(16px + env(safe-area-inset-bottom));
+            right: calc(16px + env(safe-area-inset-right));
+        }
     }
 }
 
@@ -455,20 +513,6 @@
         padding: 6px 10px;
         font-size: 0.9rem;
     }
-    
-    .scroll-to-top {
-        bottom: 18px;
-        right: 18px;
-        width: 42px;
-        height: 42px;
-    }
-    
-    @supports (padding-bottom: env(safe-area-inset-bottom)) {
-        .scroll-to-top {
-            bottom: calc(18px + env(safe-area-inset-bottom));
-            right: calc(18px + env(safe-area-inset-right));
-        }
-    }
 }
 
 /* ========== PORTRAIT MODE SIDEBAR ADJUSTMENTS ========== */
@@ -508,6 +552,7 @@
     
     .channel-list {
         padding: 0.25rem 0.5rem 0.5rem 0.5rem;
+        padding-bottom: 70px;
     }
     
     .channel-item {
@@ -538,21 +583,6 @@
         padding: 6px 12px;
         font-size: 0.75rem;
     }
-    
-    .scroll-to-top {
-        bottom: 16px;
-        right: 16px;
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-    }
-    
-    @supports (padding-bottom: env(safe-area-inset-bottom)) {
-        .scroll-to-top {
-            bottom: calc(16px + env(safe-area-inset-bottom));
-            right: calc(16px + env(safe-area-inset-right));
-        }
-    }
 }
 
 /* ========== SMALL MOBILE (max-width: 480px) ========== */
@@ -575,19 +605,8 @@
         font-size: 0.8rem;
     }
     
-    .scroll-to-top {
-        bottom: 14px;
-        right: 14px;
-        width: 38px;
-        height: 38px;
-        font-size: 0.9rem;
-    }
-    
-    @supports (padding-bottom: env(safe-area-inset-bottom)) {
-        .scroll-to-top {
-            bottom: calc(14px + env(safe-area-inset-bottom));
-            right: calc(14px + env(safe-area-inset-right));
-        }
+    .channel-list {
+        padding-bottom: 65px;
     }
 }
 
@@ -613,19 +632,8 @@
         font-size: 0.8rem;
     }
     
-    .scroll-to-top {
-        bottom: 12px;
-        right: 12px;
-        width: 36px;
-        height: 36px;
-        font-size: 0.85rem;
-    }
-    
-    @supports (padding-bottom: env(safe-area-inset-bottom)) {
-        .scroll-to-top {
-            bottom: calc(12px + env(safe-area-inset-bottom));
-            right: calc(12px + env(safe-area-inset-right));
-        }
+    .channel-list {
+        padding-bottom: 60px;
     }
 }
 
@@ -662,18 +670,8 @@
         padding: 0.6rem 1rem;
     }
     
-    .scroll-to-top {
-        bottom: 20px;
-        right: 20px;
-        width: 44px;
-        height: 44px;
-    }
-    
-    @supports (padding-bottom: env(safe-area-inset-bottom)) {
-        .scroll-to-top {
-            bottom: calc(20px + env(safe-area-inset-bottom));
-            right: calc(20px + env(safe-area-inset-right));
-        }
+    .channel-list {
+        padding-bottom: 75px;
     }
 }
 
