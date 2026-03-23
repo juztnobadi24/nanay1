@@ -23,7 +23,7 @@ class FirebaseChat {
         this.userId = null;
         this.userName = null;
         this.userIP = null;
-        this.deviceId = null;  // New: unique device identifier
+        this.deviceId = null;
         this.isAdmin = false;
         
         // Admin fixed name
@@ -66,7 +66,7 @@ class FirebaseChat {
                 try {
                     await this.setupCollections();
                     await this.getUserIP();
-                    this.getOrCreateDeviceId();  // New: Get or create device ID
+                    this.getOrCreateDeviceId();
                     await this.identifyUser();
                     await this.loadExistingNotifications();
                     this.setupListeners();
@@ -100,31 +100,26 @@ class FirebaseChat {
         if (!this.db) return;
         
         try {
-            // Create references to Firestore collections
             this.messagesCollection = this.db.collection('chat_messages');
             this.notificationsCollection = this.db.collection('notifications');
             this.usersCollection = this.db.collection('users');
             this.globalNotificationsCollection = this.db.collection('global_notifications');
             console.log("✅ Firestore collections references created");
             
-            // Test connection by trying to get a document
             const testQuery = await this.messagesCollection.limit(1).get();
             console.log("✅ Firestore connection test successful!");
             
         } catch (error) {
             console.error("❌ Error setting up Firestore collections:", error);
-            console.error("Make sure Firestore is enabled in your Firebase console");
             throw error;
         }
     }
     
     async loadExistingNotifications() {
-        // Load existing notifications for new users
         if (!this.mockMode && this.notificationsCollection && this.userId) {
             try {
                 console.log("📥 Loading existing notifications for user:", this.userName);
                 
-                // Check if user already has notifications
                 const userNotifications = await this.notificationsCollection
                     .where('userId', '==', this.userId)
                     .get();
@@ -132,7 +127,6 @@ class FirebaseChat {
                 if (userNotifications.empty) {
                     console.log("No existing notifications found for user, checking global notifications...");
                     
-                    // Load all global notifications for new user
                     const globalNotifications = await this.globalNotificationsCollection
                         .orderBy('timestamp', 'desc')
                         .limit(100)
@@ -141,7 +135,6 @@ class FirebaseChat {
                     if (!globalNotifications.empty) {
                         console.log(`📥 Found ${globalNotifications.size} global notifications to load for new user`);
                         
-                        // Create personal copies for this user
                         const batch = this.db.batch();
                         const newNotifications = [];
                         
@@ -169,7 +162,6 @@ class FirebaseChat {
                         await batch.commit();
                         console.log(`✅ Loaded ${newNotifications.length} notifications for new user`);
                         
-                        // Add to local notifications
                         newNotifications.forEach(notif => {
                             this.notifications.push(notif);
                         });
@@ -178,7 +170,6 @@ class FirebaseChat {
                     }
                 } else {
                     console.log(`✅ User already has ${userNotifications.size} notifications`);
-                    // Load existing notifications into local array
                     userNotifications.forEach(doc => {
                         const notif = doc.data();
                         notif.id = doc.id;
@@ -230,23 +221,18 @@ class FirebaseChat {
         }
     }
     
-    // New: Generate or retrieve a unique device ID that persists across sessions
     getOrCreateDeviceId() {
-        // Check if device ID exists in localStorage
         let deviceId = localStorage.getItem('device_id');
         
         if (!deviceId) {
-            // Generate a unique device ID using various browser fingerprints
             const userAgent = navigator.userAgent;
             const language = navigator.language;
             const platform = navigator.platform;
             const screenResolution = `${screen.width}x${screen.height}`;
             const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             
-            // Create a hash from browser fingerprints
             const fingerprint = `${userAgent}|${language}|${platform}|${screenResolution}|${timezone}|${Date.now()}|${Math.random()}`;
             
-            // Simple hash function
             let hash = 0;
             for (let i = 0; i < fingerprint.length; i++) {
                 const char = fingerprint.charCodeAt(i);
@@ -336,16 +322,12 @@ class FirebaseChat {
             return;
         }
         
-        // Regular user flow - use device ID + IP combination
         if (!this.userIP || !this.deviceId) return;
         
-        // Create a unique identifier combining IP and device ID
-        // This ensures different devices on same network get different IDs
         const uniqueDeviceId = `${this.userIP}_${this.deviceId}`;
         
         if (!this.mockMode && this.usersCollection) {
             try {
-                // Query by the combined unique ID
                 const userQuery = await this.usersCollection
                     .where('uniqueDeviceId', '==', uniqueDeviceId)
                     .limit(1)
@@ -357,16 +339,13 @@ class FirebaseChat {
                     this.userName = userDoc.data().name;
                     console.log("👤 Existing user found:", this.userName, "Device ID:", this.deviceId);
                     
-                    // Update last seen and device info
                     await this.usersCollection.doc(this.userId).update({
                         lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
                         deviceId: this.deviceId,
                         lastSeenIP: this.userIP
                     });
                 } else {
-                    // Create new user with unique device ID
                     this.userName = this.generateRandomName();
-                    // Use device ID as part of Firestore document ID to ensure uniqueness
                     this.userId = uniqueDeviceId.replace(/[.]/g, '_');
                     
                     await this.usersCollection.doc(this.userId).set({
@@ -428,7 +407,6 @@ class FirebaseChat {
     }
     
     setupListeners() {
-        // Listen for new chat messages (global - all users can see)
         if (this.messagesCollection) {
             try {
                 this.messageListener = this.messagesCollection
@@ -447,16 +425,11 @@ class FirebaseChat {
                 console.log("✅ Message listener attached");
             } catch (error) {
                 console.error("❌ Error attaching message listener:", error);
-                if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                    console.warn("⚠️ Firestore index required for messages. You can create it using the link in the console.");
-                }
             }
         }
         
-        // Listen for user-specific notifications (personal copies) - SIMPLIFIED to avoid index requirement
         if (this.notificationsCollection) {
             try {
-                // Use a simpler query that doesn't require a composite index
                 this.notificationListener = this.notificationsCollection
                     .where('userId', '==', this.userId)
                     .onSnapshot((snapshot) => {
@@ -484,17 +457,11 @@ class FirebaseChat {
                 console.error("❌ Error attaching notification listener:", error);
                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
                     console.warn("⚠️ Firestore index required for notifications. Please create the index.");
-                    const indexUrl = error.message.match(/https:\/\/console\.firebase\.google\.com[^\s]+/);
-                    if (indexUrl) {
-                        console.log("🔗 Create index here:", indexUrl[0]);
-                    }
-                    // Fallback: Load notifications without real-time listener
                     this.loadNotificationsWithoutListener();
                 }
             }
         }
         
-        // Listen for global notifications (for new notifications to be distributed to all users)
         if (this.globalNotificationsCollection && !this.isAdmin) {
             try {
                 this.globalNotificationListener = this.globalNotificationsCollection
@@ -567,7 +534,6 @@ class FirebaseChat {
             const docRef = await this.notificationsCollection.add(userNotification);
             console.log("📢 Global notification received and saved for user:", this.userName);
             
-            // Add to local notifications
             userNotification.id = docRef.id;
             this.onNewNotification(userNotification);
         } catch (error) {
@@ -582,7 +548,7 @@ class FirebaseChat {
                     lastSeen: firebase.firestore.FieldValue.serverTimestamp()
                 });
             } catch (error) {
-                // Silently fail - not critical
+                // Silently fail
             }
         }
         
@@ -609,7 +575,6 @@ class FirebaseChat {
     }
     
     onNewNotification(notification) {
-        // Check if notification already exists to avoid duplicates
         const exists = this.notifications.some(n => n.id === notification.id);
         if (!exists) {
             this.notifications.unshift(notification);
@@ -769,11 +734,9 @@ class FirebaseChat {
         
         if (!this.mockMode && this.globalNotificationsCollection) {
             try {
-                // Save to global notifications collection (all users can read)
                 await this.globalNotificationsCollection.add(notification);
                 console.log("📢 Admin notification saved to global collection");
                 
-                // Also create personal copy for admin
                 const adminPersonalNotif = {
                     ...notification,
                     userId: this.ADMIN_ID,
@@ -799,8 +762,7 @@ class FirebaseChat {
         
         if (!this.mockMode && this.notificationsCollection) {
             try {
-                const snapshot = await this.notificationsCollection
-                    .get();
+                const snapshot = await this.notificationsCollection.get();
                 
                 const notifications = [];
                 snapshot.forEach(doc => {
@@ -967,7 +929,6 @@ class ChatUI {
         
         const userInfo = this.chatService.getUserInfo();
         
-        // Display full device ID without truncation
         const deviceDisplay = userInfo.deviceId ? userInfo.deviceId : 'unknown';
         
         const modalHTML = `
@@ -979,11 +940,15 @@ class ChatUI {
                             <button class="chat-close">&times;</button>
                         </div>
                         <div class="chat-user-info">
-                            <i class="fas fa-user-circle"></i>
-                            <span>You are: <strong>${escapeHtml(userInfo.name)}</strong></span>
-                            ${userInfo.isAdmin ? '<span class="admin-badge"><i class="fas fa-crown"></i> Admin</span>' : ''}
-                            ${userInfo.deviceId ? `<span class="device-info" style="font-size: 0.7rem; margin-left: 8px;"><i class="fas fa-mobile-alt"></i> Device: ${escapeHtml(deviceDisplay)}</span>` : ''}
-                            ${userInfo.isAdmin ? '<button class="logout-admin-btn" id="logoutAdminBtn"><i class="fas fa-sign-out-alt"></i> Logout Admin</button>' : ''}
+                            <div class="user-info-left">
+                                <i class="fas fa-user-circle"></i>
+                                <span>You are: <strong>${escapeHtml(userInfo.name)}</strong></span>
+                                ${userInfo.deviceId ? `<span class="device-info"><i class="fas fa-mobile-alt"></i> ${escapeHtml(deviceDisplay)}</span>` : ''}
+                            </div>
+                            <div class="user-info-right">
+                                ${userInfo.isAdmin ? '<span class="admin-badge"><i class="fas fa-crown"></i> Admin</span>' : ''}
+                                ${userInfo.isAdmin ? '<button class="logout-admin-btn" id="logoutAdminBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>' : ''}
+                            </div>
                         </div>
                         <div class="chat-messages" id="chatMessages">
                             <div class="chat-status">Loading messages...</div>
@@ -1391,7 +1356,6 @@ class NotificationsUI {
         let notifications;
         if (this.isAdminMode) {
             notifications = await this.chatService.getAllNotifications();
-            // Remove duplicates for admin
             const uniqueNotifications = new Map();
             notifications.forEach(notif => {
                 const key = `${notif.timestampMs}_${notif.title}`;
@@ -1507,7 +1471,6 @@ class NotificationsUI {
         document.body.style.overflow = 'hidden';
         this.renderNotifications();
         
-        // Mark all unread notifications as read when opening
         if (this.chatService && this.notifications) {
             const unreadNotifications = this.notifications.filter(n => !n.read);
             unreadNotifications.forEach(notification => {
