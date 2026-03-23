@@ -560,5 +560,301 @@
     "category": "Praise and Worship",
     "streamUrl": "https://stream-175.zeno.fm/4vgyas31hc9uv",
     "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/l2P2LqzjVpThF-4OA-N9D4OIV4oMdwRyC9V6lClFtDg/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvNmE2MjgxMWUtOWYyZS00NmJmLTliMzAtN2EwYjQ0ZmYzZTQ4L2ltYWdlLz91PTE3MTM5Mzc3MDkwMDA.webp"
+  },
+
+    {
+    "name": "ABC News Live",
+    "type": "tv",
+    "category": "News",
+    "manifestUri": "https://livetv-fa.tubi.video/abc-news/index_1.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "ABN Bible Movies",
+    "type": "tv",
+    "category": "Pinoy",
+    "manifestUri": "https://mediaserver.abnvideos.com/streams/abnbiblemovies.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "Action Hollywood Movies HD",
+    "type": "tv",
+    "category": "Movies",
+    "manifestUri": "https://cdn-apse1-prod.tsv2.amagi.tv/linear/amg01076-lightningintern-actionhollywood-samsungnz/playlist.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "AFV",
+    "type": "tv",
+    "category": "Entertainment",
+    "manifestUri": "https://linear-12.frequency.stream/dist/plex/12/hls/master/playlist.m3u8",
+    "logo": "https://asset.brandfetch.io/idEdVdcbxd/idchi5xM0w.png"
+  },
+  {
+    "name": "Alien Nation",
+    "type": "tv",
+    "category": "Entertainment",
+    "manifestUri": "https://linear-888.frequency.stream/dist/xumo/888/hls/master/playlist.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "All Weddings We TV",
+    "type": "tv",
+    "category": "Entertainment",
+    "manifestUri": "https://amc-allweddings-1-us.xumo.wurl.tv/playlist.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "AllTV2",
+    "type": "tv",
+    "category": "Pinoy",
+    "manifestUri": "https://live20.bozztv.com/akamaissh101/ssh101/alltv2/playlist.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "All Time Movies",
+    "type": "tv",
+    "category": "Movies",
+    "manifestUri": "https://cloudfrontnet.vercel.app/tplay/playout/209612/master.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "Aljazeera",
+    "type": "tv",
+    "category": "Entertainment",
+    "manifestUri": "https://live-hls-web-aje.getaj.net/AJE/index.m3u8",
+    "logo": "https://i.postimg.cc/sXW5pHwc/aj.png"
+  },
+  {
+    "name": "Always Funny Videos",
+    "type": "tv",
+    "category": "Entertainment",
+    "manifestUri": "https://linear-12.frequency.stream/dist/glewedtv/12/hls/master/playlist_640x360.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "AMC Thrillers",
+    "type": "tv",
+    "category": "Thriller & Crime",
+    "manifestUri": "https://amc-rushbyamc-1-us.vizio.wurl.tv/playlist.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "American Crimes",
+    "type": "tv",
+    "category": "Documentary",
+    "manifestUri": "https://xumo-xumoent-vc-113-at8kn.fast.nbcuni.com/live/master.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "American Ninja Warrior",
+    "type": "tv",
+    "category": "Entertainment",
+    "manifestUri": "https://xumo-drct-ch812-n4996.fast.nbcuni.com/live/master.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "American Pickers",
+    "type": "tv",
+    "category": "Entertainment",
+    "manifestUri": "https://livetv-fa.tubi.video/american-pickers/playlist_1280x720.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "Americas Test Kitchen",
+    "type": "tv",
+    "category": "Food and Lifestyle",
+    "manifestUri": "https://livetv-fa.tubi.video/americas-test-kitchen2/playlist_2709b554_89148653.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "AMG TV (1080p)",
+    "type": "tv",
+    "category": "Entertainment",
+    "manifestUri": "https://2-fss-2.streamhoster.com/pl_138/201660-1270634-1/playlist.m3u8",
+    "logo": "https://i.imgur.com/m5Anun9.png"
+  },
+  {
+    "name": "ANC",
+    "type": "tv",
+    "category": "News",
+    "manifestUri": "https://cdn-ue1-prod.tsv2.amagi.tv/linear/amg01006-abs-cbn-anc-global-dash-abscbnono/index.mpd",
+    "drm": {
+      "clearkey": {
+        "4bbdc78024a54662854b412d01fafa16": "6039ec9b213aca913821677a28bd78ae"
+      }
+    },
+    "logo": "https://vignette.wikia.nocookie.net/russel/images/5/52/ANC_HD_Logo_2016.png/revision/latest?cb=20180404015018"
+  },
+  {
+    "name": "Angry Bird",
+    "type": "tv",
+    "category": "Kids and Animation",
+    "manifestUri": "https://stream-us-east-1.getpublica.com/playlist.m3u8?network_id=547",
+    "logo": "https://d21tktytfo9riy.cloudfront.net/wp-content/uploads/2021/05/27151240/AB_RELOADED_202105_780x800_CharactersAndLogo-1.png"
+  },
+  {
+    "name": "Animal Planet",
+    "type": "tv",
+    "category": "Documentary",
+    "manifestUri": "https://live.dinesh29.com.np/stream/jiotv/animalplanethdworld/master.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "Animax",
+    "type": "tv",
+    "category": "Kids and Animation",
+    "manifestUri": "https://qp-pldt-live-bpk-01-prod.akamaized.net/bpk-tv/cg_animax_sd_new/default/index.mpd",
+    "drm": {
+      "type": "org.w3.clearkey",
+      "keyIds": {
+        "92032b0e41a543fb9830751273b8debd": "03f8b65e2af785b10d6634735dbe6c11"
+      }
+    },
+    "logo": "https://i.imgur.com/VLlyHhT.png"
+  },
+  {
+    "name": "Anime X Hidive",
+    "type": "tv",
+    "category": "Kids and Animation",
+    "manifestUri": "https://amc-anime-x-hidive-1-us.tablo.wurl.tv/playlist.m3u8",
+    "logo": "https://www.tablotv.com/wp-content/uploads/2023/12/AnimeXHIDIVE_official-768x499.png"
+  },
+  {
+    "name": "Aniplus",
+    "type": "tv",
+    "category": "Kids and Animation",
+    "manifestUri": "https://amg18481-amg18481c1-amgplt0352.playout.now3.amagi.tv/ts-eu-w1-n2/playlist/amg18481-amg18481c1-amgplt0352/playlist.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "Antiques Road Trip",
+    "type": "tv",
+    "category": "Food and Lifestyle",
+    "manifestUri": "https://aegis-cloudfront-1.tubi.video/b42ac280-5300-4db0-8a63-2ec2e52c5b5c/720p-cc/index.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "Ani-One",
+    "type": "tv",
+    "category": "Kids and Animation",
+    "manifestUri": "https://amg19223-amg19223c9-amgplt0019.playout.now3.amagi.tv/playlist/amg19223-amg19223c9-amgplt0019/playlist.m3u8",
+    "logo": "https://i.ibb.co/Rpj2zNY7/1.png"
+  },
+  {
+    "name": "Arirang Korea",
+    "type": "tv",
+    "category": "News",
+    "manifestUri": "https://amdlive-ch03-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Arirang_logo.png/1200px-Arirang_logo.png"
+  },
+  {
+    "name": "Asian Box",
+    "type": "tv",
+    "category": "Movies",
+    "manifestUri": "https://cdn4.skygo.mn/live/disk1/AsianBOX/HLSv3-FTA/AsianBOX.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "AsianCrush",
+    "type": "tv",
+    "category": "Movies",
+    "manifestUri": "https://cineverse.g-mana.live/media/1ebfbe30-c35c-4404-8bc5-0339d750eb58/profile/0/profileManifest.m3u8?_uid=5de4a899-873c-4992-8f77-61bea7a21e8f&rK=an&_did=7f31da621fda114b61e651f80c416ee4f91aa17f",
+    "logo": ""
+  },
+  {
+    "name": "Asian Food Network HD",
+    "type": "tv",
+    "category": "Entertainment",
+    "manifestUri": "https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_foodnetwork_hd1/default/index.mpd",
+    "drm": {
+      "type": "org.w3.clearkey",
+      "keyIds": {
+        "b7299ea0af8945479cd2f287ee7d530e": "b8ae7679cf18e7261303313b18ba7a14"
+      }
+    },
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/f/f9/Food_Network_New_Logo.png"
+  },
+  {
+    "name": "Astro Awani",
+    "type": "tv",
+    "category": "News",
+    "manifestUri": "https://d2idp3hzkhjpih.cloudfront.net/out/v1/4b85d9c2bf97413eb0c9fd875599b837/index_3.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "Asylum Movie Channel",
+    "type": "tv",
+    "category": "Movies",
+    "manifestUri": "https://aka-live1049.delivery.roku.com/d6ff3250-48ea-4a0c-8535-560b7e99f92d/t2-origin/out/v1/live_720.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "Authentic History",
+    "type": "tv",
+    "category": "Documentary",
+    "manifestUri": "https://c79f98a182af4cd79e0afe576c99cde9.mediatailor.us-east-1.amazonaws.com/v1/master/04fd913bb278d8775298c26fdca9d9841f37601f/LG-au_AutenticHistory/playlist.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "Authentic Travel",
+    "type": "tv",
+    "category": "Documentary",
+    "manifestUri": "https://2d1ef59f0ad34d14888d8abce1b99264.mediatailor.us-east-1.amazonaws.com/v1/master/04fd913bb278d8775298c26fdca9d9841f37601f/LG-au_AutenticTravel/playlist.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "AVA Family",
+    "type": "tv",
+    "category": "Movies",
+    "manifestUri": "https://familyhls.avatv.live/hls/stream.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "AVA Series",
+    "type": "tv",
+    "category": "Movies",
+    "manifestUri": "https://avaserieshls.wns.live/hls/stream.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "AXN",
+    "type": "tv",
+    "category": "Entertainment",
+    "manifestUri": "https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_axn_sd/default/index.mpd",
+    "drm": {
+      "type": "org.w3.clearkey",
+      "keyIds": {
+        "fd5d928f5d974ca4983f6e9295dfe410": "3aaa001ddc142fedbb9d5557be43792f"
+      }
+    },
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/d/d0/AXN_Logo_2015.png"
+  },
+  {
+    "name": "AWE Plus",
+    "type": "tv",
+    "category": "Entertainment",
+    "manifestUri": "https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg00450-herringnetwork-awe-lgau/playlist.m3u8?ads.deviceid=[DEVICE_ID]&ads.ifa=[IFA]&ads.ifatype=[IFA_TYPE]&ads.lat=[LMT]&ads.donotsell=[DNS]&ads.ua=[UA]&ads.ip=[IP]&ads.gdpr=[GDPR]&ads.gdprconsent=[GDPR_CONSENT]&ads.country=[COUNTRY]&ads.appstoreurl=[APP_STORE_URL]&ads.bundleid=[APP_BUNDLE]&ads.appname=[APP_NAME]&ads.appversion=[APP_VERSION]&ads.devicetype=[DEVICE_TYPE]&ads.devicemake=[DEVICE_MAKE]&ads.devicemodel=[DEVICE_MODEL]&ads.coppa=0&ads.targetad=[TARGETAD_ALLOWED]",
+    "logo": ""
+  },
+  {
+    "name": "Azteca International",
+    "type": "tv",
+    "category": "Drama",
+    "manifestUri": "https://azt-mun.otteravision.com/azt/mun/mun_1080p.m3u8",
+    "logo": ""
+  },
+  {
+    "name": "A2Z",
+    "type": "tv",
+    "category": "Pinoy",
+    "manifestUri": "https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_a2z/default/index.mpd",
+    "drm": {
+      "type": "org.w3.clearkey",
+      "keyIds": {
+        "f703e4c8ec9041eeb5028ab4248fa094": "c22f2162e176eee6273a5d0b68d19530"
+      }
+    },
+    "logo": "https://i.imgur.com/pRwyOMP.png"
   }
 ]
