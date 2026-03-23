@@ -26,6 +26,27 @@ class SidebarComponent {
         }
     }
     
+    updateScrollToTopPosition() {
+        if (!this.scrollToTopBtn) return;
+        
+        // Get safe area insets
+        const safeAreaBottom = window.innerHeight - document.documentElement.clientHeight;
+        const safeAreaRight = window.innerWidth - document.documentElement.clientWidth;
+        
+        // Apply safe area insets to button position
+        if (safeAreaBottom > 0) {
+            this.scrollToTopBtn.style.bottom = `${20 + safeAreaBottom}px`;
+        } else {
+            this.scrollToTopBtn.style.bottom = '';
+        }
+        
+        if (safeAreaRight > 0) {
+            this.scrollToTopBtn.style.right = `${20 + safeAreaRight}px`;
+        } else {
+            this.scrollToTopBtn.style.right = '';
+        }
+    }
+    
     render() {
         if (!this.container) return;
         
@@ -83,7 +104,7 @@ class SidebarComponent {
         this.scrollToTopBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
         this.scrollToTopBtn.title = 'Scroll to top';
         
-        // Append to sidebar container instead of body
+        // Append to sidebar container
         if (this.container) {
             this.container.style.position = 'relative';
             this.container.appendChild(this.scrollToTopBtn);
@@ -103,6 +124,27 @@ class SidebarComponent {
             });
         }
         
+        // Update position on orientation change and resize
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.updateScrollToTopPosition(), 100);
+        });
+        
+        window.addEventListener('resize', () => {
+            setTimeout(() => this.updateScrollToTopPosition(), 100);
+        });
+        
+        // Also update on fullscreen changes
+        document.addEventListener('fullscreenchange', () => {
+            setTimeout(() => this.updateScrollToTopPosition(), 100);
+        });
+        
+        document.addEventListener('webkitfullscreenchange', () => {
+            setTimeout(() => this.updateScrollToTopPosition(), 100);
+        });
+        
+        // Initial position update
+        setTimeout(() => this.updateScrollToTopPosition(), 100);
+        
         // Initial check
         setTimeout(() => this.toggleScrollToTopButton(), 100);
     }
@@ -115,6 +157,8 @@ class SidebarComponent {
         
         if (scrollTop > 100) {
             this.scrollToTopBtn.classList.add('show');
+            // Update position when showing
+            this.updateScrollToTopPosition();
         } else {
             this.scrollToTopBtn.classList.remove('show');
         }
