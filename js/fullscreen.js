@@ -11,6 +11,7 @@ class FullscreenManager {
         this.resizeTimer = null;
         this.isEnteringFullscreen = false;
         this.forceCheckInterval = null;
+        this.lastOrientation = null;
     }
     
     init(videoContainer, videoPlayer, sidebar, header) {
@@ -18,6 +19,9 @@ class FullscreenManager {
         this.videoPlayer = videoPlayer;
         this.sidebar = sidebar;
         this.header = header;
+        
+        // Store initial orientation
+        this.lastOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
         
         // Listen for orientation changes
         window.addEventListener('orientationchange', this.orientationHandler);
@@ -28,7 +32,7 @@ class FullscreenManager {
         document.addEventListener('webkitfullscreenchange', this.handleFullscreenChange.bind(this));
         document.addEventListener('mozfullscreenchange', this.handleFullscreenChange.bind(this));
         
-        // Force check orientation every second to ensure fullscreen stays active in landscape
+        // Force check orientation every 500ms to ensure fullscreen stays active in landscape
         this.forceCheckInterval = setInterval(() => {
             this.forceCheckOrientation();
         }, 500);
@@ -36,7 +40,7 @@ class FullscreenManager {
         // Check initial orientation after a short delay
         setTimeout(() => this.forceCheckOrientation(), 500);
         
-        console.log("Fullscreen Manager initialized - Force video fullscreen on landscape");
+        console.log("Fullscreen Manager initialized - Landscape = Video Fullscreen Only");
     }
     
     handleOrientationChange() {
@@ -51,7 +55,7 @@ class FullscreenManager {
         this.resizeTimer = setTimeout(() => {
             this.forceCheckOrientation();
             this.resizeTimer = null;
-        }, 100);
+        }, 50);
     }
     
     forceCheckOrientation() {
@@ -63,23 +67,28 @@ class FullscreenManager {
         }
         
         const isLandscape = window.innerWidth > window.innerHeight;
+        const currentOrientation = isLandscape ? 'landscape' : 'portrait';
+        
+        // Log orientation change
+        if (this.lastOrientation !== currentOrientation) {
+            console.log(`Orientation: ${this.lastOrientation} -> ${currentOrientation}`);
+            this.lastOrientation = currentOrientation;
+        }
         
         if (isLandscape) {
-            // LANDSCAPE: Force video fullscreen
+            // LANDSCAPE: Force video container fullscreen
             const isVideoFullscreenNow = document.fullscreenElement === this.videoContainer;
             
             if (!isVideoFullscreenNow && !this.isEnteringFullscreen) {
-                console.log("LANDSCAPE: Forcing video fullscreen...");
+                console.log("LANDSCAPE: Forcing video container fullscreen...");
                 this.enterVideoFullscreen();
             } else if (isVideoFullscreenNow) {
-                console.log("LANDSCAPE: Already in video fullscreen");
-            } else if (this.isEnteringFullscreen) {
-                console.log("LANDSCAPE: Already entering fullscreen, waiting...");
+                console.log("LANDSCAPE: Video container already in fullscreen");
             }
         } else {
-            // PORTRAIT: Exit video fullscreen
+            // PORTRAIT: Exit video container fullscreen
             if (document.fullscreenElement === this.videoContainer || this.isVideoFullscreen) {
-                console.log("PORTRAIT: Exiting video fullscreen...");
+                console.log("PORTRAIT: Exiting video container fullscreen...");
                 this.exitVideoFullscreen();
             }
         }
@@ -93,7 +102,7 @@ class FullscreenManager {
         
         // Don't enter if already in video fullscreen
         if (document.fullscreenElement === this.videoContainer) {
-            console.log("Already in video fullscreen");
+            console.log("Video container already in fullscreen");
             this.isVideoFullscreen = true;
             return;
         }
@@ -106,7 +115,7 @@ class FullscreenManager {
         
         this.isEnteringFullscreen = true;
         
-        console.log("Entering video fullscreen...");
+        console.log("Entering video container fullscreen...");
         
         // Hide sidebar and header
         if (this.sidebar) this.sidebar.style.display = 'none';
@@ -126,11 +135,11 @@ class FullscreenManager {
             
             if (fullscreenPromise) {
                 fullscreenPromise.then(() => {
-                    console.log("Video fullscreen entered successfully");
+                    console.log("Video container fullscreen entered successfully");
                     this.isVideoFullscreen = true;
                     this.isEnteringFullscreen = false;
                 }).catch(err => {
-                    console.error("Video fullscreen failed:", err);
+                    console.error("Video container fullscreen failed:", err);
                     // Restore UI if fullscreen fails
                     if (this.sidebar) this.sidebar.style.display = '';
                     if (this.header) this.header.style.display = '';
@@ -159,7 +168,7 @@ class FullscreenManager {
     }
     
     exitVideoFullscreen() {
-        console.log("Exiting video fullscreen...");
+        console.log("Exiting video container fullscreen...");
         
         // Reset entering flag
         this.isEnteringFullscreen = false;
@@ -221,9 +230,9 @@ class FullscreenManager {
             // We entered fullscreen on some element
             if (fsElement === this.videoContainer) {
                 this.isVideoFullscreen = true;
-                console.log("Video is fullscreen");
+                console.log("Video container is fullscreen");
                 
-                // Ensure UI is hidden when video is fullscreen
+                // Ensure UI is hidden when video container is fullscreen
                 if (this.sidebar) this.sidebar.style.display = 'none';
                 if (this.header) this.header.style.display = 'none';
             }
