@@ -15,12 +15,27 @@ class PlayerComponent {
         this.currentChannel = null;
         this.isLoading = false;
         
-        // CORS proxy to convert HTTP to HTTPS
-        // You can use a public proxy or deploy your own
-        this.proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-        // Alternative proxies (try if one doesn't work):
-        // this.proxyUrl = 'https://api.allorigins.win/raw?url=';
-        // this.proxyUrl = 'https://corsproxy.io/?';
+        // Track current player type
+        this.currentPlayerType = null;
+        
+        // Retry count for failed loads
+        this.retryCount = 0;
+        this.maxRetries = 2;
+        
+        // Proxy endpoint detection
+        this.proxyEndpoint = this.detectProxyEndpoint();
+    }
+    
+    detectProxyEndpoint() {
+        // Check if we're on Vercel (api folder) or traditional hosting (proxy.php)
+        const isVercel = window.location.hostname.includes('vercel.app') || 
+                         window.location.hostname.includes('now.sh');
+        
+        if (isVercel) {
+            return '/api/proxy';
+        } else {
+            return '/proxy.php';
+        }
     }
     
     render() {
@@ -37,6 +52,7 @@ class PlayerComponent {
         this.errorMessageDiv = document.getElementById("errorMessage");
         this.videoContainer = document.getElementById("videoContainer");
         
+        // Remove controls from video player
         if (this.videoPlayer) {
             this.videoPlayer.removeAttribute("controls");
             this.videoPlayer.controls = false;
@@ -50,26 +66,11 @@ class PlayerComponent {
         };
     }
     
-    // Convert HTTP stream URL to HTTPS using proxy
-    convertToProxiedUrl(url) {
-        // If already HTTPS, return as is
-        if (url.startsWith('https://')) {
-            return url;
-        }
-        
-        // If HTTP, use proxy to convert
-        if (url.startsWith('http://')) {
-            // Encode the original URL
-            const encodedUrl = encodeURIComponent(url);
-            return `${this.proxyUrl}${encodedUrl}`;
-        }
-        
-        return url;
-    }
-    
     async destroyPlayers() {
         this.isLoading = false;
+        this.retryCount = 0;
         
+        // Stop and clear video element
         if (this.videoPlayer) {
             try {
                 this.videoPlayer.pause();
@@ -80,6 +81,7 @@ class PlayerComponent {
             }
         }
         
+        // Destroy Shaka player
         if (this.shakaPlayer) {
             try {
                 await this.shakaPlayer.destroy();
@@ -89,6 +91,7 @@ class PlayerComponent {
             this.shakaPlayer = null;
         }
         
+        // Destroy HLS player
         if (this.hlsPlayer) {
             try {
                 this.hlsPlayer.destroy();
@@ -99,30 +102,127 @@ class PlayerComponent {
         }
         
         this.isShakaInitialized = false;
+        this.currentPlayerType = null;
     }
     
     async initShaka() {
         if (this.shakaPlayer) return this.shakaPlayer;
+        
         if (typeof shaka !== "undefined") {
-            this.shakaPlayer = new shaka.Player();
-            await this.shakaPlayer.attach(this.videoPlayer);
+            this.shakaPlayer = new shaka.Player(this.videoPlayer);
             
+            // Configure Shaka for better error handling and DRM support
             await this.shakaPlayer.configure({
                 drm: {
                     servers: {},
                     clearKeys: {},
-                    retryParameters: { maxAttempts: 3 }
+                    retryParameters: { 
+                        maxAttempts: 3,
+                        baseDelay: 1000,
+                        backoffFactor: 2
+                    },
+                    advanced: {},
+                    initDataTransform: (initData, initDataType, drmInfo) => {
+                        console.log("DRM init data:", initDataType);
+                        return initData;
+                    }
                 },
                 streaming: {
                     rebufferingGoal: 2,
                     bufferingGoal: 10,
-                    retryParameters: { maxAttempts: 3 }
+                    retryParameters: { 
+                        maxAttempts: 3,
+                        baseDelay: 1000,
+                        backoffFactor: 2
+                    },
+                    lowLatencyMode: false,
+                    ignoreTextStreamFailures: true,
+                    alwaysStreamText: false,
+                    startAtSegmentBoundary: true,
+                    failureCallback: (error) => {
+                        console.warn("Streaming failure:", error);
+                    }
+                },
+                manifest: {
+                    dash: {
+                        ignoreSuggestedPresentationDelay: true,
+                        ignoreMinBufferTime: true,
+                        autoCorrectDrift: true,
+                        clockSyncUri: null
+                    },
+                    retryParameters: {
+                        maxAttempts: 3,
+                        baseDelay: 1000,
+                        backoffFactor: 2
+                    }
+                },
+                networking: {
+                    retryParameters: {
+                        maxAttempts: 3,
+                        baseDelay: 1000,
+                        backoffFactor: 2,
+                        timeout: 10000
+                    }
+                },
+                abr: {
+                    enabled: true,
+                    defaultBandwidthEstimate: 1e6,
+                    switchInterval: 2
                 }
             });
             
+            // Add error handler with specific handling for Error 3014
             this.shakaPlayer.addEventListener("error", (event) => {
-                console.error("Shaka error", event.detail);
-                showError("Playback error: " + (event.detail?.message || "DRM or stream issue"));
+                const error = event.detail;
+                console.error("Shaka error details:", error);
+                
+                let errorMsg = "Playback error";
+                let shouldRetry = false;
+                
+                // Handle specific error codes
+                if (error && error.code) {
+                    switch(error.code) {
+                        case 3014: // MANIFEST_ERROR
+                            errorMsg = "Stream manifest error (3014) - The stream may have expired or is temporarily unavailable";
+                            shouldRetry = true;
+                            break;
+                        case 1001: // NETWORK_ERROR
+                            errorMsg = "Network error - Check your internet connection";
+                            shouldRetry = true;
+                            break;
+                        case 6001: // DRM_ERROR
+                            errorMsg = "DRM license error - This stream requires DRM protection";
+                            break;
+                        case 1002: // NETWORK_ERROR with timeout
+                            errorMsg = "Connection timeout - The server is taking too long to respond";
+                            shouldRetry = true;
+                            break;
+                        default:
+                            if (error.message) {
+                                if (error.message.includes("LICENSE")) {
+                                    errorMsg = "DRM license error";
+                                } else if (error.message.includes("MANIFEST")) {
+                                    errorMsg = "Cannot load stream manifest";
+                                    shouldRetry = true;
+                                } else {
+                                    errorMsg = error.message;
+                                }
+                            }
+                    }
+                }
+                
+                // Auto-retry for recoverable errors
+                if (shouldRetry && this.retryCount < this.maxRetries) {
+                    this.retryCount++;
+                    console.log(`Retrying stream (${this.retryCount}/${this.maxRetries})...`);
+                    setTimeout(() => {
+                        if (this.currentChannel) {
+                            this.playChannel(this.currentChannel);
+                        }
+                    }, 2000);
+                } else {
+                    showError(errorMsg);
+                }
             });
             
             this.isShakaInitialized = true;
@@ -131,133 +231,363 @@ class PlayerComponent {
         return null;
     }
     
-    async loadStream(url, drmConfig = null, headers = null) {
-        console.log("Loading stream:", url);
+    // Helper to parse DRM config from various formats
+    parseDrmConfig(drmConfig) {
+        if (!drmConfig) return { clearKeys: {}, servers: {} };
         
-        // Convert HTTP to HTTPS using proxy
-        let finalUrl = this.convertToProxiedUrl(url);
-        console.log("Proxied URL:", finalUrl);
+        const result = { clearKeys: {}, servers: {} };
+        
+        // Handle array format with keys
+        if (drmConfig.keys && Array.isArray(drmConfig.keys)) {
+            drmConfig.keys.forEach(key => {
+                if (key.kid && key.k) {
+                    let kid = key.kid;
+                    if (kid.length === 32 && !kid.includes('-')) {
+                        kid = `${kid.substring(0, 8)}-${kid.substring(8, 12)}-${kid.substring(12, 16)}-${kid.substring(16, 20)}-${kid.substring(20, 32)}`;
+                    }
+                    result.clearKeys[kid] = key.k;
+                }
+            });
+        } 
+        // Handle object format with kid:key pairs
+        else if (typeof drmConfig === 'object') {
+            for (const [kid, key] of Object.entries(drmConfig)) {
+                if (kid && key && typeof key === 'string') {
+                    let formattedKid = kid;
+                    if (formattedKid.length === 32 && !formattedKid.includes('-')) {
+                        formattedKid = `${formattedKid.substring(0, 8)}-${formattedKid.substring(8, 12)}-${formattedKid.substring(12, 16)}-${formattedKid.substring(16, 20)}-${formattedKid.substring(20, 32)}`;
+                    }
+                    result.clearKeys[formattedKid] = key;
+                }
+            }
+        }
+        
+        return result;
+    }
+    
+    // Check if URL is likely expired or invalid
+    isUrlExpired(url) {
+        if (!url) return true;
+        
+        // Check for AuthInfo parameter which may contain timestamp
+        const authMatch = url.match(/AuthInfo=([^&]+)/);
+        if (authMatch) {
+            console.log("URL contains AuthInfo token");
+            return false;
+        }
+        
+        // Check for expired or malformed URLs
+        if (url.includes('expired') || url.includes('invalid')) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    // Get proxied URL for external streams
+    getProxiedUrl(originalUrl) {
+        // If it's already a relative URL or proxy URL, return as is
+        if (originalUrl.startsWith('/') || 
+            originalUrl.startsWith('http://localhost') || 
+            originalUrl.includes('/api/') ||
+            originalUrl.includes('proxy.php')) {
+            return originalUrl;
+        }
+        
+        // Don't proxy if it's a local file
+        if (originalUrl.startsWith('blob:') || originalUrl.startsWith('data:')) {
+            return originalUrl;
+        }
+        
+        // Use the proxy for external URLs
+        console.log("Using proxy for URL:", originalUrl.substring(0, 80) + "...");
+        return `${this.proxyEndpoint}?url=${encodeURIComponent(originalUrl)}`;
+    }
+    
+    // Try to clean/fix URL if possible
+    cleanUrl(url) {
+        if (!url) return url;
+        
+        // Remove any tracking parameters that might cause issues
+        try {
+            const urlObj = new URL(url);
+            // Keep only essential parameters for DASH streams
+            const essentialParams = ['AuthInfo', 'version', 'virtualDomain', 'programid', 'contentid', 'videoid'];
+            const params = new URLSearchParams();
+            
+            essentialParams.forEach(param => {
+                if (urlObj.searchParams.has(param)) {
+                    params.set(param, urlObj.searchParams.get(param));
+                }
+            });
+            
+            const cleanedUrl = `${urlObj.origin}${urlObj.pathname}?${params.toString()}`;
+            console.log("Cleaned URL:", cleanedUrl.substring(0, 100) + "...");
+            return cleanedUrl;
+        } catch (e) {
+            return url;
+        }
+    }
+    
+    async loadStream(url, drmConfig = null, headers = null) {
+        // Convert to proxied URL if it's external
+        let streamUrl = url;
+        
+        // Check if it's an external URL that needs proxying
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            // Don't proxy if it's already using our proxy
+            if (!url.includes('/api/proxy') && !url.includes('proxy.php')) {
+                // Don't proxy localhost or internal domains
+                if (!url.includes('localhost') && !url.includes('127.0.0.1') && !url.includes(window.location.hostname)) {
+                    streamUrl = this.getProxiedUrl(url);
+                }
+            }
+        }
+        
+        console.log("Loading stream:", streamUrl.substring(0, 100) + "...");
         
         // Clear any existing players first
         await this.destroyPlayers();
         
-        const isDash = finalUrl.includes(".mpd") || finalUrl.includes("manifest.mpd");
-        const isHls = finalUrl.includes(".m3u8");
+        const isDash = streamUrl.includes(".mpd") || streamUrl.includes("manifest.mpd");
+        const isHls = streamUrl.includes(".m3u8");
         
-        try {
-            if (isDash) {
-                console.log("Loading DASH stream");
-                const player = await this.initShaka();
-                if (!player) throw new Error("Shaka Player not loaded");
+        // For DASH streams
+        if (isDash) {
+            console.log("Loading DASH stream");
+            
+            // Try to clean the URL
+            const cleanedUrl = this.cleanUrl(streamUrl);
+            
+            const player = await this.initShaka();
+            if (!player) {
+                throw new Error("Shaka Player not loaded");
+            }
+            
+            // Parse and apply DRM configuration
+            if (drmConfig) {
+                const drmSettings = this.parseDrmConfig(drmConfig);
+                console.log("Applying DRM config:", Object.keys(drmSettings.clearKeys).length, "keys");
                 
-                if (drmConfig) {
-                    const drmObj = {};
-                    if (drmConfig.keys && Array.isArray(drmConfig.keys)) {
-                        const clearKeys = {};
-                        drmConfig.keys.forEach(key => {
-                            if (key.kid && key.k) clearKeys[key.kid] = key.k;
-                        });
-                        drmObj.clearKeys = clearKeys;
-                    } else if (typeof drmConfig === "object") {
-                        const clearKeys = {};
-                        for (const [kid, key] of Object.entries(drmConfig)) {
-                            clearKeys[kid] = key;
-                        }
-                        drmObj.clearKeys = clearKeys;
-                    }
-                    await player.configure({ drm: drmObj });
-                } else {
-                    await player.configure({ drm: { clearKeys: {} } });
+                try {
+                    await player.configure({ 
+                        drm: {
+                            clearKeys: drmSettings.clearKeys,
+                            servers: drmSettings.servers
+                        } 
+                    });
+                } catch (configError) {
+                    console.warn("DRM config error:", configError);
                 }
+            } else {
+                await player.configure({ drm: { clearKeys: {} } });
+            }
+            
+            // Set up networking filters for headers and CORS
+            if (player.getNetworkingEngine) {
+                const netEngine = player.getNetworkingEngine();
+                if (netEngine) {
+                    netEngine.registerRequestFilter((type, request) => {
+                        if (headers && headers["User-Agent"]) {
+                            request.headers["User-Agent"] = headers["User-Agent"];
+                        }
+                        if (headers && headers["Referer"]) {
+                            request.headers["Referer"] = headers["Referer"];
+                        }
+                        if (headers && headers["Origin"]) {
+                            request.headers["Origin"] = headers["Origin"];
+                        }
+                        request.headers["Accept"] = "*/*";
+                    });
+                }
+            }
+            
+            try {
+                // Load with timeout
+                const loadPromise = player.load(cleanedUrl);
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error("Load timeout")), 15000);
+                });
                 
-                await player.load(finalUrl);
+                await Promise.race([loadPromise, timeoutPromise]);
+                console.log("DASH stream loaded successfully");
                 
+                // Auto-play
                 setTimeout(() => {
-                    if (this.videoPlayer && !this.videoPlayer.paused) {
-                        this.videoPlayer.play().catch(e => console.warn("Play attempt:", e));
+                    if (this.videoPlayer && this.videoPlayer.paused) {
+                        this.videoPlayer.play().catch(e => console.log("Auto-play blocked:", e.message));
                     }
                 }, 100);
                 
+                this.currentPlayerType = 'dash';
+                this.retryCount = 0;
                 return true;
-            } 
-            else if (isHls) {
-                console.log("Loading HLS stream");
-                if (Hls.isSupported()) {
-                    return new Promise((resolve, reject) => {
-                        this.hlsPlayer = new Hls({
-                            enableWorker: true,
-                            lowLatencyMode: true,
-                            autoStartLoad: true,
-                            startPosition: -1,
-                            xhrSetup: (xhr, url) => {
-                                if (headers && headers["User-Agent"]) {
-                                    xhr.setRequestHeader("User-Agent", headers["User-Agent"]);
-                                }
-                            }
-                        });
-                        
-                        let resolved = false;
-                        
-                        this.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
-                            if (!resolved) {
-                                resolved = true;
-                                this.videoPlayer.play()
-                                    .then(() => {
-                                        console.log("HLS playback started");
-                                        resolve(true);
-                                    })
-                                    .catch(e => {
-                                        console.warn("Autoplay blocked:", e);
-                                        resolve(true);
-                                    });
-                            }
-                        });
-                        
-                        this.hlsPlayer.on(Hls.Events.ERROR, (event, data) => {
-                            console.error("HLS Error:", data);
-                            if (data.fatal && !resolved) {
-                                resolved = true;
-                                reject(new Error(data.details || "HLS stream error"));
-                            }
-                        });
-                        
-                        this.hlsPlayer.loadSource(finalUrl);
-                        this.hlsPlayer.attachMedia(this.videoPlayer);
-                        
-                        setTimeout(() => {
-                            if (!resolved) {
-                                resolved = true;
-                                this.videoPlayer.play()
-                                    .then(() => {
-                                        console.log("HLS playback started (timeout fallback)");
-                                        resolve(true);
-                                    })
-                                    .catch(e => {
-                                        console.warn("Timeout play attempt:", e);
-                                        resolve(true);
-                                    });
-                            }
-                        }, 5000);
-                    });
-                } 
-                else if (this.videoPlayer.canPlayType("application/vnd.apple.mpegurl")) {
-                    this.videoPlayer.src = finalUrl;
-                    await this.videoPlayer.play();
-                    return true;
-                } else {
-                    throw new Error("HLS not supported in this browser");
+                
+            } catch (loadError) {
+                console.error("DASH load error:", loadError);
+                
+                // Try alternative approach - load without DRM config
+                if (drmConfig && this.retryCount === 0) {
+                    console.log("Attempting to load without DRM config...");
+                    try {
+                        await player.configure({ drm: { clearKeys: {} } });
+                        await player.load(cleanedUrl);
+                        console.log("DASH loaded without DRM config");
+                        this.currentPlayerType = 'dash';
+                        return true;
+                    } catch (noDrmError) {
+                        console.warn("No DRM attempt also failed");
+                    }
                 }
+                
+                // Try HLS fallback if available
+                if (streamUrl.replace('.mpd', '.m3u8') !== streamUrl) {
+                    const hlsUrl = streamUrl.replace('.mpd', '.m3u8');
+                    console.log("Trying HLS fallback:", hlsUrl);
+                    try {
+                        return await this.loadHlsStream(hlsUrl, headers);
+                    } catch (hlsError) {
+                        console.warn("HLS fallback failed:", hlsError);
+                    }
+                }
+                
+                throw loadError;
             }
-            else {
-                console.log("Loading direct stream (MP3/audio)");
-                this.videoPlayer.src = finalUrl;
+        } 
+        // For HLS streams
+        else if (isHls) {
+            return this.loadHlsStream(streamUrl, headers);
+        }
+        // For direct audio/video streams
+        else {
+            console.log("Loading direct stream");
+            this.videoPlayer.src = streamUrl;
+            
+            if (headers && headers["User-Agent"]) {
+                this.videoPlayer.setAttribute('crossorigin', 'anonymous');
+            }
+            
+            try {
                 await this.videoPlayer.play();
+                this.currentPlayerType = 'direct';
+                this.retryCount = 0;
                 return true;
+            } catch (playError) {
+                console.error("Direct stream error:", playError);
+                throw new Error("Cannot play stream: " + playError.message);
             }
-        } catch (err) {
-            console.error("loadStream error:", err);
-            showError(`Cannot play stream: ${err.message || "unknown error"}`);
-            return false;
+        }
+    }
+    
+    async loadHlsStream(url, headers = null) {
+        console.log("Loading HLS stream");
+        
+        // Clean HLS URL
+        const cleanedUrl = this.cleanUrl(url);
+        
+        if (Hls && Hls.isSupported()) {
+            return new Promise((resolve, reject) => {
+                let resolved = false;
+                
+                this.hlsPlayer = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: false,
+                    autoStartLoad: true,
+                    startPosition: -1,
+                    maxBufferLength: 30,
+                    maxMaxBufferLength: 60,
+                    maxBufferSize: 60 * 1000 * 1000,
+                    debug: false,
+                    xhrSetup: (xhr, url) => {
+                        if (headers && headers["User-Agent"]) {
+                            xhr.setRequestHeader("User-Agent", headers["User-Agent"]);
+                        }
+                        if (headers && headers["Referer"]) {
+                            xhr.setRequestHeader("Referer", headers["Referer"]);
+                        }
+                        if (headers && headers["Origin"]) {
+                            xhr.setRequestHeader("Origin", headers["Origin"]);
+                        }
+                        xhr.withCredentials = false;
+                    }
+                });
+                
+                this.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
+                    if (!resolved) {
+                        resolved = true;
+                        this.videoPlayer.play()
+                            .then(() => {
+                                console.log("HLS playback started");
+                                this.retryCount = 0;
+                                resolve(true);
+                            })
+                            .catch(e => {
+                                console.warn("Autoplay blocked:", e);
+                                resolve(true);
+                            });
+                    }
+                });
+                
+                this.hlsPlayer.on(Hls.Events.ERROR, (event, data) => {
+                    console.error("HLS Error:", data);
+                    
+                    if (!data.fatal) {
+                        return;
+                    }
+                    
+                    if (!resolved) {
+                        resolved = true;
+                        
+                        if (this.videoPlayer.canPlayType("application/vnd.apple.mpegurl")) {
+                            console.log("Falling back to native HLS");
+                            this.videoPlayer.src = cleanedUrl;
+                            this.videoPlayer.play()
+                                .then(() => {
+                                    this.currentPlayerType = 'hls-native';
+                                    resolve(true);
+                                })
+                                .catch(() => {
+                                    reject(new Error("Native HLS failed"));
+                                });
+                        } else {
+                            reject(new Error(data.details || "HLS stream error"));
+                        }
+                    }
+                });
+                
+                this.hlsPlayer.loadSource(cleanedUrl);
+                this.hlsPlayer.attachMedia(this.videoPlayer);
+                
+                setTimeout(() => {
+                    if (!resolved) {
+                        resolved = true;
+                        console.log("HLS timeout, attempting fallback");
+                        if (this.videoPlayer.canPlayType("application/vnd.apple.mpegurl")) {
+                            this.videoPlayer.src = cleanedUrl;
+                            this.videoPlayer.play()
+                                .then(() => {
+                                    this.currentPlayerType = 'hls-native';
+                                    resolve(true);
+                                })
+                                .catch(() => {
+                                    resolve(true);
+                                });
+                        } else {
+                            resolve(true);
+                        }
+                    }
+                }, 15000);
+            });
+        } 
+        else if (this.videoPlayer.canPlayType("application/vnd.apple.mpegurl")) {
+            console.log("Using native HLS support");
+            this.videoPlayer.src = cleanedUrl;
+            await this.videoPlayer.play();
+            this.currentPlayerType = 'hls-native';
+            this.retryCount = 0;
+            return true;
+        } else {
+            throw new Error("HLS not supported in this browser");
         }
     }
     
@@ -278,10 +608,18 @@ class PlayerComponent {
             console.log("Switching to channel:", channel.name);
             this.currentChannel = channel;
             
+            if (this.drmNoticeSpan) {
+                this.drmNoticeSpan.innerHTML = '';
+            }
+            
             let drmConfig = null;
             let headers = null;
             if (channel.drm) drmConfig = channel.drm;
             if (channel.headers) headers = channel.headers;
+            
+            if (this.isUrlExpired(channel.streamUrl)) {
+                console.warn("URL may have expired tokens");
+            }
             
             const success = await this.loadStream(channel.streamUrl, drmConfig, headers);
             
@@ -294,12 +632,19 @@ class PlayerComponent {
                 }
             } else {
                 console.error("Failed to play channel:", channel.name);
+                showError(`Failed to play ${channel.name}. Stream may be unavailable.`);
             }
             
             return success;
         } catch (error) {
             console.error("Error in playChannel:", error);
-            showError(`Error playing ${channel.name}: ${error.message}`);
+            
+            if (error.message && error.message.includes("MANIFEST")) {
+                showError(`Cannot load stream: The manifest file is invalid or expired. Please try refreshing the page.`);
+            } else {
+                showError(`Error playing ${channel.name}: ${error.message || "Unknown error"}`);
+            }
+            
             return false;
         } finally {
             setTimeout(() => {
