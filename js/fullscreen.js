@@ -32,7 +32,7 @@ class FullscreenManager {
         document.addEventListener('webkitfullscreenchange', this.handleFullscreenChange.bind(this));
         document.addEventListener('mozfullscreenchange', this.handleFullscreenChange.bind(this));
         
-        // Force check orientation every 500ms to ensure fullscreen stays active in landscape
+        // Force check orientation every second to ensure fullscreen stays active in landscape
         this.forceCheckInterval = setInterval(() => {
             this.forceCheckOrientation();
         }, 500);
@@ -40,7 +40,7 @@ class FullscreenManager {
         // Check initial orientation after a short delay
         setTimeout(() => this.forceCheckOrientation(), 500);
         
-        console.log("Fullscreen Manager initialized - Landscape = Video Fullscreen Only");
+        console.log("Fullscreen Manager initialized - Video container fullscreen on landscape (even without video)");
     }
     
     handleOrientationChange() {
@@ -76,7 +76,7 @@ class FullscreenManager {
         }
         
         if (isLandscape) {
-            // LANDSCAPE: Force video container fullscreen
+            // LANDSCAPE: Force video container fullscreen (even if no video is playing)
             const isVideoFullscreenNow = document.fullscreenElement === this.videoContainer;
             
             if (!isVideoFullscreenNow && !this.isEnteringFullscreen) {
@@ -124,7 +124,7 @@ class FullscreenManager {
         // Add class for styling
         document.body.classList.add('video-fullscreen-mode');
         
-        // Request fullscreen on video container
+        // Request fullscreen on video container (not waiting for video to play)
         const element = this.videoContainer;
         
         const requestFullscreen = () => {
