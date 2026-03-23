@@ -5,17 +5,6 @@ class SettingsModal {
         this.modal = null;
         this.isOpen = false;
         this.deviceInfo = this.getDeviceInfo();
-        
-        // Check if auto-fullscreen setting exists, if not, set default based on device
-        const savedAutoFullscreen = localStorage.getItem('autoFullscreen');
-        if (savedAutoFullscreen === null) {
-            // Default: ON for mobile devices, OFF for desktop
-            this.autoFullscreen = this.deviceInfo.isMobile || this.deviceInfo.isTablet;
-            localStorage.setItem('autoFullscreen', this.autoFullscreen);
-        } else {
-            this.autoFullscreen = savedAutoFullscreen === 'true';
-        }
-        
         this.qualityPreference = localStorage.getItem('qualityPreference') || 'auto';
     }
     
@@ -110,16 +99,6 @@ class SettingsModal {
                             <h4><i class="fas fa-sliders-h"></i> Display Settings</h4>
                             <div class="setting-item">
                                 <div>
-                                    <div class="setting-label">Auto Fullscreen (Landscape)</div>
-                                    <div class="setting-description">Automatically enter fullscreen when rotating to landscape on mobile</div>
-                                </div>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="autoFullscreenToggle" ${this.autoFullscreen ? 'checked' : ''}>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                            </div>
-                            <div class="setting-item">
-                                <div>
                                     <div class="setting-label">Video Quality</div>
                                     <div class="setting-description">Preferred video quality for streaming</div>
                                 </div>
@@ -135,7 +114,7 @@ class SettingsModal {
                         <div class="info-note">
                             <i class="fas fa-info-circle"></i> 
                             <span>
-                                <strong>Auto Fullscreen:</strong> ${this.autoFullscreen ? 'ENABLED' : 'DISABLED'} - Rotate your device to landscape to test.
+                                <strong>Auto Fullscreen:</strong> Video automatically enters fullscreen when rotating to landscape on mobile devices.
                             </span>
                         </div>
                         
@@ -212,28 +191,16 @@ class SettingsModal {
     }
     
     applySettings() {
-        const autoFullscreenToggle = document.getElementById('autoFullscreenToggle');
         const qualitySelect = document.getElementById('qualitySelect');
-        
-        if (autoFullscreenToggle) {
-            this.autoFullscreen = autoFullscreenToggle.checked;
-            localStorage.setItem('autoFullscreen', this.autoFullscreen);
-        }
         
         if (qualitySelect) {
             this.qualityPreference = qualitySelect.value;
             localStorage.setItem('qualityPreference', this.qualityPreference);
         }
         
-        // Trigger orientation check to apply new settings
-        if (window.fullscreenManager) {
-            setTimeout(() => {
-                window.fullscreenManager.checkAndApplyFullscreen();
-            }, 100);
-        }
-        
         // Show success message
-        this.showToast(`Settings applied! Auto fullscreen: ${this.autoFullscreen ? 'ON' : 'OFF'}`);
+        let message = `Settings applied! Video quality set to: ${this.qualityPreference.toUpperCase()}`;
+        this.showToast(message);
         
         // Close modal after a short delay
         setTimeout(() => {
@@ -280,7 +247,6 @@ class SettingsModal {
     
     getSettings() {
         return {
-            autoFullscreen: this.autoFullscreen,
             qualityPreference: this.qualityPreference,
             deviceInfo: this.deviceInfo
         };
