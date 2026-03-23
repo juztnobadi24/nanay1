@@ -14,6 +14,18 @@ class SidebarComponent {
         this.scrollToTopBtn = null;
     }
     
+    hideAddressBar() {
+        // Function to hide browser address bar
+        window.scrollTo(0, 1);
+        
+        // For iOS, ensure it stays hidden
+        if (navigator.userAgent.match(/iPhone|iPad|iPod/i)) {
+            setTimeout(() => {
+                window.scrollTo(0, 1);
+            }, 50);
+        }
+    }
+    
     render() {
         if (!this.container) return;
         
@@ -79,12 +91,14 @@ class SidebarComponent {
         
         // Add click event
         this.scrollToTopBtn.addEventListener('click', () => {
+            this.hideAddressBar();
             this.scrollToTop();
         });
         
         // Add scroll listener to channel list
         if (this.channelListDiv) {
             this.channelListDiv.addEventListener('scroll', () => {
+                this.hideAddressBar();
                 this.toggleScrollToTopButton();
             });
         }
@@ -137,6 +151,7 @@ class SidebarComponent {
         const allBtn = document.querySelector(".filter-btn[data-filter='all']");
         if (allBtn) {
             allBtn.addEventListener("click", () => {
+                this.hideAddressBar();
                 this.setActiveFilter("all");
                 this.closeSearch();
                 // Scroll to top when filter changes
@@ -148,6 +163,7 @@ class SidebarComponent {
         const favoritesBtn = document.getElementById("favoritesBtn");
         if (favoritesBtn) {
             favoritesBtn.addEventListener("click", () => {
+                this.hideAddressBar();
                 this.setActiveFilter("favorites");
                 this.closeSearch();
                 // Scroll to top when filter changes
@@ -159,6 +175,7 @@ class SidebarComponent {
         const searchIconBtn = document.getElementById("searchIconBtn");
         if (searchIconBtn) {
             searchIconBtn.addEventListener("click", (e) => {
+                this.hideAddressBar();
                 e.stopPropagation();
                 if (this.activeFilter === "search") {
                     this.setActiveFilter("all");
@@ -178,6 +195,7 @@ class SidebarComponent {
         
         if (dropdownBtn) {
             dropdownBtn.addEventListener("click", (e) => {
+                this.hideAddressBar();
                 e.stopPropagation();
                 if (this.activeFilter !== "category") {
                     this.setActiveFilter("category");
@@ -202,6 +220,7 @@ class SidebarComponent {
         // Search input
         if (this.searchInput) {
             this.searchInput.addEventListener("input", (e) => {
+                this.hideAddressBar();
                 window.searchQuery = e.target.value;
                 if (typeof window.onSearchChange === "function") {
                     window.onSearchChange();
@@ -212,9 +231,14 @@ class SidebarComponent {
             
             this.searchInput.addEventListener("keyup", (e) => {
                 if (e.key === "Escape") {
+                    this.hideAddressBar();
                     this.setActiveFilter("all");
                     this.closeSearch();
                 }
+            });
+            
+            this.searchInput.addEventListener("focus", () => {
+                this.hideAddressBar();
             });
         }
     }
@@ -225,7 +249,10 @@ class SidebarComponent {
         const searchIconBtn = document.getElementById("searchIconBtn");
         if (searchIconBtn) searchIconBtn.classList.add("active");
         setTimeout(() => {
-            if (this.searchInput) this.searchInput.focus();
+            if (this.searchInput) {
+                this.searchInput.focus();
+                this.hideAddressBar();
+            }
         }, 100);
         
         if (this.searchInput) {
@@ -360,6 +387,7 @@ class SidebarComponent {
         
         dropdownMenu.querySelectorAll(".dropdown-item").forEach(item => {
             item.addEventListener("click", () => {
+                this.hideAddressBar();
                 const cat = item.dataset.cat;
                 this.selectedCategory = cat;
                 window.currentCategory = cat;
@@ -460,6 +488,8 @@ class SidebarComponent {
         // ATTACH CHANNEL SELECTION - CLICK TO SWITCH AND PLAY
         document.querySelectorAll(".channel-item").forEach(el => {
             el.addEventListener("click", (e) => {
+                this.hideAddressBar();
+                
                 // Don't trigger if clicking on favorite icon
                 if (e.target.classList && e.target.classList.contains("favorite-icon")) {
                     return;
@@ -490,6 +520,7 @@ class SidebarComponent {
         // Attach favorite toggle events
         document.querySelectorAll(".favorite-icon").forEach(icon => {
             icon.addEventListener("click", (e) => {
+                this.hideAddressBar();
                 e.stopPropagation();
                 const channelId = parseInt(icon.dataset.id);
                 const added = toggleFavorite(channelId);
