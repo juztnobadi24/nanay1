@@ -54,7 +54,7 @@
     transform: rotate(90deg);
 }
 
-/* Chat User Info Bar - Single Row Layout */
+/* Chat User Info Bar - Single Row Layout - FIXED */
 .chat-user-info {
     padding: 8px 1rem;
     background: #1a1e2c;
@@ -65,7 +65,9 @@
     gap: 12px;
     font-size: 0.75rem;
     color: #9aa2bf;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    min-height: 48px;
 }
 
 .user-info-left {
@@ -73,20 +75,28 @@
     align-items: center;
     gap: 8px;
     flex: 1;
+    flex-wrap: nowrap;
+    min-width: 0;
 }
 
 .user-info-left i {
     color: #f97316;
     font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.user-info-left span {
+    white-space: nowrap;
 }
 
 .user-info-left strong {
     color: #eef2ff;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .device-info {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
     font-size: 0.7rem;
@@ -94,6 +104,8 @@
     background: rgba(249, 115, 22, 0.1);
     padding: 4px 10px;
     border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .device-info i {
@@ -118,6 +130,8 @@
     align-items: center;
     gap: 4px;
     font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .admin-badge i {
@@ -135,10 +149,11 @@
     font-size: 0.7rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .logout-admin-btn:hover {
@@ -750,7 +765,7 @@
     }
 }
 
-/* Mobile Responsive */
+/* Mobile Responsive - Keep everything on one row */
 @media (max-width: 640px) {
     .chat-modal .modal-content {
         width: 95%;
@@ -765,14 +780,19 @@
         font-size: 1rem;
     }
     
-    /* Mobile Chat User Info - Single Row with smaller elements */
+    /* Mobile Chat User Info - Keep on single row with horizontal scroll if needed */
     .chat-user-info {
         padding: 6px 10px;
         gap: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        min-height: 44px;
     }
     
     .user-info-left {
         gap: 6px;
+        flex-shrink: 1;
+        min-width: 0;
     }
     
     .user-info-left i {
@@ -783,9 +803,14 @@
         font-size: 0.7rem;
     }
     
+    .user-info-left span:not(.device-info) {
+        white-space: nowrap;
+    }
+    
     .device-info {
         padding: 3px 8px;
         font-size: 0.6rem;
+        flex-shrink: 0;
     }
     
     .device-info i {
@@ -795,11 +820,13 @@
     .admin-badge {
         padding: 3px 8px;
         font-size: 0.6rem;
+        flex-shrink: 0;
     }
     
     .logout-admin-btn {
         padding: 3px 10px;
         font-size: 0.65rem;
+        flex-shrink: 0;
     }
     
     .chat-messages {
