@@ -10,6 +10,7 @@ class FullscreenManager {
         this.orientationHandler = this.handleOrientationChange.bind(this);
         this.resizeTimer = null;
         this.isEnteringFullscreen = false;
+        this.forceCheckInterval = null;
     }
     
     init(videoContainer, videoPlayer, sidebar, header) {
@@ -27,10 +28,15 @@ class FullscreenManager {
         document.addEventListener('webkitfullscreenchange', this.handleFullscreenChange.bind(this));
         document.addEventListener('mozfullscreenchange', this.handleFullscreenChange.bind(this));
         
-        // Check initial orientation after a short delay
-        setTimeout(() => this.checkOrientation(), 500);
+        // Force check orientation every second to ensure fullscreen stays active in landscape
+        this.forceCheckInterval = setInterval(() => {
+            this.forceCheckOrientation();
+        }, 500);
         
-        console.log("Fullscreen Manager initialized - Video fullscreen on landscape only");
+        // Check initial orientation after a short delay
+        setTimeout(() => this.forceCheckOrientation(), 500);
+        
+        console.log("Fullscreen Manager initialized - Force video fullscreen on landscape");
     }
     
     handleOrientationChange() {
@@ -43,31 +49,32 @@ class FullscreenManager {
         
         // Wait for orientation change to complete
         this.resizeTimer = setTimeout(() => {
-            this.checkOrientation();
+            this.forceCheckOrientation();
             this.resizeTimer = null;
-        }, 150);
+        }, 100);
     }
     
-    checkOrientation() {
+    forceCheckOrientation() {
         const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
         
         // For desktop, do nothing
         if (!isMobile) {
-            console.log("Desktop device - no auto-fullscreen");
             return;
         }
         
         const isLandscape = window.innerWidth > window.innerHeight;
         
         if (isLandscape) {
-            // LANDSCAPE: Enter video fullscreen
+            // LANDSCAPE: Force video fullscreen
             const isVideoFullscreenNow = document.fullscreenElement === this.videoContainer;
             
             if (!isVideoFullscreenNow && !this.isEnteringFullscreen) {
-                console.log("LANDSCAPE: Entering video fullscreen...");
+                console.log("LANDSCAPE: Forcing video fullscreen...");
                 this.enterVideoFullscreen();
             } else if (isVideoFullscreenNow) {
                 console.log("LANDSCAPE: Already in video fullscreen");
+            } else if (this.isEnteringFullscreen) {
+                console.log("LANDSCAPE: Already entering fullscreen, waiting...");
             }
         } else {
             // PORTRAIT: Exit video fullscreen
@@ -138,8 +145,17 @@ class FullscreenManager {
             }
         };
         
-        // Small delay to ensure DOM is ready
-        setTimeout(requestFullscreen, 50);
+        // Request fullscreen immediately
+        requestFullscreen();
+        
+        // Also try again after a short delay if it didn't work
+        setTimeout(() => {
+            if (!this.isVideoFullscreen && !this.isEnteringFullscreen) {
+                console.log("Retrying fullscreen request...");
+                this.isEnteringFullscreen = true;
+                requestFullscreen();
+            }
+        }, 200);
     }
     
     exitVideoFullscreen() {
@@ -198,7 +214,7 @@ class FullscreenManager {
                 const isLandscape = window.innerWidth > window.innerHeight;
                 if (isLandscape) {
                     console.log("Still in landscape after exit, re-entering fullscreen");
-                    this.checkOrientation();
+                    this.forceCheckOrientation();
                 }
             }, 100);
         } else {
@@ -215,6 +231,12 @@ class FullscreenManager {
     }
     
     destroy() {
+        // Clear the force check interval
+        if (this.forceCheckInterval) {
+            clearInterval(this.forceCheckInterval);
+            this.forceCheckInterval = null;
+        }
+        
         window.removeEventListener('orientationchange', this.orientationHandler);
         window.removeEventListener('resize', this.orientationHandler);
         
