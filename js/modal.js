@@ -1,4 +1,4 @@
-// ======================== SETTINGS MODAL ========================
+// ======================== MODAL.JS - COMPLETE UPDATED VERSION ========================
 
 class SettingsModal {
     constructor() {
@@ -254,7 +254,7 @@ class SettingsModal {
         // Trigger orientation check to apply new settings
         if (window.fullscreenManager) {
             setTimeout(() => {
-                window.fullscreenManager.handleOrientationChange();
+                window.fullscreenManager.checkAndApplyFullscreen();
             }, 100);
         }
         
