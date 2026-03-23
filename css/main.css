@@ -175,3 +175,53 @@ body {
 :-moz-full-screen .channel-sidebar {
     display: flex !important;
 }
+/* Hide browser chrome on interaction */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Ensure the app takes full height for fullscreen mode */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* For fullscreen mode to hide address bar */
+:fullscreen {
+    overflow: auto;
+}
+
+:-webkit-full-screen {
+    overflow: auto;
+}
+
+:-moz-full-screen {
+    overflow: auto;
+}
+
+/* Prevent pull-to-refresh and overscroll */
+body {
+    overscroll-behavior: none;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.app-container {
+    overflow-y: auto;
+    height: 100%;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Hide scrollbar on mobile for cleaner look */
+@media (max-width: 768px) {
+    .app-container::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .app-container {
+        scrollbar-width: none;
+    }
+}
