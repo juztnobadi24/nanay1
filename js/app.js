@@ -1,5 +1,3 @@
-// ======================== APP.JS - COMPLETE UPDATED VERSION ========================
-
 // ======================== MAIN APPLICATION ========================
 
 let headerComponent;
@@ -96,6 +94,9 @@ async function onChannelSelect(channel) {
     
     console.log("Selected channel:", channel.name);
     
+    // Hide address bar on channel selection
+    hideAddressBar();
+    
     // Prevent rapid switching
     if (window.isSwitchingChannel) {
         console.log("Already switching channel, ignoring...");
@@ -143,8 +144,119 @@ function initFirebaseFeatures() {
     }, 1000);
 }
 
+// Function to hide browser address bar on mobile
+function hideAddressBar() {
+    // Scroll to top to trigger address bar hiding on mobile
+    window.scrollTo(0, 1);
+    
+    // For iOS, we need to ensure it stays hidden
+    if (navigator.userAgent.match(/iPhone|iPad|iPod/i)) {
+        setTimeout(() => {
+            window.scrollTo(0, 1);
+        }, 50);
+    }
+}
+
+// Setup address bar hiding on user interactions
+function setupHideAddressBar() {
+    // Hide on page load
+    hideAddressBar();
+    
+    // Hide on any user interaction
+    const interactionEvents = ['touchstart', 'touchend', 'scroll', 'click', 'keydown', 'orientationchange', 'touchmove'];
+    
+    interactionEvents.forEach(event => {
+        window.addEventListener(event, () => {
+            hideAddressBar();
+        });
+    });
+    
+    // Handle orientation changes with delay for smooth transition
+    window.addEventListener('orientationchange', () => {
+        setTimeout(() => {
+            hideAddressBar();
+        }, 100);
+    });
+    
+    // Handle resize (keyboard appearing/disappearing)
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            hideAddressBar();
+        }, 100);
+    });
+    
+    // For fullscreen changes
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement) {
+            setTimeout(() => {
+                hideAddressBar();
+            }, 200);
+        } else {
+            // When entering fullscreen, also hide address bar
+            setTimeout(() => {
+                hideAddressBar();
+            }, 50);
+        }
+    });
+    
+    document.addEventListener('webkitfullscreenchange', () => {
+        if (!document.webkitFullscreenElement) {
+            setTimeout(() => {
+                hideAddressBar();
+            }, 200);
+        } else {
+            setTimeout(() => {
+                hideAddressBar();
+            }, 50);
+        }
+    });
+    
+    document.addEventListener('mozfullscreenchange', () => {
+        if (!document.mozFullScreenElement) {
+            setTimeout(() => {
+                hideAddressBar();
+            }, 200);
+        } else {
+            setTimeout(() => {
+                hideAddressBar();
+            }, 50);
+        }
+    });
+    
+    // Handle scroll events to keep address bar hidden
+    window.addEventListener('scroll', () => {
+        // If we're not at the top, quickly scroll to top to hide address bar
+        if (window.scrollY > 10) {
+            hideAddressBar();
+        }
+    });
+    
+    // Also hide when focusing on input fields
+    document.addEventListener('focusin', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            setTimeout(() => {
+                hideAddressBar();
+            }, 100);
+        }
+    });
+    
+    // Periodically check and hide address bar (every 2 seconds)
+    setInterval(() => {
+        if (document.visibilityState === 'visible') {
+            hideAddressBar();
+        }
+    }, 2000);
+    
+    console.log("Address bar hiding enabled - will hide on any user interaction");
+}
+
 // Initialize application
 async function initApp() {
+    // First, setup address bar hiding
+    setupHideAddressBar();
+    
     // Create components
     headerComponent = new HeaderComponent();
     sidebarComponent = new SidebarComponent();
@@ -201,18 +313,62 @@ async function initApp() {
         if (fullscreenManager) {
             fullscreenManager.checkAndApplyFullscreen();
         }
+        // Also hide address bar again after layout settles
+        hideAddressBar();
     }, 1000);
     
-    // Also listen for video play to trigger fullscreen check
+    // Also listen for video play to trigger fullscreen check and hide address bar
     if (playerComponent && playerComponent.videoPlayer) {
         playerComponent.videoPlayer.addEventListener('play', () => {
             setTimeout(() => {
                 if (fullscreenManager) {
                     fullscreenManager.checkAndApplyFullscreen();
                 }
+                hideAddressBar();
             }, 200);
         });
+        
+        // Also hide address bar when video is clicked/tapped
+        playerComponent.videoPlayer.addEventListener('click', () => {
+            hideAddressBar();
+        });
+        
+        playerComponent.videoPlayer.addEventListener('touchstart', () => {
+            hideAddressBar();
+        });
     }
+    
+    // Hide address bar after any modal closes
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                const modal = mutation.target;
+                if (modal.classList && !modal.classList.contains('show')) {
+                    setTimeout(() => {
+                        hideAddressBar();
+                    }, 100);
+                }
+            }
+        });
+    });
+    
+    // Observe modals for class changes
+    const modals = ['chatModal', 'notificationsModal', 'settingsModal'];
+    modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            observer.observe(modal, { attributes: true });
+        }
+    });
+    
+    // Also hide address bar when page becomes visible again
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            setTimeout(() => {
+                hideAddressBar();
+            }, 100);
+        }
+    });
     
     // Log app initialization
     console.log("JUZT IPTV App Initialized");
@@ -239,6 +395,10 @@ document.addEventListener('visibilitychange', () => {
                 window.firebaseChat.updateBadge();
             }
         }
+        // Hide address bar when becoming visible again
+        setTimeout(() => {
+            hideAddressBar();
+        }, 100);
     }
 });
 
@@ -253,6 +413,9 @@ window.addEventListener('online', () => {
             playerComponent.playChannel(playerComponent.currentChannel);
         }, 1000);
     }
+    
+    // Hide address bar
+    hideAddressBar();
 });
 
 window.addEventListener('offline', () => {
@@ -283,3 +446,6 @@ initApp().catch(err => {
     console.error("Init error:", err);
     showError("Failed to initialize app: " + err.message);
 });
+
+// Export hideAddressBar for use in other modules
+window.hideAddressBar = hideAddressBar;
