@@ -142,7 +142,7 @@
         padding: 0.8rem 1rem;
     }
     .header-icons {
-        gap: 6px;
+        gap: 12px;
     }
     .icon-btn {
         padding: 6px;
@@ -198,7 +198,7 @@
     }
     
     .header-icons {
-        gap: 4px;
+        gap: 8px;
     }
     
     .icon-btn {
