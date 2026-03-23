@@ -34,6 +34,18 @@ class GestureControls {
         this.init();
     }
     
+    hideAddressBar() {
+        // Function to hide browser address bar
+        window.scrollTo(0, 1);
+        
+        // For iOS, ensure it stays hidden
+        if (navigator.userAgent.match(/iPhone|iPad|iPod/i)) {
+            setTimeout(() => {
+                window.scrollTo(0, 1);
+            }, 50);
+        }
+    }
+    
     init() {
         // Set initial brightness and volume
         this.applyBrightness();
@@ -215,6 +227,9 @@ class GestureControls {
     }
     
     handleTouchStart(e) {
+        // Hide address bar on any touch interaction
+        this.hideAddressBar();
+        
         e.preventDefault();
         const touch = e.touches[0];
         const rect = this.overlay.getBoundingClientRect();
@@ -247,6 +262,9 @@ class GestureControls {
     }
     
     handleTouchMove(e) {
+        // Hide address bar during gesture movement
+        this.hideAddressBar();
+        
         if (!this.isDragging || !this.dragSide) return;
         e.preventDefault();
         
@@ -273,6 +291,9 @@ class GestureControls {
     }
     
     handleTouchEnd(e) {
+        // Hide address bar on touch end
+        this.hideAddressBar();
+        
         if (!this.isDragging) {
             this.dragSide = null;
             return;
@@ -295,6 +316,9 @@ class GestureControls {
     }
     
     handleMouseDown(e) {
+        // Hide address bar on mouse down
+        this.hideAddressBar();
+        
         e.preventDefault();
         const rect = this.overlay.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -478,6 +502,9 @@ class GestureControls {
         if (this.videoContainer) {
             this.videoContainer.style.filter = '';
         }
+        
+        // Hide address bar on destroy
+        this.hideAddressBar();
     }
 }
 
