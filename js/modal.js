@@ -16,6 +16,15 @@ class SettingsModal {
             this.autoFullscreen = savedAutoFullscreen === 'true';
         }
         
+        // Load portrait fullscreen setting (default to true for mobile)
+        const savedMobileFullscreenPortrait = localStorage.getItem('mobileFullscreenPortrait');
+        if (savedMobileFullscreenPortrait === null) {
+            this.mobileFullscreenPortrait = this.deviceInfo.isMobile || this.deviceInfo.isTablet;
+            localStorage.setItem('mobileFullscreenPortrait', this.mobileFullscreenPortrait);
+        } else {
+            this.mobileFullscreenPortrait = savedMobileFullscreenPortrait === 'true';
+        }
+        
         this.qualityPreference = localStorage.getItem('qualityPreference') || 'auto';
     }
     
@@ -107,14 +116,24 @@ class SettingsModal {
                         </div>
                         
                         <div class="settings-section">
-                            <h4><i class="fas fa-sliders-h"></i> Playback Settings</h4>
+                            <h4><i class="fas fa-sliders-h"></i> Display Settings</h4>
                             <div class="setting-item">
                                 <div>
                                     <div class="setting-label">Auto Fullscreen (Landscape)</div>
-                                    <div class="setting-description">Automatically enter fullscreen when rotating to landscape on mobile</div>
+                                    <div class="setting-description">Automatically enter video fullscreen when rotating to landscape on mobile</div>
                                 </div>
                                 <label class="toggle-switch">
                                     <input type="checkbox" id="autoFullscreenToggle" ${this.autoFullscreen ? 'checked' : ''}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">Full Website in Portrait</div>
+                                    <div class="setting-description">Make entire website fullscreen on mobile when in portrait mode</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="mobileFullscreenPortraitToggle" ${this.mobileFullscreenPortrait ? 'checked' : ''}>
                                     <span class="toggle-slider"></span>
                                 </label>
                             </div>
@@ -134,8 +153,10 @@ class SettingsModal {
                         
                         <div class="info-note">
                             <i class="fas fa-info-circle"></i> 
-                            <span>Auto fullscreen is ${this.autoFullscreen ? 'ENABLED' : 'DISABLED'} for your ${this.deviceInfo.isMobile ? 'mobile device' : (this.deviceInfo.isTablet ? 'tablet' : 'desktop')}.</span>
-                            ${this.autoFullscreen ? '<span style="color:#f97316;"> Rotate your device to landscape to test.</span>' : ''}
+                            <span>
+                                <strong>Auto Fullscreen (Landscape):</strong> ${this.autoFullscreen ? 'ENABLED' : 'DISABLED'} - Rotate to landscape to test.<br>
+                                <strong>Full Website in Portrait:</strong> ${this.mobileFullscreenPortrait ? 'ENABLED' : 'DISABLED'} - Makes the entire website fullscreen in portrait mode.
+                            </span>
                         </div>
                         
                         <button id="applySettingsBtn" class="settings-btn">
@@ -212,6 +233,7 @@ class SettingsModal {
     
     applySettings() {
         const autoFullscreenToggle = document.getElementById('autoFullscreenToggle');
+        const mobileFullscreenPortraitToggle = document.getElementById('mobileFullscreenPortraitToggle');
         const qualitySelect = document.getElementById('qualitySelect');
         
         if (autoFullscreenToggle) {
@@ -219,13 +241,25 @@ class SettingsModal {
             localStorage.setItem('autoFullscreen', this.autoFullscreen);
         }
         
+        if (mobileFullscreenPortraitToggle) {
+            this.mobileFullscreenPortrait = mobileFullscreenPortraitToggle.checked;
+            localStorage.setItem('mobileFullscreenPortrait', this.mobileFullscreenPortrait);
+        }
+        
         if (qualitySelect) {
             this.qualityPreference = qualitySelect.value;
             localStorage.setItem('qualityPreference', this.qualityPreference);
         }
         
+        // Trigger orientation check to apply new settings
+        if (window.fullscreenManager) {
+            setTimeout(() => {
+                window.fullscreenManager.handleOrientationChange();
+            }, 100);
+        }
+        
         // Show success message with status
-        this.showToast(`Settings applied! Auto fullscreen is now ${this.autoFullscreen ? 'ON' : 'OFF'}`);
+        this.showToast(`Settings applied! Auto fullscreen: ${this.autoFullscreen ? 'ON' : 'OFF'} | Portrait fullscreen: ${this.mobileFullscreenPortrait ? 'ON' : 'OFF'}`);
         
         // Close modal after a short delay
         setTimeout(() => {
@@ -267,12 +301,13 @@ class SettingsModal {
         setTimeout(() => {
             toast.style.opacity = '0';
             setTimeout(() => toast.remove(), 300);
-        }, 2000);
+        }, 3000);
     }
     
     getSettings() {
         return {
             autoFullscreen: this.autoFullscreen,
+            mobileFullscreenPortrait: this.mobileFullscreenPortrait,
             qualityPreference: this.qualityPreference,
             deviceInfo: this.deviceInfo
         };
