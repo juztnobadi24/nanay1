@@ -967,6 +967,9 @@ class ChatUI {
         
         const userInfo = this.chatService.getUserInfo();
         
+        // Display full device ID without truncation
+        const deviceDisplay = userInfo.deviceId ? userInfo.deviceId : 'unknown';
+        
         const modalHTML = `
             <div id="chatModal" class="modal chat-modal">
                 <div class="modal-content" style="padding: 0;">
@@ -979,7 +982,7 @@ class ChatUI {
                             <i class="fas fa-user-circle"></i>
                             <span>You are: <strong>${escapeHtml(userInfo.name)}</strong></span>
                             ${userInfo.isAdmin ? '<span class="admin-badge"><i class="fas fa-crown"></i> Admin</span>' : ''}
-                            ${userInfo.deviceId ? `<span class="device-info" style="font-size: 0.65rem; margin-left: 8px;"><i class="fas fa-mobile-alt"></i> Device: ${userInfo.deviceId.substring(0, 8)}...</span>` : ''}
+                            ${userInfo.deviceId ? `<span class="device-info" style="font-size: 0.7rem; margin-left: 8px;"><i class="fas fa-mobile-alt"></i> Device: ${escapeHtml(deviceDisplay)}</span>` : ''}
                             ${userInfo.isAdmin ? '<button class="logout-admin-btn" id="logoutAdminBtn"><i class="fas fa-sign-out-alt"></i> Logout Admin</button>' : ''}
                         </div>
                         <div class="chat-messages" id="chatMessages">
@@ -1568,7 +1571,7 @@ async function initFirebaseChat() {
             console.log("%cTo send notifications, click the bell icon and press 'New Notification'", "color: #9aa2bf;");
         } else {
             console.log("%c👤 Logged in as: " + userInfo.name, "color: #9aa2bf;");
-            console.log("%c🆔 Device ID: " + (userInfo.deviceId ? userInfo.deviceId.substring(0, 20) + "..." : "unknown"), "color: #9aa2bf;");
+            console.log("%c🆔 Device ID: " + (userInfo.deviceId ? userInfo.deviceId : "unknown"), "color: #9aa2bf;");
         }
         
     } catch (error) {
