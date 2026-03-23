@@ -451,16 +451,16 @@
     }
     
     .filter-row {
-        gap: 6px;
+        gap: 4px;
     }
     
     .filter-btn, .dropdown-btn, .favorites-btn {
-        padding: 6px 12px;
+        padding: 6px 10px;
         font-size: 0.75rem;
     }
     
     .search-icon-btn {
-        padding: 6px 10px;
+        padding: 6px 8px;
         font-size: 0.9rem;
     }
 }
@@ -478,31 +478,37 @@
     }
     
     .sidebar-header {
-        padding: 0.6rem 1rem 0.4rem;
+        padding: 0.6rem 0.8rem 0.4rem;
         margin-top: 0;
     }
     
     .filter-row {
         margin-bottom: 8px;
         margin-top: 0;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-    
-    .filter-group {
-        flex: 1;
-        justify-content: space-between;
-        min-width: auto;
+        gap: 4px;
+        justify-content: flex-start;
     }
     
     .filter-btn, .dropdown-btn, .favorites-btn {
-        padding: 5px 12px;
+        padding: 5px 8px;
         font-size: 0.7rem;
     }
     
-    .search-icon-btn {
+    .filter-btn {
+        padding: 5px 10px;
+    }
+    
+    .dropdown-btn {
         padding: 5px 8px;
-        font-size: 0.9rem;
+    }
+    
+    .favorites-btn {
+        padding: 5px 8px;
+    }
+    
+    .search-icon-btn {
+        padding: 5px 6px;
+        font-size: 0.85rem;
     }
     
     .channel-list {
@@ -547,6 +553,102 @@
     }
 }
 
+/* ========== SMALL MOBILE (max-width: 480px) - EVEN TIGHTER ========== */
+@media (max-width: 480px) {
+    .sidebar-header {
+        padding: 0.5rem 0.6rem 0.3rem;
+    }
+    
+    .filter-row {
+        gap: 3px;
+    }
+    
+    .filter-btn {
+        padding: 4px 8px;
+        font-size: 0.65rem;
+    }
+    
+    .dropdown-btn {
+        padding: 4px 6px;
+        font-size: 0.65rem;
+        gap: 4px;
+    }
+    
+    .dropdown-btn i {
+        font-size: 0.65rem;
+    }
+    
+    .favorites-btn {
+        padding: 4px 6px;
+        font-size: 0.65rem;
+        gap: 4px;
+    }
+    
+    .favorites-btn i {
+        font-size: 0.7rem;
+    }
+    
+    .search-icon-btn {
+        padding: 4px 5px;
+        font-size: 0.8rem;
+    }
+    
+    .channel-list {
+        padding: 0.2rem 0.4rem 0.4rem 0.4rem;
+    }
+    
+    .channel-item {
+        padding: 0.45rem 0.6rem;
+        gap: 6px;
+    }
+    
+    .channel-logo {
+        width: 32px;
+        height: 32px;
+        font-size: 0.75rem;
+        border-radius: 8px;
+    }
+    
+    .channel-name {
+        font-size: 0.75rem;
+    }
+    
+    .channel-category {
+        font-size: 0.55rem;
+    }
+    
+    .favorite-icon {
+        font-size: 0.75rem;
+    }
+}
+
+/* ========== EXTRA SMALL MOBILE (max-width: 380px) ========== */
+@media (max-width: 380px) {
+    .filter-row {
+        gap: 2px;
+    }
+    
+    .filter-btn {
+        padding: 3px 6px;
+        font-size: 0.6rem;
+    }
+    
+    .dropdown-btn {
+        padding: 3px 5px;
+        font-size: 0.6rem;
+    }
+    
+    .favorites-btn {
+        padding: 3px 5px;
+        font-size: 0.6rem;
+    }
+    
+    .search-icon-btn {
+        padding: 3px 4px;
+        font-size: 0.75rem;
+    }
+}
+
 @media (min-width: 641px) and (max-width: 1024px) and (orientation: portrait) {
     .channel-sidebar {
         width: 100%;
@@ -559,10 +661,19 @@
     }
     
     .sidebar-header {
-        padding: 0.8rem 1.2rem 0.6rem;
+        padding: 0.8rem 1rem 0.6rem;
         margin-top: 0;
         border-bottom: 2px solid #f97316;
         background: linear-gradient(135deg, #1a1f2e 0%, #131724 100%);
+    }
+    
+    .filter-row {
+        gap: 6px;
+    }
+    
+    .filter-btn, .dropdown-btn, .favorites-btn {
+        padding: 6px 12px;
+        font-size: 0.75rem;
     }
     
     .channel-item {
@@ -584,13 +695,13 @@
     }
     
     .filter-row {
+        gap: 4px;
         flex-wrap: wrap;
-        gap: 6px;
     }
     
-    .filter-group {
-        flex: 1;
-        justify-content: space-between;
+    .filter-btn, .dropdown-btn, .favorites-btn {
+        padding: 4px 8px;
+        font-size: 0.7rem;
     }
     
     .scroll-to-top {
@@ -611,13 +722,8 @@
     }
     
     .filter-row {
+        gap: 4px;
         flex-wrap: wrap;
-        gap: 8px;
-    }
-    
-    .filter-group {
-        flex: 1;
-        justify-content: space-between;
     }
 }
 
