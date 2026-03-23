@@ -442,6 +442,123 @@
     }
   },
 
-{ "name": "93.1 MONSTER RX", "type": "Radio", "category": "Music", "streamUrl": "https://in-icecast.eradioportal.com:8443/monsterrrx", "LocalLogo": "https://rx931.com/images/logo-main.png" },
-{ "name": "91.5 Win Radio Manila", "type": "Radio", "category": "Music", "streamUrl": "https://stream.zeno.fm/nz4ydgnu6hhvv?an-uid=4762660213158558940", "LocalLogo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/Ev1_yutQykKjO56VRPMAd2sEQlmrQC9EVrP9p-0rGLo/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJQ0k3b1NRbEFrTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJQ0k5dkRNNmdvTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTc0NDgyMzQxMjAwMA.webp" }
+{
+    "name": "90.7 Love Radio",
+    "type": "Radio",
+    "category": "FM",
+    "manifestUri": "https://azura.loveradio.com.ph/listen/love_radio_manila/radio.mp3",
+    "logo": "https://upload.wikimedia.org/wikipedia/en/3/32/Love_Radio_2021_logo.png?Love_Radio1184620647"
+  },
+  {
+    "name": "96.3 Easy Rock",
+    "type": "Radio",
+    "category": "FM",
+    "manifestUri": "https://azura.easyrock.com.ph/listen/easy_rock_manila/radio.mp3",
+    "logo": "https://upload.wikimedia.org/wikipedia/en/1/13/New_modernized_logo_of_96.3_Easy_Rock_-_Vectorized_via_InkScape.svg"
+  },
+  {
+    "name": "93.1 MONSTER RX",
+    "type": "Radio",
+    "category": "FM",
+    "manifestUri": "https://in-icecast.eradioportal.com:8443/monsterrrx",
+    "logo": "https://rx931.com/images/logo-main.png"
+  },
+  {
+    "name": "91.5 Win Radio Manila",
+    "type": "Radio",
+    "category": "FM",
+    "manifestUri": "https://stream.zeno.fm/nz4ydgnu6hhvv?an-uid=4762660213158558940",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/Ev1_yutQykKjO56VRPMAd2sEQlmrQC9EVrP9p-0rGLo/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJQ0k3b1NRbEFrTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJQ0k5dkRNNmdvTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTc0NDgyMzQxMjAwMA.webp"
+  },
+  {
+    "name": "95.5 Star FM Cebu",
+    "type": "Radio",
+    "category": "FM",
+    "manifestUri": "https://stream.zeno.fm/g98fs57q0y5tv?aw_0_req_lsid=376d510357a82bad906197fa7ba84f93",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/ZYMRqpgfV09UKg4XATVZf1ImvzXxiPAKCo92PKwI8nI/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJQ0E2THlrOEFvTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJQ0FnUE9Ya3drTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTU3NDE2NjMyOTAwMA.webp"
+  },
+  {
+    "name": "94.7 Energy FM Cebu",
+    "type": "Radio",
+    "category": "FM",
+    "manifestUri": "https://stream.zeno.fm/4oa5m3ffwutuv?dyn-uid=4953455941537461585&an-uid=6788999058307340397&dot-uid=0c6f2204002afaac5e3f41c4&amb-uid=8063733765431834548&dbm-uid=CAESEJoN6FTvjvF3Bvl0e_kDWTg&aw_0_req_lsid=b60d41b87dd35514d9cf949f42a559c6",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/XG-MObHM6PEtkzagDXocTb6RTP9-7aVgC3rLPtQpTp0/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYzFmNWUxNTgtM2VmOS00MTYzLWE1NWItOTZhMjU2MjIzYmE5L2ltYWdlLz91PTE3MjgzNDg4NTkwMDA.webp"
+  },
+  {
+    "name": "106.3 Energy FM Naga",
+    "type": "Radio",
+    "category": "FM",
+    "manifestUri": "https://stream.zeno.fm/klewk28qlqquv?aw_0_req_lsid=376d510357a82bad906197fa7ba84f93",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/-Y6IS9jaU9PriXP_3E3JHF4c-256Ob8Pl-9D5q48VjE/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvMjI5Y2YzNmYtZDJlMi00ZGRlLWJhMTMtZDUwYWMyOGM2NjMwL2ltYWdlLz91PTE3Mzk4NjUxMjIwMDA.webp"
+  },
+  {
+    "name": "102.7 Star FM Manila",
+    "type": "Radio",
+    "category": "FM",
+    "manifestUri": "https://stream.zeno.fm/69b1kf7q0y5tv?an-uid=4762660213158558940",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/_ZvbPylo7NBu72rPDnUvyCInPbTGGCj7iO57KrUOGW4/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJQ0E2THlrOEFvTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJQ0FnSXY2aGdvTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTU3NDE2NjQxNTAwMA.webp"
+  },
+  {
+    "name": "Tee Radio",
+    "type": "Radio",
+    "category": "FM",
+    "manifestUri": "https://stream.zeno.fm/r19q0f1hbm0uv?aw_0_req_lsid=376d510357a82bad906197fa7ba84f93",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/naE7jZGFRs5c0t0g3ULHHy-4vKFi03lHsXEcmRjW-0g/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJRFFpYnJ4N0FrTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJRFE2Zk90cmdnTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTY2MTY3NzE1MzAwMA.webp"
+  },
+  {
+    "name": "Station 1 Radio",
+    "type": "Radio",
+    "category": "FM",
+    "manifestUri": "https://stream.zeno.fm/6a9w4h8xqg0uv?aw_0_req_lsid=376d510357a82bad906197fa7ba84f93",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/8OuhHMZdgn8agTxt5HtAGl1IkvcnP-NzTBs4gDjI-2c/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJRFFfcm5DN3dnTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJRFFucnZOeGdnTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTY4OTU1MzAyODAwMA.webp"
+  },
+  {
+    "name": "Vibe Radio",
+    "type": "Radio",
+    "category": "FM",
+    "manifestUri": "https://stream.zeno.fm/zf0ac4raqy8uv?aw_0_req_lsid=376d510357a82bad906197fa7ba84f93",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/2omcviiNmet2a72dj84IDg4pUlt43mCC0UDlhQWVFyw/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJQ3dsdU9Gc0FvTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJQ3dpWlRfLWdnTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTY3MzQ5Nzc1NDAwMA.webp"
+  },
+  {
+    "name": "Dreamstar Teleradio Nationwide",
+    "type": "Radio",
+    "category": "FM",
+    "manifestUri": "https://usa13.fastcast4u.com/proxy/itunerworldwide?mp=/1",
+    "logo": "https://static.mytuner.mobi/media/tvos_radios/380/dreamstar-teleradio.f004004e.png"
+  },
+  {
+    "name": "Online Christian Radio",
+    "type": "Radio",
+    "category": "Praise and Worship",
+    "manifestUri": "https://stream.zeno.fm/grvs43g0tmzuv",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/ECaB9K5zwHe4kbsQqOhf5SJ01_L2wkyXIa-cHGPdwzc/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJRGd4Y0hCa1FzTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJRGdwWjNEMFFzTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTY2MTc1MzI0NjAwMA.webp"
+  },
+  {
+    "name": "One Radio Manila",
+    "type": "Radio",
+    "category": "Praise and Worship",
+    "manifestUri": "https://stream-155.zeno.fm/e9d0qhpxmv8uv",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/KQrS02TIJj_KEw1Lbc9mH14-OTMfGJchgZKgS_LnGSI/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJQ3d5dXEybEFzTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJQ3dxcjMyckFzTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTc1MDI5NDM5NTAwMA.webp"
+  },
+  {
+    "name": "Flame Gospel Radio",
+    "type": "Radio",
+    "category": "Praise and Worship",
+    "manifestUri": "https://stream.zeno.fm/1ruppedsd6quv",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/DSamCoS2ae3svnuek0UpEU2SatLtUM08ztxnlMoOkAY/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJQ2dncFhiclFrTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJQ2doY0tSbHdnTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTY2MTQ3NzU4ODAwMA.webp"
+  },
+  {
+    "name": "One Radio Christmas",
+    "type": "Radio",
+    "category": "Praise and Worship",
+    "manifestUri": "https://stream.zeno.fm/p29uvzkazy8uv",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/BeDsdWFYzxt7kruuYoLl3Wd5ckqNkRBnEi6WPEk2WAU/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJQ3d5dXEybEFzTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJQ3d1ZTNZcWdvTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTczMjkzNzM4MTAwMA.webp"
+  },
+  {
+    "name": "Send The Word Online Radio",
+    "type": "Radio",
+    "category": "Praise and Worship",
+    "manifestUri": "https://stream-175.zeno.fm/4vgyas31hc9uv",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/l2P2LqzjVpThF-4OA-N9D4OIV4oMdwRyC9V6lClFtDg/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvNmE2MjgxMWUtOWYyZS00NmJmLTliMzAtN2EwYjQ0ZmYzZTQ4L2ltYWdlLz91PTE3MTM5Mzc3MDkwMDA.webp"
+  }
 ]
