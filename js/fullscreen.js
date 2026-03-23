@@ -50,23 +50,8 @@ class FullscreenManager {
         console.log("Fullscreen Manager initialized");
     }
     
-    hideAddressBar() {
-        // Function to hide browser address bar
-        window.scrollTo(0, 1);
-        
-        // For iOS, ensure it stays hidden
-        if (navigator.userAgent.match(/iPhone|iPad|iPod/i)) {
-            setTimeout(() => {
-                window.scrollTo(0, 1);
-            }, 50);
-        }
-    }
-    
     handleOrientationChange() {
         console.log("Orientation change detected");
-        
-        // Hide address bar immediately on orientation change
-        this.hideAddressBar();
         
         // Clear any pending resize timer
         if (this.resizeTimer) {
@@ -134,9 +119,6 @@ class FullscreenManager {
                 if (document.fullscreenElement) {
                     console.log("LANDSCAPE: Auto-fullscreen disabled, exiting fullscreen");
                     this.exitFullscreen();
-                } else {
-                    // Even if not in fullscreen, hide address bar
-                    this.hideAddressBar();
                 }
             }
         } else {
@@ -144,9 +126,6 @@ class FullscreenManager {
             if (document.fullscreenElement) {
                 console.log("PORTRAIT: Exiting fullscreen");
                 this.exitFullscreen();
-            } else {
-                // Hide address bar in portrait mode as well
-                this.hideAddressBar();
             }
         }
     }
@@ -173,9 +152,6 @@ class FullscreenManager {
         // Add class for styling
         document.body.classList.add('video-fullscreen-mode');
         
-        // Scroll to top to hide address bar before entering fullscreen
-        this.hideAddressBar();
-        
         // Request fullscreen on video container
         const element = this.videoContainer;
         
@@ -189,21 +165,6 @@ class FullscreenManager {
                 fullscreenPromise.then(() => {
                     console.log("Video fullscreen entered successfully");
                     this.isVideoFullscreen = true;
-                    
-                    // Additional scroll after fullscreen to ensure address bar is hidden
-                    setTimeout(() => {
-                        this.hideAddressBar();
-                    }, 50);
-                    
-                    // Also hide address bar when touching video in fullscreen
-                    if (this.videoContainer) {
-                        const hideOnTouch = () => {
-                            this.hideAddressBar();
-                        };
-                        this.videoContainer.addEventListener('touchstart', hideOnTouch);
-                        this.videoContainer.addEventListener('click', hideOnTouch);
-                        this.videoContainer._hideAddressBarHandler = hideOnTouch;
-                    }
                 }).catch(err => {
                     console.error("Video fullscreen failed:", err);
                     // Restore UI if fullscreen fails
@@ -211,15 +172,10 @@ class FullscreenManager {
                     if (this.header) this.header.style.display = '';
                     document.body.classList.remove('video-fullscreen-mode');
                     this.isVideoFullscreen = false;
-                    // Still try to hide address bar
-                    this.hideAddressBar();
                 });
             } else {
                 // Fallback for browsers without Promise support
                 this.isVideoFullscreen = true;
-                setTimeout(() => {
-                    this.hideAddressBar();
-                }, 50);
             }
         };
         
@@ -229,13 +185,6 @@ class FullscreenManager {
     
     exitVideoFullscreen() {
         console.log("Exiting video fullscreen...");
-        
-        // Remove touch handlers
-        if (this.videoContainer && this.videoContainer._hideAddressBarHandler) {
-            this.videoContainer.removeEventListener('touchstart', this.videoContainer._hideAddressBarHandler);
-            this.videoContainer.removeEventListener('click', this.videoContainer._hideAddressBarHandler);
-            delete this.videoContainer._hideAddressBarHandler;
-        }
         
         // Exit fullscreen if video container is fullscreen
         if (document.fullscreenElement === this.videoContainer || 
@@ -264,29 +213,17 @@ class FullscreenManager {
         
         this.isVideoFullscreen = false;
         
-        // Hide address bar after exiting fullscreen
-        setTimeout(() => {
-            this.hideAddressBar();
-        }, 100);
-        
-        // After exiting, check if we need to apply any settings
+        // After exiting, check if we need to apply portrait fullscreen
         setTimeout(() => {
             const isLandscape = window.innerWidth > window.innerHeight;
             if (!isLandscape) {
-                this.hideAddressBar();
+                this.checkAndApplyFullscreen();
             }
         }, 150);
     }
     
     exitFullscreen() {
         console.log("Exiting fullscreen...");
-        
-        // Remove touch handlers if any
-        if (this.videoContainer && this.videoContainer._hideAddressBarHandler) {
-            this.videoContainer.removeEventListener('touchstart', this.videoContainer._hideAddressBarHandler);
-            this.videoContainer.removeEventListener('click', this.videoContainer._hideAddressBarHandler);
-            delete this.videoContainer._hideAddressBarHandler;
-        }
         
         if (document.exitFullscreen) {
             document.exitFullscreen();
@@ -305,11 +242,6 @@ class FullscreenManager {
         if (this.header) this.header.style.display = '';
         document.body.classList.remove('video-fullscreen-mode');
         document.body.classList.remove('website-fullscreen');
-        
-        // Hide address bar after exiting
-        setTimeout(() => {
-            this.hideAddressBar();
-        }, 100);
     }
     
     handleFullscreenChange() {
@@ -330,11 +262,6 @@ class FullscreenManager {
             if (this.sidebar) this.sidebar.style.display = '';
             if (this.header) this.header.style.display = '';
             
-            // Hide address bar after exiting fullscreen
-            setTimeout(() => {
-                this.hideAddressBar();
-            }, 100);
-            
             // Check if we need to re-enter based on current orientation
             setTimeout(() => {
                 const isLandscape = window.innerWidth > window.innerHeight;
@@ -342,9 +269,6 @@ class FullscreenManager {
                     // If we're in landscape and exited, re-enter video fullscreen
                     console.log("Re-checking fullscreen after exit...");
                     this.checkAndApplyFullscreen();
-                } else {
-                    // In portrait, just hide address bar
-                    this.hideAddressBar();
                 }
             }, 100);
         } else {
@@ -356,21 +280,6 @@ class FullscreenManager {
                 // Ensure UI is hidden when video is fullscreen
                 if (this.sidebar) this.sidebar.style.display = 'none';
                 if (this.header) this.header.style.display = 'none';
-                
-                // Hide address bar immediately when entering video fullscreen
-                setTimeout(() => {
-                    this.hideAddressBar();
-                }, 50);
-                
-                // Add touch handler to keep address bar hidden while in fullscreen
-                if (this.videoContainer && !this.videoContainer._hideAddressBarHandler) {
-                    const hideOnTouch = () => {
-                        this.hideAddressBar();
-                    };
-                    this.videoContainer.addEventListener('touchstart', hideOnTouch);
-                    this.videoContainer.addEventListener('click', hideOnTouch);
-                    this.videoContainer._hideAddressBarHandler = hideOnTouch;
-                }
             }
         }
     }
@@ -398,21 +307,9 @@ class FullscreenManager {
                 }
             }
         }
-        
-        // Always hide address bar after toggling
-        setTimeout(() => {
-            this.hideAddressBar();
-        }, 100);
     }
     
     destroy() {
-        // Remove touch handlers
-        if (this.videoContainer && this.videoContainer._hideAddressBarHandler) {
-            this.videoContainer.removeEventListener('touchstart', this.videoContainer._hideAddressBarHandler);
-            this.videoContainer.removeEventListener('click', this.videoContainer._hideAddressBarHandler);
-            delete this.videoContainer._hideAddressBarHandler;
-        }
-        
         window.removeEventListener('orientationchange', this.orientationHandler);
         window.removeEventListener('resize', this.orientationHandler);
         
@@ -430,9 +327,6 @@ class FullscreenManager {
         if (this.header) this.header.style.display = '';
         document.body.classList.remove('video-fullscreen-mode');
         document.body.classList.remove('website-fullscreen');
-        
-        // Hide address bar on destroy
-        this.hideAddressBar();
     }
 }
 
