@@ -103,6 +103,12 @@ async function onChannelSelect(channel) {
     window.isSwitchingChannel = true;
     
     try {
+        // First, destroy current player before loading new one
+        await playerComponent.destroyPlayers();
+        
+        // Small delay to ensure cleanup
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         // Play the channel
         const success = await playerComponent.playChannel(channel);
         
@@ -119,7 +125,7 @@ async function onChannelSelect(channel) {
         // Reset switching flag after a delay
         setTimeout(() => {
             window.isSwitchingChannel = false;
-        }, 1000);
+        }, 1500);
     }
 }
 
@@ -196,21 +202,15 @@ async function initApp() {
     // Initialize Firebase features (chat & notifications)
     initFirebaseFeatures();
     
-    // Force check orientation after a short delay to ensure layout is ready
-    setTimeout(() => {
-        if (fullscreenManager) {
-            fullscreenManager.checkAndApplyFullscreen();
-        }
-    }, 1000);
+    // Listen for orientation changes (log only)
+    window.addEventListener('orientationchange', () => {
+        console.log("Orientation changed - manual fullscreen only");
+    });
     
-    // Also listen for video play to trigger fullscreen check
+    // Listen for video play events
     if (playerComponent && playerComponent.videoPlayer) {
         playerComponent.videoPlayer.addEventListener('play', () => {
-            setTimeout(() => {
-                if (fullscreenManager) {
-                    fullscreenManager.checkAndApplyFullscreen();
-                }
-            }, 200);
+            console.log("Video playing");
         });
     }
     
