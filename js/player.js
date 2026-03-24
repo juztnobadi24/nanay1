@@ -14,6 +14,8 @@ class PlayerComponent {
         this.isShakaInitialized = false;
         this.currentChannel = null;
         this.isLoading = false;
+        this.loadRetryCount = 0;
+        this.maxRetries = 2;
         
         // Fullscreen button elements
         this.fullscreenBtn = null;
@@ -349,7 +351,7 @@ class PlayerComponent {
         }
     }
     
-    async loadStream(url, drmConfig = null, headers = null) {
+    async loadStream(url, drmConfig = null, headers = null, isRetry = false) {
         console.log("Loading stream:", url);
         
         // Clear any existing players first
@@ -361,8 +363,15 @@ class PlayerComponent {
         // Set a timeout for the entire load operation
         const loadTimeout = setTimeout(() => {
             console.warn("Stream load timeout for:", url);
-            this.showError("Stream load timeout - trying to reconnect...");
-        }, 30000);
+            if (!isRetry && this.loadRetryCount < this.maxRetries) {
+                this.loadRetryCount++;
+                console.log(`Retrying stream load (${this.loadRetryCount}/${this.maxRetries})...`);
+                this.showError(`Connection timeout, retrying (${this.loadRetryCount}/${this.maxRetries})...`);
+                this.loadStream(url, drmConfig, headers, true);
+            } else if (this.loadRetryCount >= this.maxRetries) {
+                this.showError("Failed to load stream after multiple attempts");
+            }
+        }, 15000);
         
         try {
             if (isDash) {
@@ -399,6 +408,7 @@ class PlayerComponent {
                 }, 100);
                 
                 clearTimeout(loadTimeout);
+                this.loadRetryCount = 0;
                 return true;
             } 
             else if (isHls) {
@@ -428,13 +438,16 @@ class PlayerComponent {
                             if (!resolved) {
                                 resolved = true;
                                 if (timeoutId) clearTimeout(timeoutId);
+                                clearTimeout(loadTimeout);
                                 this.videoPlayer.play()
                                     .then(() => {
                                         console.log("HLS playback started");
+                                        this.loadRetryCount = 0;
                                         resolve(true);
                                     })
                                     .catch(e => {
                                         console.warn("Autoplay blocked:", e);
+                                        this.loadRetryCount = 0;
                                         resolve(true);
                                     });
                             }
@@ -443,13 +456,23 @@ class PlayerComponent {
                         this.hlsPlayer.on(Hls.Events.ERROR, (event, data) => {
                             console.error("HLS Error:", data);
                             if (data.fatal && !resolved) {
-                                if (data.type === 'networkError') {
-                                    // Retry network errors silently
-                                    console.warn("Network error, retrying...");
-                                    this.hlsPlayer.startLoad();
-                                } else {
+                                if (data.type === 'networkError' && !isRetry && this.loadRetryCount < this.maxRetries) {
+                                    // Retry network errors
                                     resolved = true;
                                     if (timeoutId) clearTimeout(timeoutId);
+                                    clearTimeout(loadTimeout);
+                                    this.loadRetryCount++;
+                                    console.log(`Retrying HLS stream (${this.loadRetryCount}/${this.maxRetries})...`);
+                                    this.showError(`Network error, retrying (${this.loadRetryCount}/${this.maxRetries})...`);
+                                    setTimeout(() => {
+                                        this.loadStream(url, drmConfig, headers, true)
+                                            .then(resolve)
+                                            .catch(reject);
+                                    }, 2000);
+                                } else if (data.type !== 'networkError') {
+                                    resolved = true;
+                                    if (timeoutId) clearTimeout(timeoutId);
+                                    clearTimeout(loadTimeout);
                                     reject(new Error(data.details || "HLS stream error"));
                                 }
                             }
@@ -459,18 +482,29 @@ class PlayerComponent {
                         timeoutId = setTimeout(() => {
                             if (!resolved) {
                                 resolved = true;
-                                console.warn("HLS manifest load timeout, trying play anyway...");
-                                this.videoPlayer.play()
-                                    .then(() => {
-                                        console.log("HLS playback started (timeout fallback)");
-                                        resolve(true);
-                                    })
-                                    .catch(e => {
-                                        console.warn("Timeout play attempt:", e);
-                                        resolve(true);
-                                    });
+                                clearTimeout(loadTimeout);
+                                if (!isRetry && this.loadRetryCount < this.maxRetries) {
+                                    this.loadRetryCount++;
+                                    console.log(`Manifest timeout, retrying (${this.loadRetryCount}/${this.maxRetries})...`);
+                                    this.showError(`Loading timeout, retrying (${this.loadRetryCount}/${this.maxRetries})...`);
+                                    this.loadStream(url, drmConfig, headers, true)
+                                        .then(resolve)
+                                        .catch(reject);
+                                } else {
+                                    console.warn("HLS manifest load timeout, trying play anyway...");
+                                    this.videoPlayer.play()
+                                        .then(() => {
+                                            console.log("HLS playback started (timeout fallback)");
+                                            this.loadRetryCount = 0;
+                                            resolve(true);
+                                        })
+                                        .catch(e => {
+                                            console.warn("Timeout play attempt:", e);
+                                            reject(new Error("Stream load timeout"));
+                                        });
+                                }
                             }
-                        }, 15000);
+                        }, 10000);
                         
                         this.hlsPlayer.loadSource(url);
                         this.hlsPlayer.attachMedia(this.videoPlayer);
@@ -480,6 +514,7 @@ class PlayerComponent {
                     this.videoPlayer.src = url;
                     await this.videoPlayer.play();
                     clearTimeout(loadTimeout);
+                    this.loadRetryCount = 0;
                     return true;
                 } else {
                     throw new Error("HLS not supported in this browser");
@@ -490,11 +525,22 @@ class PlayerComponent {
                 this.videoPlayer.src = url;
                 await this.videoPlayer.play();
                 clearTimeout(loadTimeout);
+                this.loadRetryCount = 0;
                 return true;
             }
         } catch (err) {
             clearTimeout(loadTimeout);
             console.error("loadStream error:", err);
+            
+            // Auto retry on error
+            if (!isRetry && this.loadRetryCount < this.maxRetries) {
+                this.loadRetryCount++;
+                console.log(`Retrying after error (${this.loadRetryCount}/${this.maxRetries})...`);
+                this.showError(`Playback error, retrying (${this.loadRetryCount}/${this.maxRetries})...`);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                return this.loadStream(url, drmConfig, headers, true);
+            }
+            
             this.showError(`Cannot play stream: ${err.message || "unknown error"}`);
             return false;
         }
@@ -508,11 +554,24 @@ class PlayerComponent {
         
         // Prevent multiple simultaneous loads
         if (this.isLoading) {
-            console.log("Already loading a channel, skipping...");
-            return false;
+            console.log("Already loading a channel, waiting...");
+            // Wait for current load to finish
+            await new Promise(resolve => {
+                const checkLoad = setInterval(() => {
+                    if (!this.isLoading) {
+                        clearInterval(checkLoad);
+                        resolve();
+                    }
+                }, 100);
+                setTimeout(() => {
+                    clearInterval(checkLoad);
+                    resolve();
+                }, 3000);
+            });
         }
         
         this.isLoading = true;
+        this.loadRetryCount = 0;
         
         try {
             console.log("Switching to channel:", channel.name);
