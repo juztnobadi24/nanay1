@@ -116,10 +116,10 @@ class PlayerComponent {
         this.fullscreenBtn.classList.add('show');
         this.isFullscreenBtnVisible = true;
         
-        // Hide after 5 seconds
+        // Hide after 3 seconds
         this.fullscreenTimeout = setTimeout(() => {
             this.hideFullscreenButton();
-        }, 5000);
+        }, 3000);
     }
     
     hideFullscreenButton() {
@@ -159,33 +159,56 @@ class PlayerComponent {
         
         if (isFullscreen) {
             // Exit fullscreen
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            } else if (document.mozCancelFullScreen) {
-                document.mozCancelFullScreen();
-            } else if (document.msExitFullscreen) {
-                document.msExitFullscreen();
-            }
+            this.exitFullscreen();
         } else {
             // Enter fullscreen on video container
-            const element = this.videoContainer;
-            const requestMethod = element.requestFullscreen || 
-                                 element.webkitRequestFullscreen || 
-                                 element.mozRequestFullScreen || 
-                                 element.msRequestFullscreen;
-            
-            if (requestMethod) {
-                requestMethod.call(element);
-            }
+            this.enterFullscreen();
+        }
+    }
+    
+    enterFullscreen() {
+        if (!this.videoContainer) return;
+        
+        const element = this.videoContainer;
+        const requestMethod = element.requestFullscreen || 
+                             element.webkitRequestFullscreen || 
+                             element.mozRequestFullScreen || 
+                             element.msRequestFullscreen;
+        
+        if (requestMethod) {
+            requestMethod.call(element).catch(err => {
+                console.error("Fullscreen request failed:", err);
+            });
         }
         
         // Update button icon
         this.updateFullscreenButtonIcon();
         
-        // Show button temporarily after toggle
-        this.showFullscreenButton();
+        // Show button temporarily after entering fullscreen
+        setTimeout(() => {
+            this.showFullscreenButton();
+        }, 100);
+    }
+    
+    exitFullscreen() {
+        const exitMethod = document.exitFullscreen || 
+                          document.webkitExitFullscreen || 
+                          document.mozCancelFullScreen || 
+                          document.msExitFullscreen;
+        
+        if (exitMethod) {
+            exitMethod.call(document).catch(err => {
+                console.error("Exit fullscreen failed:", err);
+            });
+        }
+        
+        // Update button icon
+        this.updateFullscreenButtonIcon();
+        
+        // Show button temporarily after exiting fullscreen
+        setTimeout(() => {
+            this.showFullscreenButton();
+        }, 100);
     }
     
     async destroyPlayers() {
