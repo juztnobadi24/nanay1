@@ -33,9 +33,7 @@ class PlayerComponent {
         this.container.innerHTML = `
             <div class="video-container" id="videoContainer">
                 <video id="videoPlayer" playsinline disablePictureInPicture autoplay></video>
-                <div class="radio-logo-container" id="radioLogoContainer" style="display: none;">
-                    <img id="radioLogoImg" class="radio-logo" alt="Radio Logo">
-                </div>
+                <div class="radio-logo-container" id="radioLogoContainer" style="display: none;"></div>
                 <button class="fullscreen-toggle-btn" id="fullscreenToggleBtn">
                     <i class="fas fa-expand"></i>
                 </button>
@@ -47,7 +45,6 @@ class PlayerComponent {
         this.errorMessageDiv = document.getElementById("errorMessage");
         this.videoContainer = document.getElementById("videoContainer");
         this.radioLogoContainer = document.getElementById("radioLogoContainer");
-        this.radioLogoImg = document.getElementById("radioLogoImg");
         
         // Remove controls from video player
         if (this.videoPlayer) {
@@ -67,7 +64,7 @@ class PlayerComponent {
     }
     
     showRadioLogo(channel) {
-        if (!this.radioLogoContainer || !this.radioLogoImg) return;
+        if (!this.radioLogoContainer) return;
         
         // Check if it's a radio channel
         const isRadio = channel.type === "Radio";
@@ -97,29 +94,74 @@ class PlayerComponent {
             logoUrl = 'https://via.placeholder.com/200x200/1a1e2c/f97316?text=📻';
         }
         
-        // Set logo image
-        this.radioLogoImg.src = logoUrl;
-        this.radioLogoImg.alt = channel.name;
+        // Clear existing content
+        this.radioLogoContainer.innerHTML = '';
+        
+        // Create wrapper
+        const wrapper = document.createElement('div');
+        wrapper.className = 'radio-logo-wrapper';
+        
+        // Create logo content container (like button)
+        const logoContent = document.createElement('div');
+        logoContent.className = 'radio-logo-content';
+        
+        // Create logo image
+        const img = document.createElement('img');
+        img.className = 'radio-logo';
+        img.src = logoUrl;
+        img.alt = channel.name;
         
         // Handle image load error
-        this.radioLogoImg.onerror = () => {
-            this.radioLogoImg.src = 'https://via.placeholder.com/200x200/1a1e2c/f97316?text=📻';
-            this.radioLogoImg.alt = 'Radio';
+        img.onerror = () => {
+            img.src = 'https://via.placeholder.com/200x200/1a1e2c/f97316?text=📻';
+            img.alt = 'Radio';
         };
+        
+        logoContent.appendChild(img);
+        wrapper.appendChild(logoContent);
+        
+        this.radioLogoContainer.appendChild(wrapper);
+        
+        // Add sound wave bars at the bottom
+        const soundWaveBars = document.createElement('div');
+        soundWaveBars.className = 'sound-wave-bars';
+        for (let i = 0; i < 12; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'sound-wave-bar';
+            soundWaveBars.appendChild(bar);
+        }
+        this.radioLogoContainer.appendChild(soundWaveBars);
+        
+        // Add side wave bars (left)
+        const leftWaveBars = document.createElement('div');
+        leftWaveBars.className = 'side-wave-bars left';
+        for (let i = 0; i < 6; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'side-wave-bar';
+            leftWaveBars.appendChild(bar);
+        }
+        this.radioLogoContainer.appendChild(leftWaveBars);
+        
+        // Add side wave bars (right)
+        const rightWaveBars = document.createElement('div');
+        rightWaveBars.className = 'side-wave-bars right';
+        for (let i = 0; i < 6; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'side-wave-bar';
+            rightWaveBars.appendChild(bar);
+        }
+        this.radioLogoContainer.appendChild(rightWaveBars);
+        
+        // Add station name
+        const stationName = document.createElement('div');
+        stationName.className = 'station-name';
+        stationName.textContent = channel.name;
+        this.radioLogoContainer.appendChild(stationName);
         
         // Show logo container
         this.radioLogoContainer.style.display = 'flex';
         
-        // Add station name overlay
-        let stationNameElem = this.radioLogoContainer.querySelector('.station-name');
-        if (!stationNameElem) {
-            stationNameElem = document.createElement('div');
-            stationNameElem.className = 'station-name';
-            this.radioLogoContainer.appendChild(stationNameElem);
-        }
-        stationNameElem.textContent = channel.name;
-        
-        // Fade out video player for radio (optional)
+        // Fade out video player for radio
         if (this.videoPlayer) {
             this.videoPlayer.style.opacity = '0.3';
         }
@@ -299,12 +341,9 @@ class PlayerComponent {
                 console.log("Trying fallback on video element...");
                 this.videoPlayer.requestFullscreen().catch(e => {
                     console.error("Video element fullscreen also failed:", e);
-                    // Don't show error, just log
                 });
             }
         });
-        
-        // Update button icon will be handled by onFullscreenChange event
     }
     
     exitFullscreen() {
@@ -339,8 +378,6 @@ class PlayerComponent {
         }).catch(err => {
             console.error("Exit fullscreen failed:", err);
         });
-        
-        // Update button icon will be handled by onFullscreenChange event
     }
     
     async destroyPlayers() {
@@ -406,7 +443,6 @@ class PlayerComponent {
             });
             this.shakaPlayer.addEventListener("error", (event) => {
                 console.error("Shaka error", event.detail);
-                // Don't show error message, just log
             });
             this.isShakaInitialized = true;
             return this.shakaPlayer;
@@ -415,19 +451,13 @@ class PlayerComponent {
     }
     
     showError(msg) {
-        // Don't show error messages for loading failures
-        // Just log them
         console.error(msg);
-        
-        // Hide loader if showing
         this.hideLoader();
     }
     
     showLoader(message = "Loading stream...") {
-        // Remove existing loader if any
         this.hideLoader();
         
-        // Create loader overlay
         this.loaderOverlay = document.createElement('div');
         this.loaderOverlay.className = 'loader-overlay';
         this.loaderOverlay.innerHTML = `
@@ -461,20 +491,17 @@ class PlayerComponent {
     async loadStream(url, drmConfig = null, headers = null, isRetry = false) {
         console.log("Loading stream:", url);
         
-        // Clear any existing players first
         await this.destroyPlayers();
         
         const isDash = url.includes(".mpd") || url.includes("manifest.mpd");
         const isHls = url.includes(".m3u8");
         
-        // Show loader with appropriate message
         if (isRetry) {
             this.updateLoaderMessage(`Retrying (${this.loadRetryCount}/${this.maxRetries})...`);
         } else {
             this.showLoader("Loading stream...");
         }
         
-        // Set a timeout for the entire load operation
         const loadTimeout = setTimeout(() => {
             console.warn("Stream load timeout for:", url);
             if (!isRetry && this.loadRetryCount < this.maxRetries) {
@@ -485,7 +512,6 @@ class PlayerComponent {
             } else if (this.loadRetryCount >= this.maxRetries) {
                 this.hideLoader();
                 console.error("Failed to load stream after multiple attempts");
-                // Don't show error message
             }
         }, 15000);
         
@@ -576,7 +602,6 @@ class PlayerComponent {
                             console.error("HLS Error:", data);
                             if (data.fatal && !resolved) {
                                 if (data.type === 'networkError' && !isRetry && this.loadRetryCount < this.maxRetries) {
-                                    // Retry network errors
                                     resolved = true;
                                     if (timeoutId) clearTimeout(timeoutId);
                                     clearTimeout(loadTimeout);
@@ -598,7 +623,6 @@ class PlayerComponent {
                             }
                         });
                         
-                        // Set a timeout for the manifest loading
                         timeoutId = setTimeout(() => {
                             if (!resolved) {
                                 resolved = true;
@@ -646,7 +670,6 @@ class PlayerComponent {
             clearTimeout(loadTimeout);
             console.error("loadStream error:", err);
             
-            // Auto retry on error
             if (!isRetry && this.loadRetryCount < this.maxRetries) {
                 this.loadRetryCount++;
                 console.log(`Retrying after error (${this.loadRetryCount}/${this.maxRetries})...`);
@@ -656,7 +679,6 @@ class PlayerComponent {
             }
             
             this.hideLoader();
-            // Don't show error message to user, just log
             console.error(`Cannot play stream: ${err.message || "unknown error"}`);
             return false;
         }
@@ -668,10 +690,8 @@ class PlayerComponent {
             return false;
         }
         
-        // Prevent multiple simultaneous loads
         if (this.isLoading) {
             console.log("Already loading a channel, waiting...");
-            // Wait for current load to finish
             await new Promise(resolve => {
                 const checkLoad = setInterval(() => {
                     if (!this.isLoading) {
@@ -689,7 +709,6 @@ class PlayerComponent {
         this.isLoading = true;
         this.loadRetryCount = 0;
         
-        // Show loader immediately
         this.showLoader("Loading channel...");
         
         // Show or hide radio logo based on channel type
@@ -703,31 +722,26 @@ class PlayerComponent {
             console.log("Switching to channel:", channel.name);
             this.currentChannel = channel;
             
-            // Clear DRM notice if it exists (not used anymore)
             if (this.drmNoticeSpan) {
                 this.drmNoticeSpan.innerHTML = '';
             }
             
-            // Get DRM config and headers
             let drmConfig = null;
             let headers = null;
             if (channel.drm) drmConfig = channel.drm;
             if (channel.headers) headers = channel.headers;
             
-            // Load and play the stream
             const success = await this.loadStream(channel.streamUrl, drmConfig, headers);
             
             if (success) {
                 window.activeChannelId = channel.id;
                 console.log("Channel playing successfully:", channel.name);
                 
-                // Update sidebar active state
                 if (window.sidebarComponent) {
                     window.sidebarComponent.updateActiveChannel(channel.id);
                 }
             } else {
                 console.error("Failed to play channel:", channel.name);
-                // Hide radio logo on failure
                 this.hideRadioLogo();
             }
             
@@ -738,7 +752,6 @@ class PlayerComponent {
             this.hideLoader();
             return false;
         } finally {
-            // Reset loading flag after a delay
             setTimeout(() => {
                 this.isLoading = false;
             }, 500);
@@ -752,7 +765,6 @@ class PlayerComponent {
                 this.hideRadioLogo();
             } else {
                 this.videoContainer.style.background = "linear-gradient(135deg, #1a1f2e 0%, #0f1222 100%)";
-                // If there's a current channel playing that's radio, show its logo
                 if (this.currentChannel && this.currentChannel.type === "Radio") {
                     this.showRadioLogo(this.currentChannel);
                 }
