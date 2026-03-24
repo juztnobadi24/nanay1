@@ -75,7 +75,6 @@
 }
 
 .fullscreen-toggle-btn:hover {
-    background: rgba(249, 115, 22, 0.9);
     transform: scale(1.05);
 }
 
@@ -280,7 +279,6 @@
     }
     
     .fullscreen-toggle-btn:hover {
-        background: rgba(249, 115, 22, 0.9);
         transform: scale(1.05);
     }
 }
