@@ -22,6 +22,8 @@
     height: 100%;
     object-fit: contain;
     background: #000;
+    position: relative;
+    z-index: 1;
 }
 
 .error-message {
@@ -39,74 +41,55 @@
     display: block;
 }
 
-@media (max-width: 780px) {
-    .player-area {
-        padding: 1rem;
-    }
+/* Fullscreen Toggle Button */
+.fullscreen-toggle-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    color: white;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* ========== PORTRAIT MODE PLAYER ADJUSTMENTS ========== */
-@media (max-width: 640px) and (orientation: portrait) {
-    .player-area {
-        padding: 0.8rem 0.8rem 0 0.8rem;
-        flex: 0 0 auto;
-        height: auto;
-        overflow-y: visible;
-    }
-    
-    .video-container {
-        border-radius: 20px;
-        aspect-ratio: 16 / 9;
-        width: 100%;
-    }
-    
-    .error-message {
-        margin-top: 6px;
-        margin-bottom: 0;
-        padding: 6px 10px;
-        font-size: 0.75rem;
-    }
+.fullscreen-toggle-btn.show {
+    opacity: 1;
+    visibility: visible;
 }
 
-@media (min-width: 641px) and (max-width: 1024px) and (orientation: portrait) {
-    .player-area {
-        padding: 1rem 1rem 0 1rem;
-        flex: 0 0 auto;
-        height: auto;
-        overflow-y: visible;
-    }
-    
-    .video-container {
-        border-radius: 24px;
-        aspect-ratio: 16 / 9;
-    }
-    
-    .error-message {
-        margin-top: 8px;
-        margin-bottom: 0;
-    }
+.fullscreen-toggle-btn:hover {
+    background: rgba(249, 115, 22, 0.9);
+    transform: scale(1.05);
 }
 
-/* For landscape on small screens */
-@media (max-width: 640px) and (orientation: landscape) {
-    .player-area {
-        padding: 0.6rem;
-    }
-    
-    .video-container {
-        border-radius: 16px;
-    }
-    
-    .error-message {
-        margin-top: 6px;
-        margin-bottom: 0;
-    }
+.fullscreen-toggle-btn:active {
+    transform: scale(0.95);
 }
-/* Add these styles to existing player.css */
 
 /* Gesture Controls Overlay */
 .gesture-overlay {
     cursor: default;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    background: transparent;
+    touch-action: none;
 }
 
 /* Control Indicator */
@@ -137,7 +120,6 @@
     opacity: 0;
 }
 
-
 /* For fullscreen mode */
 .video-container:fullscreen .gesture-overlay,
 .video-container:-webkit-full-screen .gesture-overlay,
@@ -145,8 +127,24 @@
     position: fixed;
 }
 
+/* When in fullscreen, adjust button position */
+:fullscreen .fullscreen-toggle-btn,
+:-webkit-full-screen .fullscreen-toggle-btn,
+:-moz-full-screen .fullscreen-toggle-btn {
+    bottom: 30px;
+    right: 30px;
+}
+
 /* Mobile optimization */
 @media (max-width: 640px) {
+    .fullscreen-toggle-btn {
+        bottom: 16px;
+        right: 16px;
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
     .control-indicator {
         padding: 8px 16px;
         font-size: 0.85rem;
@@ -163,37 +161,118 @@
         font-size: 0.75rem;
     }
 }
+
+/* Portrait mode player adjustments */
+@media (max-width: 640px) and (orientation: portrait) {
+    .player-area {
+        padding: 0.8rem 0.8rem 0 0.8rem;
+        flex: 0 0 auto;
+        height: auto;
+        overflow-y: visible;
+    }
+    
+    .video-container {
+        border-radius: 20px;
+    }
+    
+    .error-message {
+        margin-top: 6px;
+        margin-bottom: 0;
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) and (orientation: portrait) {
+    .player-area {
+        padding: 1rem 1rem 0 1rem;
+        flex: 0 0 auto;
+        height: auto;
+        overflow-y: visible;
+    }
+    
+    .video-container {
+        border-radius: 24px;
+    }
+    
+    .error-message {
+        margin-top: 8px;
+        margin-bottom: 0;
+    }
+}
+
+/* For landscape on small screens */
+@media (max-width: 640px) and (orientation: landscape) {
+    .player-area {
+        padding: 0.6rem;
+    }
+    
+    .video-container {
+        border-radius: 16px;
+    }
+    
+    .error-message {
+        margin-top: 6px;
+        margin-bottom: 0;
+    }
+}
+
+/* Desktop/Laptop Styles */
+@media (min-width: 1025px) {
+    .player-area {
+        padding: 1.5rem;
+    }
+    
+    .video-container {
+        border-radius: 28px;
+    }
+    
+    .fullscreen-toggle-btn:hover {
+        background: rgba(249, 115, 22, 0.9);
+        transform: scale(1.05);
+    }
+}
+
+/* Ensure video container maintains aspect ratio */
+.video-container {
+    position: relative;
+    background: #000;
+    border-radius: 28px;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.6);
+}
+
 /* Video fullscreen mode */
 .video-fullscreen-mode .video-container {
     background: #000;
+    border-radius: 0 !important;
+    aspect-ratio: auto !important;
+    height: 100vh !important;
+    width: 100vw !important;
 }
 
 .video-fullscreen-mode #videoPlayer {
     object-fit: contain;
 }
 
-/* Ensure proper fullscreen behavior */
-:fullscreen .video-container,
-:-webkit-full-screen .video-container,
-:-moz-full-screen .video-container {
-    background: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* Ensure fullscreen button stays on top in fullscreen mode */
+:fullscreen .fullscreen-toggle-btn,
+:-webkit-full-screen .fullscreen-toggle-btn,
+:-moz-full-screen .fullscreen-toggle-btn {
+    z-index: 1000;
 }
 
-:fullscreen #videoPlayer,
-:-webkit-full-screen #videoPlayer,
-:-moz-full-screen #videoPlayer {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-/* Smooth transitions for fullscreen changes */
-.video-container,
-#videoPlayer,
-.channel-sidebar,
-.header {
-    transition: all 0.2s ease;
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .fullscreen-toggle-btn {
+        width: 48px;
+        height: 48px;
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .fullscreen-toggle-btn:active {
+        transform: scale(0.95);
+    }
 }
