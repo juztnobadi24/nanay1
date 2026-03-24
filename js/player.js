@@ -73,7 +73,6 @@ class PlayerComponent {
         // Show button when video container is touched/clicked
         if (this.videoContainer) {
             this.videoContainer.addEventListener('click', (e) => {
-                // Don't hide if clicking the button itself
                 if (e.target === this.fullscreenBtn || this.fullscreenBtn.contains(e.target)) {
                     return;
                 }
@@ -81,7 +80,6 @@ class PlayerComponent {
             });
             
             this.videoContainer.addEventListener('touchstart', (e) => {
-                // Don't hide if touching the button itself
                 if (e.target === this.fullscreenBtn || this.fullscreenBtn.contains(e.target)) {
                     return;
                 }
@@ -123,25 +121,20 @@ class PlayerComponent {
             }
         }
         
-        // Show button briefly after fullscreen change
         this.showFullscreenButton();
-        
         console.log("Fullscreen changed:", isFullscreen ? "Entered" : "Exited");
     }
     
     showFullscreenButton() {
         if (!this.fullscreenBtn) return;
         
-        // Clear existing timeout
         if (this.fullscreenTimeout) {
             clearTimeout(this.fullscreenTimeout);
         }
         
-        // Show button
         this.fullscreenBtn.classList.add('show');
         this.isFullscreenBtnVisible = true;
         
-        // Hide after 3 seconds
         this.fullscreenTimeout = setTimeout(() => {
             this.hideFullscreenButton();
         }, 3000);
@@ -178,11 +171,24 @@ class PlayerComponent {
     enterFullscreen() {
         if (!this.videoContainer) return;
         
-        console.log("Attempting to enter fullscreen...");
+        console.log("Entering fullscreen with landscape orientation...");
         
         const element = this.videoContainer;
         
-        // Try all possible fullscreen methods
+        // First, try to lock orientation to landscape
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').then(() => {
+                console.log("Screen orientation locked to landscape");
+            }).catch(err => {
+                console.log("Orientation lock failed:", err);
+            });
+        } else if (screen.lockOrientation) {
+            screen.lockOrientation('landscape').catch(err => {
+                console.log("Orientation lock failed:", err);
+            });
+        }
+        
+        // Then request fullscreen
         const requestFullscreen = () => {
             if (element.requestFullscreen) {
                 return element.requestFullscreen();
@@ -196,45 +202,32 @@ class PlayerComponent {
             return Promise.reject("Fullscreen not supported");
         };
         
-        // Request fullscreen
         requestFullscreen().then(() => {
             console.log("Fullscreen entered successfully");
-            
-            // Try to lock orientation to landscape after entering fullscreen
-            setTimeout(() => {
-                if (screen.orientation && screen.orientation.lock) {
-                    screen.orientation.lock('landscape').catch(err => {
-                        console.log("Orientation lock failed:", err);
-                    });
-                } else if (screen.lockOrientation) {
-                    screen.lockOrientation('landscape').catch(err => {
-                        console.log("Orientation lock failed:", err);
-                    });
-                }
-            }, 100);
-            
         }).catch(err => {
             console.error("Fullscreen request failed:", err);
-            
-            // Fallback: Try to use the video element directly
+            // Fallback to video element if container fails
             if (this.videoPlayer && this.videoPlayer.requestFullscreen) {
                 console.log("Trying fallback on video element...");
                 this.videoPlayer.requestFullscreen().catch(e => {
                     console.error("Video element fullscreen also failed:", e);
-                    showError("Fullscreen not supported in this browser");
                 });
-            } else {
-                showError("Fullscreen not supported in this browser");
             }
         });
         
-        // Update button icon will be handled by onFullscreenChange event
+        // Update button icon
+        this.updateFullscreenButtonIcon();
+        
+        // Show button temporarily after entering fullscreen
+        setTimeout(() => {
+            this.showFullscreenButton();
+        }, 100);
     }
     
     exitFullscreen() {
-        console.log("Attempting to exit fullscreen...");
+        console.log("Exiting fullscreen...");
         
-        // Try all possible exit fullscreen methods
+        // Exit fullscreen
         const exitFullscreen = () => {
             if (document.exitFullscreen) {
                 return document.exitFullscreen();
@@ -251,10 +244,11 @@ class PlayerComponent {
         exitFullscreen().then(() => {
             console.log("Fullscreen exited successfully");
             
-            // Unlock orientation
+            // Unlock orientation after exiting fullscreen
             setTimeout(() => {
                 if (screen.orientation && screen.orientation.unlock) {
                     screen.orientation.unlock();
+                    console.log("Screen orientation unlocked");
                 } else if (screen.unlockOrientation) {
                     screen.unlockOrientation();
                 }
@@ -264,7 +258,29 @@ class PlayerComponent {
             console.error("Exit fullscreen failed:", err);
         });
         
-        // Update button icon will be handled by onFullscreenChange event
+        // Update button icon
+        this.updateFullscreenButtonIcon();
+        
+        // Show button temporarily after exiting fullscreen
+        setTimeout(() => {
+            this.showFullscreenButton();
+        }, 100);
+    }
+    
+    updateFullscreenButtonIcon() {
+        if (!this.fullscreenBtn) return;
+        
+        const isFullscreen = !!(document.fullscreenElement || 
+                                document.webkitFullscreenElement || 
+                                document.mozFullScreenElement);
+        
+        if (isFullscreen) {
+            this.fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+            this.fullscreenBtn.title = 'Exit Fullscreen';
+        } else {
+            this.fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+            this.fullscreenBtn.title = 'Enter Fullscreen';
+        }
     }
     
     async destroyPlayers() {
@@ -281,6 +297,7 @@ class PlayerComponent {
                 this.videoPlayer.pause();
                 this.videoPlayer.removeAttribute("src");
                 this.videoPlayer.load();
+                this.videoPlayer.src = '';
             } catch (e) {
                 console.warn("Error clearing video:", e);
             }
@@ -338,7 +355,6 @@ class PlayerComponent {
     async loadStream(url, drmConfig = null, headers = null) {
         console.log("Loading stream:", url);
         
-        // Clear any existing players first
         await this.destroyPlayers();
         
         const isDash = url.includes(".mpd") || url.includes("manifest.mpd");
@@ -372,7 +388,6 @@ class PlayerComponent {
                 
                 await player.load(url);
                 
-                // Force play
                 setTimeout(() => {
                     if (this.videoPlayer && !this.videoPlayer.paused) {
                         this.videoPlayer.play().catch(e => console.warn("Play attempt:", e));
@@ -385,6 +400,14 @@ class PlayerComponent {
                 console.log("Loading HLS stream");
                 if (Hls.isSupported()) {
                     return new Promise((resolve, reject) => {
+                        const loadingTimeout = setTimeout(() => {
+                            if (this.hlsPlayer) {
+                                console.error("HLS loading timeout");
+                                this.destroyPlayers();
+                                reject(new Error("Stream loading timeout"));
+                            }
+                        }, 15000);
+                        
                         this.hlsPlayer = new Hls({
                             enableWorker: true,
                             lowLatencyMode: true,
@@ -402,6 +425,7 @@ class PlayerComponent {
                         this.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
                             if (!resolved) {
                                 resolved = true;
+                                clearTimeout(loadingTimeout);
                                 this.videoPlayer.play()
                                     .then(() => {
                                         console.log("HLS playback started");
@@ -418,6 +442,8 @@ class PlayerComponent {
                             console.error("HLS Error:", data);
                             if (data.fatal && !resolved) {
                                 resolved = true;
+                                clearTimeout(loadingTimeout);
+                                this.destroyPlayers();
                                 reject(new Error(data.details || "HLS stream error"));
                             }
                         });
@@ -425,10 +451,10 @@ class PlayerComponent {
                         this.hlsPlayer.loadSource(url);
                         this.hlsPlayer.attachMedia(this.videoPlayer);
                         
-                        // Fallback timeout
                         setTimeout(() => {
                             if (!resolved) {
                                 resolved = true;
+                                clearTimeout(loadingTimeout);
                                 this.videoPlayer.play()
                                     .then(() => {
                                         console.log("HLS playback started (timeout fallback)");
@@ -459,6 +485,7 @@ class PlayerComponent {
         } catch (err) {
             console.error("loadStream error:", err);
             showError(`Cannot play stream: ${err.message || "unknown error"}`);
+            await this.destroyPlayers();
             return false;
         }
     }
@@ -469,9 +496,8 @@ class PlayerComponent {
             return false;
         }
         
-        // Prevent multiple simultaneous loads
         if (this.isLoading) {
-            console.log("Already loading a channel, skipping...");
+            console.log("Already loading a channel, ignoring...");
             return false;
         }
         
@@ -481,42 +507,45 @@ class PlayerComponent {
             console.log("Switching to channel:", channel.name);
             this.currentChannel = channel;
             
-            // Clear DRM notice if it exists (not used anymore)
             if (this.drmNoticeSpan) {
                 this.drmNoticeSpan.innerHTML = '';
             }
             
-            // Get DRM config and headers
             let drmConfig = null;
             let headers = null;
             if (channel.drm) drmConfig = channel.drm;
             if (channel.headers) headers = channel.headers;
             
-            // Load and play the stream
             const success = await this.loadStream(channel.streamUrl, drmConfig, headers);
             
             if (success) {
                 window.activeChannelId = channel.id;
                 console.log("Channel playing successfully:", channel.name);
                 
-                // Update sidebar active state
                 if (window.sidebarComponent) {
                     window.sidebarComponent.updateActiveChannel(channel.id);
                 }
             } else {
                 console.error("Failed to play channel:", channel.name);
+                window.activeChannelId = null;
+                if (window.sidebarComponent) {
+                    window.sidebarComponent.updateActiveChannel(null);
+                }
             }
             
             return success;
         } catch (error) {
             console.error("Error in playChannel:", error);
             showError(`Error playing ${channel.name}: ${error.message}`);
+            window.activeChannelId = null;
+            if (window.sidebarComponent) {
+                window.sidebarComponent.updateActiveChannel(null);
+            }
             return false;
         } finally {
-            // Reset loading flag after a delay
             setTimeout(() => {
                 this.isLoading = false;
-            }, 500);
+            }, 1000);
         }
     }
     
