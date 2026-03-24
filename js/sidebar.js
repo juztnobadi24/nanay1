@@ -480,6 +480,17 @@ class SidebarComponent {
         });
     }
     
+    getChannelLogo(channel) {
+        // Try to get logo from multiple sources
+        if (channel.logo) {
+            return channel.logo;
+        }
+        if (channel.logoLocal) {
+            return `images/${channel.logoLocal}.webp`;
+        }
+        return null;
+    }
+    
     renderChannelList() {
         if (!this.channelListDiv) return;
         
@@ -532,13 +543,22 @@ class SidebarComponent {
         let html = "";
         window.filteredChannels.forEach((channel) => {
             const isActive = (window.activeChannelId === channel.id);
-            const firstLetter = channel.name.charAt(0).toUpperCase();
             const displayName = channel.name.length > 30 ? channel.name.slice(0, 28) + ".." : channel.name;
             const favIcon = isFavorite(channel.id) ? 'fas fa-star' : 'far fa-star';
             
+            // Get channel logo
+            const logoUrl = this.getChannelLogo(channel);
+            
+            // If logo exists, use image, otherwise use first letter
+            const logoHtml = logoUrl 
+                ? `<img class="channel-logo-img" src="${logoUrl}" alt="${escapeHtml(channel.name)}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'channel-logo\'>${escapeHtml(channel.name.charAt(0).toUpperCase())}</div>'">`
+                : `<div class="channel-logo">${escapeHtml(channel.name.charAt(0).toUpperCase())}</div>`;
+            
             html += `
                 <div class="channel-item ${isActive ? 'active' : ''}" data-id="${channel.id}" data-channel-name="${escapeHtml(channel.name)}">
-                    <div class="channel-logo">${escapeHtml(firstLetter)}</div>
+                    <div class="channel-logo-wrapper">
+                        ${logoHtml}
+                    </div>
                     <div class="channel-info-side">
                         <div class="channel-name">${escapeHtml(displayName)}</div>
                         <div class="channel-category">${escapeHtml(channel.category)}</div>
