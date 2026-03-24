@@ -15,6 +15,7 @@
     overflow: hidden;
     aspect-ratio: 16 / 9;
     box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.6);
+    transition: all 0.3s ease;
 }
 
 #videoPlayer {
@@ -77,6 +78,33 @@
 
 .fullscreen-toggle-btn:active {
     transform: scale(0.95);
+}
+
+/* Force landscape mode for video when needed */
+.video-container.force-landscape {
+    transform: rotate(90deg);
+    transform-origin: center center;
+    width: 100vh !important;
+    height: 100vw !important;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
+    z-index: 10000;
+    background: #000;
+    border-radius: 0 !important;
+}
+
+/* When in fullscreen, reset the transform */
+:fullscreen .video-container.force-landscape,
+:-webkit-full-screen .video-container.force-landscape,
+:-moz-full-screen .video-container.force-landscape {
+    transform: none;
+    width: 100% !important;
+    height: 100% !important;
+    position: static;
+    top: auto;
+    left: auto;
 }
 
 /* Gesture Controls Overlay */
