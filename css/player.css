@@ -42,7 +42,7 @@
     display: block;
 }
 
-/* Fullscreen Toggle Button - Smaller */
+/* Fullscreen Toggle Button */
 .fullscreen-toggle-btn {
     position: absolute;
     bottom: 20px;
@@ -80,74 +80,44 @@
     transform: scale(0.95);
 }
 
-/* Popout Video Container */
-.popout-video-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #000;
+/* Fullscreen Styles - Critical for proper fullscreen behavior */
+.video-container:fullscreen,
+.video-container:-webkit-full-screen,
+.video-container:-moz-full-screen {
+    width: 100% !important;
+    height: 100% !important;
+    background: #000 !important;
+    border-radius: 0 !important;
+    aspect-ratio: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 9999 !important;
+}
+
+.video-container:fullscreen #videoPlayer,
+.video-container:-webkit-full-screen #videoPlayer,
+.video-container:-moz-full-screen #videoPlayer {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+}
+
+/* When in fullscreen, adjust button position */
+:fullscreen .fullscreen-toggle-btn,
+:-webkit-full-screen .fullscreen-toggle-btn,
+:-moz-full-screen .fullscreen-toggle-btn {
+    bottom: 30px;
+    right: 30px;
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
     z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fadeIn 0.3s ease;
-}
-
-.popout-video-wrapper {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #000;
-}
-
-.popout-control-bar {
-    position: absolute;
-    bottom: 20px;
-    left: 0;
-    right: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    padding: 12px 20px;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
-    z-index: 10001;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    border-radius: 60px;
-    width: fit-content;
-    margin: 0 auto;
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.popout-control-bar button {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    color: white;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 1.2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-}
-
-.popout-control-bar button:hover {
-    background: rgba(249, 115, 22, 0.9);
-    transform: scale(1.05);
-}
-
-.popout-control-bar button:active {
-    transform: scale(0.95);
 }
 
 /* Gesture Controls Overlay */
@@ -198,17 +168,6 @@
     position: fixed;
 }
 
-/* When in fullscreen, adjust button position */
-:fullscreen .fullscreen-toggle-btn,
-:-webkit-full-screen .fullscreen-toggle-btn,
-:-moz-full-screen .fullscreen-toggle-btn {
-    bottom: 30px;
-    right: 30px;
-    width: 40px;
-    height: 40px;
-    font-size: 1.1rem;
-}
-
 /* Mobile optimization */
 @media (max-width: 640px) {
     .fullscreen-toggle-btn {
@@ -237,37 +196,12 @@
     .control-indicator span:first-child {
         font-size: 1rem;
     }
-    
-    /* Popout control bar mobile adjustments */
-    .popout-control-bar {
-        gap: 15px;
-        padding: 10px 16px;
-        bottom: 16px;
-    }
-    
-    .popout-control-bar button {
-        width: 40px;
-        height: 40px;
-        font-size: 1rem;
-    }
 }
 
 @media (orientation: landscape) and (max-width: 640px) {
     .control-indicator {
         padding: 6px 12px;
         font-size: 0.75rem;
-    }
-    
-    .popout-control-bar {
-        bottom: 12px;
-        gap: 12px;
-        padding: 8px 14px;
-    }
-    
-    .popout-control-bar button {
-        width: 36px;
-        height: 36px;
-        font-size: 0.9rem;
     }
 }
 
@@ -346,11 +280,6 @@
         background: rgba(249, 115, 22, 0.9);
         transform: scale(1.05);
     }
-    
-    .popout-control-bar button:hover {
-        background: rgba(249, 115, 22, 0.9);
-        transform: scale(1.05);
-    }
 }
 
 /* Ensure video container maintains aspect ratio */
@@ -363,7 +292,7 @@
     box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.6);
 }
 
-/* Video fullscreen mode */
+/* Video fullscreen mode class (for when native fullscreen is active) */
 .video-fullscreen-mode .video-container {
     background: #000;
     border-radius: 0 !important;
@@ -380,7 +309,7 @@
 :fullscreen .fullscreen-toggle-btn,
 :-webkit-full-screen .fullscreen-toggle-btn,
 :-moz-full-screen .fullscreen-toggle-btn {
-    z-index: 1000;
+    z-index: 10000;
 }
 
 /* Touch device optimizations */
@@ -395,11 +324,6 @@
     .fullscreen-toggle-btn:active {
         transform: scale(0.95);
     }
-    
-    .popout-control-bar button {
-        width: 48px;
-        height: 48px;
-    }
 }
 
 /* Animations */
@@ -411,4 +335,33 @@
 @keyframes slideUp {
     from { transform: translateY(20px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+}
+
+/* Additional styles to ensure fullscreen works on all browsers */
+:-webkit-full-screen {
+    background-color: black !important;
+}
+
+:-moz-full-screen {
+    background-color: black !important;
+}
+
+:fullscreen {
+    background-color: black !important;
+}
+
+/* Ensure video container fills fullscreen properly */
+:-webkit-full-screen .video-container {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+:-moz-full-screen .video-container {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+:fullscreen .video-container {
+    width: 100% !important;
+    height: 100% !important;
 }
