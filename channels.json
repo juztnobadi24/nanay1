@@ -273,7 +273,7 @@
     {
     "name": "Eurosport 1",
     "type": "TV",
-    "logo": "ch_eurosport_1",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.G70kNeZzKIq7wek4iRqOnAHaEK?pid=Api&h=220&P=0",
     "category": "Sports",
     "streamUrl": "https://v4-pan-n79-cdn-01.live.cdn.cgates.lt/live/dash/561802/index.mpd",
     "drm": {
@@ -283,7 +283,7 @@
   {
     "name": "Eurosport 2",
     "type": "TV",
-    "logo": "ch_eurosport_2",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.G70kNeZzKIq7wek4iRqOnAHaEK?pid=Api&h=220&P=0",
     "category": "Sports",
     "streamUrl": "https://v4-pan-n79-cdn-01.live.cdn.cgates.lt/live/dash/561705/index.mpd",
     "drm": {
@@ -293,14 +293,14 @@
   {
     "name": "FIFA+",
     "type": "TV",
-    "logo": "ch_fifa_plus",
+    "logo": "https://images.seeklogo.com/logo-png/53/1/fifa-logo-png_seeklogo-537674.pngs",
     "category": "Sports",
     "streamUrl": "https://ca333c39.wurl.com/v1/sysdata_s_p_a_fifa_6/ohlscdn_us/latest/main/hls/playlist.m3u8"
   },
   {
     "name": "Fight+",
     "type": "TV",
-    "logo": "https://raw.githubusercontent.com/noodtayo/app/main/images/ch_fight_plus.webp",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.Ah19bBjnmRcxS-cEenjljgHaEu?pid=Api&h=220&P=0",
     "category": "Sports",
     "streamUrl": "https://amg19223-amg19223c6-amgplt0351.playout.now3.amagi.tv/playlist/amg19223-amg19223c6-amgplt0351/playlist.m3u8"
   },
@@ -308,7 +308,7 @@
     {
     "name": "F1 TV (1)",
     "type": "TV",
-    "logo": "https://raw.githubusercontent.com/noodtayo/app/main/images/ch_f1_tv.webp",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.QYxBTBNwg0kMz7wStbO0fQHaEK?pid=Api&h=220&P=0",
     "category": "Sports",
     "dateAdded": "2026-03-21",
     "streamUrl": "https://a184aivottlinear-a.akamaihd.net/OTTB/iad-nitro/live/clients/dash/enc/5fjow0mrvw/out/v1/f870533ee24b4f3bb98d2afe4b1e1bac/cenc.mpd",
@@ -319,7 +319,7 @@
   {
     "name": "F1 TV (2)",
     "type": "TV",
-    "logo": "https://raw.githubusercontent.com/noodtayo/app/main/images/ch_f1_tv.webp",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.QYxBTBNwg0kMz7wStbO0fQHaEK?pid=Api&h=220&P=0",
     "category": "Sports",
     "dateAdded": "2026-03-21",
     "streamUrl": "https://otte.cache.aiv-cdn.net/bom-nitro/live/clients/dash/enc/duqbirmk0d/out/v1/40f53c7cbc95498db3afd081c377d776/cenc.mpd",
@@ -380,7 +380,7 @@
   {
     "name": "HBO Family",
     "type": "TV",
-    "logo": "ch_hbo_family",
+    "logo": "https://logospng.org/download/hbo-family/logo-hbo-family-512.png",
     "category": "Movies",
     "streamUrl": "https://ucdn.mediaquest.com.ph/bpk-tv/cg_hbofam/default/index.mpd",
     "drm": {
@@ -390,7 +390,7 @@
     {
     "name": "HBO Hits",
     "type": "TV",
-    "logo": "ch_hbo_hits",
+    "logo": "https://static.wikia.nocookie.net/logopedia/images/0/04/HBO_HiTS.svg/revision/latest/scale-to-width-down/250?cb=20100511073403",
     "category": "Movies",
     "streamUrl": "https://ucdn.mediaquest.com.ph/bpk-tv/cg_hbohits/default/index.mpd",
     "drm": {
@@ -401,7 +401,7 @@
   {
     "name": "HBO Signature",
     "type": "TV",
-    "logo": "ch_hbo_signature",
+    "logo": "https://tse3.mm.bing.net/th/id/OIP.PNcaEsDsK8CX97tCTst7_gHaDw?pid=Api&h=220&P=0",
     "category": "Movies",
     "streamUrl": "https://ucdn.mediaquest.com.ph/bpk-tv/cg_hbosign/default/index.mpd",
     "drm": {
@@ -411,7 +411,7 @@
     {
     "name": "Jeepney TV",
     "type": "TV",
-    "logo": "ch_jeepney_tv",
+    "logo": "https://4.bp.blogspot.com/-URloFZ0yglM/UIFMSDxlcrI/AAAAAAAASMg/sRS0K4aJmC8/s1600/Jeepney-TV-Logo.jpg",
     "category": "Entertainment",
     "streamUrl": "https://abslive.akamaized.net/dash/live/2027618/jeepneytv/manifest.mpd",
     "drm": {
@@ -432,7 +432,7 @@
   {
     "name": "MovieSphere",
     "type": "TV",
-    "logo": "ch_moviesphere",
+    "logo": "https://tse4.mm.bing.net/th/id/OIP.OH6KANOcVN-rpIennsy6MgHaEK?pid=Api&h=220&P=0",
     "category": "Movies",
     "streamUrl": "https://amg00353-lionsgatestudio-moviesphere-xumo-zh5u0.amagi.tv/playlist.m3u8"
   },
@@ -440,7 +440,7 @@
     {
     "name": "Movies Now",
     "type": "TV",
-    "logo": "ch_movies_now",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.lveOGtLiClQDqabVAjM3LwHaHa?pid=Api&h=220&P=0",
     "category": "Movies",
     "streamUrl": "https://times-ott-live.akamaized.net/moviesnow_wv_drm/index.mpd",
     "drm": {
@@ -451,7 +451,7 @@
   {
     "name": "MYX Global",
     "type": "TV",
-    "logo": "ch_myx",
+    "logo": "https://images.seeklogo.com/logo-png/48/1/myx-logo-png_seeklogo-482518.png",
     "category": "Music",
     "streamUrl": "https://cdn-ue1-prod.tsv2.amagi.tv/linear/amg01006-abs-cbn-myxnola-dash-abscbnono/28b644c3-4a05-4733-a518-50ae75ff8193/index.mpd",
     "drm": {
@@ -464,7 +464,7 @@
     {
     "name": "NBA TV",
     "type": "TV",
-    "logo": "ch_nba_tv",
+    "logo": "https://static.vecteezy.com/system/resources/previews/027/127/440/original/nba-logo-nba-icon-transparent-free-png.png",
     "category": "Sports",
     "streamUrl": "https://bks400-tol-110.quieroxview.com.mx/bpk-tv/nba_tv_hd/default/index.mpd",
     "drm": {
@@ -475,14 +475,14 @@
     {
     "name": "New K-Pop",
     "type": "TV",
-    "logo": "ch_new_k_pop",
+    "logo": "https://24hrkpop.com/wp-content/uploads/2020/04/KPOP-Logo-Alpha.png",
     "category": "Music",
     "streamUrl": "https://newidco-newkid-1-eu.xiaomi.wurl.tv/playlist.m3u8"
   },
   {
     "name": "NFL Network",
     "type": "TV",
-    "logo": "ch_nfl_network",
+    "logo": "https://tse2.mm.bing.net/th/id/OIP.-O5xaqQzgF4_ZjXvVufitAHaHa?pid=Api&h=220&P=0",
     "category": "Sports",
     "streamUrl": "https://bks400-tol-110.quieroxview.com.mx/bpk-tv/nfl_hd/default/index.mpd",
     "drm": {
@@ -492,7 +492,7 @@
   {
     "name": "ONE Championship",
     "type": "TV",
-    "logo": "ch_one_championship",
+    "logo": "https://logowik.com/content/uploads/images/one-championship2775.jpg",
     "category": "Sports",
     "streamUrl": "https://live-pv-ta.amazon.fastly-edge.com/syd-nitro/live/clients/dash/enc/kkfdbi2d1c/out/v1/a5b9b32dafd5499688240287ef8c9b90/cenc.mpd",
     "drm": {
@@ -502,7 +502,7 @@
   {
     "name": "Pickle TV",
     "type": "TV",
-    "logo": "https://raw.githubusercontent.com/noodtayo/app/main/images/ch_pickle_tv.webp",
+    "logo": "https://tse3.mm.bing.net/th/id/OIP.5IbXxOB_xhUEFQFCXGU6UQHaHa?pid=Api&h=220&P=0",
     "category": "Sports",
     "dateAdded": "2026-03-19",
     "streamUrl": "https://fce26776.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/U3BvcnRzVHJpYmFsLWV1X1BpY2tsZVRWX0hMUw/playlist.m3u8"
@@ -511,14 +511,14 @@
     {
     "name": "Stories by AMC",
     "type": "TV",
-    "logo": "ch_amc_presents",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.E_ALVOsrM9xvzepA1oq4-gHaEJ?pid=Api&h=220&P=0",
     "category": "Movies",
     "streamUrl": "https://amc-amcpresents-1-us.plex.wurl.tv/playlist.m3u8"
   },
   {
     "name": "Tennis+",
     "type": "TV",
-    "logo": "ch_tennis_plus",
+    "logo": "https://tse4.mm.bing.net/th/id/OIP.YLaFJUU8hyI5A4hSbhPa5AHaEK?pid=Api&h=220&P=0",
     "category": "Sports",
     "streamUrl": "https://amg01935-amg01935c1-amgplt0352.playout.now3.amagi.tv/playlist/amg01935-amg01935c1-amgplt0352/playlist.m3u8"
   },
@@ -537,7 +537,7 @@
   {
     "name": "TFC",
     "type": "TV",
-    "logo": "ch_tfc",
+    "logo": "https://content.osn.com/bob/745x419/TFC.jpg",
     "category": "Entertainment",
     "streamUrl": "https://cdn-ue1-prod.tsv2.amagi.tv/linear/amg01006-abs-cbn-tfcasia-dash-abscbnono/index.mpd",
     "drm": {
@@ -550,7 +550,7 @@
     {
     "name": "Vevo Pop",
     "type": "TV",
-    "logo": "ch_vevo_pop",
+    "logo": "https://images.pluto.tv/channels/5d93b635b43dd1a399b39eee/featuredImage.jpg",
     "category": "Music",
     "streamUrl": "https://amg00056-amg00056c6-rakuten-uk-3235.playouts.now.amagi.tv/playlist.m3u8"
   },
@@ -558,7 +558,7 @@
     {
     "name": "Wild Earth",
     "type": "TV",
-    "logo": "ch_wild_earth",
+    "logo": "https://mms.businesswire.com/media/20221026005209/en/1613768/23/WE_Logo_V1_062222_Stacked_1-color_Forest.jpg",
     "category": "Documentary",
     "streamUrl": "https://wildearth-plex.amagi.tv/masterR1080p.m3u8"
   },
@@ -566,7 +566,7 @@
   {
     "name": "YTV",
     "type": "TV",
-    "logo": "ch_ytv",
+    "logo": "https://tse3.mm.bing.net/th/id/OIP.DfsD-OhD0b16GzoiCUf_GAHaHa?pid=Api&h=220&P=0",
     "category": "Kids",
     "streamUrl": "https://a196aivottlinear-a.akamaihd.net/OTTB/pdx-nitro/live/clients/dash/enc/o7aqpbb6vv/out/v1/f8f6ef738ef24c4f8176d561ffb8a157/cenc.mpd",
     "drm": {
@@ -576,7 +576,7 @@
   {
     "name": "[adult swim]",
     "type": "TV",
-    "logo": "ch_adult_swim",
+    "logo": "https://hipfonts.com/wp-content/uploads/2022/02/adult-swim-logo.jpg",
     "category": "Kids",
     "streamUrl": "https://a116aivottlinear-a.akamaihd.net/OTTB/pdx-nitro/live/clients/dash/enc/rwcf8uax9l/out/v1/13ccaaacbe1143e69b7732fced73f0ab/cenc.mpd",
     "drm": {
