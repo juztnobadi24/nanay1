@@ -2,7 +2,7 @@
     {
     "name": "Abante Radyo",
     "type": "TV",
-    "logoLocal": "ch_abante_radyo",
+    "logoLocal": "https://www.abante.com.ph/wp-content/uploads/2023/09/dwar_radio.webp",
     "category": "News",
     "streamUrl": "https://amg19223-amg19223c12-amgplt0352.playout.now3.amagi.tv/playlist/amg19223-amg19223c12-amgplt0352/playlist.m3u8"
   },
