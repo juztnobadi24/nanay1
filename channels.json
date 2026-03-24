@@ -166,35 +166,35 @@
   {
     "name": "AVA Family",
     "type": "TV",
-    "logo": "ch_ava_family",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.rSq_MfMvkmyVU30Vdtg-1AHaHa?pid=Api&h=220&P=0",
     "category": "Movies",
     "streamUrl": "https://familyhls.avatv.live/hls/stream.m3u8"
   },
   {
     "name": "AVA Series",
     "type": "TV",
-    "logo": "ch_ava_series",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.5D0NiVN4LlXjuFbqsKbkTQAAAA?pid=Api&h=220&P=0",
     "category": "Movies",
     "streamUrl": "https://avaserieshls.wns.live/hls/stream.m3u8"
   },
   {
     "name": "AWE Plus",
     "type": "TV",
-    "logo": "ch_awe_plus",
+    "logo": "https://tse4.mm.bing.net/th/id/OIP.kZwVrjAGRhuziLhTGn8_JwHaEL?pid=Api&h=220&P=0",
     "category": "Entertainment",
     "streamUrl": "https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg00450-herringnetwork-awe-lgau/playlist.m3u8?ads.deviceid=[DEVICE_ID]&ads.ifa=[IFA]&ads.ifatype=[IFA_TYPE]&ads.lat=[LMT]&ads.donotsell=[DNS]&ads.ua=[UA]&ads.ip=[IP]&ads.gdpr=[GDPR]&ads.gdprconsent=[GDPR_CONSENT]&ads.country=[COUNTRY]&ads.appstoreurl=[APP_STORE_URL]&ads.bundleid=[APP_BUNDLE]&ads.appname=[APP_NAME]&ads.appversion=[APP_VERSION]&ads.devicetype=[DEVICE_TYPE]&ads.devicemake=[DEVICE_MAKE]&ads.devicemodel=[DEVICE_MODEL]&ads.coppa=0&ads.targetad=[TARGETAD_ALLOWED]"
   },
   {
     "name": "Azteca International",
     "type": "TV",
-    "logo": "ch_azteca_international",
+    "logo": "https://tvazteca.brightspotcdn.com/6b/68/81ba31064811b3aaddf9f576682f/ainternacional-color.png",
     "category": "Drama",
     "streamUrl": "https://azt-mun.otteravision.com/azt/mun/mun_1080p.m3u8"
   },
   {
     "name": "Bilyonaryo News Channel",
     "type": "TV",
-    "logo": "ch_bnc",
+    "logo": "https://www.lyngsat.com/logo/tv/bb/bilyonaryo-news-channel-ph.png",
     "category": "News",
     "streamUrl": "https://amg19223-amg19223c11-amgplt0352.playout.now3.amagi.tv/playlist/amg19223-amg19223c11-amgplt0352/playlist.m3u8"
   },
@@ -202,7 +202,7 @@
   {
     "name": "Cinema One Global",
     "type": "TV",
-    "logo": "ch_cinema_one",
+    "logo": "https://s.pngkit.com/png/small/357-3578647_cinema-one-logo-cinema-one-logo-png.png",
     "category": "Movies",
     "streamUrl": "https://cdn-ue1-prod.tsv2.amagi.tv/linear/amg01006-abs-cbn-cinemaone-dash-abscbnono/index.mpd",
     "drm": {
@@ -212,7 +212,6 @@
   {
     "name": "Cinemo Global",
     "type": "TV",
-    "logo": "ch_cinemo",
     "category": "Movies",
     "streamUrl": "https://cdn-ue1-prod.tsv2.amagi.tv/linear/amg01006-abs-cbn-cinemo-dash-abscbnono/index.mpd",
     "drm": {
@@ -222,28 +221,28 @@
     {
     "name": "CNA",
     "type": "TV",
-    "logo": "ch_cna",
+    "logo": "https://www.marketbeat.com/logos/cna-financial-co-logo.png?v=20240215143558",
     "category": "News",
     "streamUrl": "https://d2e1asnsl7br7b.cloudfront.net/7782e205e72f43aeb4a48ec97f66ebbe/index.m3u8"
   },
     {
     "name": "DAZN Combat",
     "type": "TV",
-    "logo": "ch_dazn_combat",
+    "logo": "https://www.planetecsat.com/wp-content/uploads/2024/02/logo-DAZN-Combat.png",
     "category": "Sports",
     "streamUrl": "https://dazn-combat-rakuten.amagi.tv/hls/amagi_hls_data_rakutenAA-dazn-combat-rakuten/CDN/master.m3u8"
   },
   {
     "name": "DAZN Ringside",
     "type": "TV",
-    "logo": "ch_dazn_ringside",
+    "logo": "https://assets.goal.com/images/v3/blt077eff519e5ab803/DAZN-Logo.jpg?auto=webp&format=pjpg&width=3840&quality=60",
     "category": "Sports",
     "streamUrl": "https://aegis-cloudfront-1.tubi.video/bfad29e2-5bee-44f3-8256-127324e8b106/playlist.m3u8"
   },
   {
     "name": "Disney Channel",
     "type": "TV",
-    "logo": "ch_disney_channel",
+    "logo": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/eef93b81-b587-483c-a748-9745913f9219/dglo29x-d8ced47b-f36c-4e21-b4f7-b50df1cd01e9.png/v1/fill/w_955,h_836/disney_channel_my_concept_for_new_logo_2_by_kh111111_dglo29x-pre.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTExOSIsInBhdGgiOiJcL2ZcL2VlZjkzYjgxLWI1ODctNDgzYy1hNzQ4LTk3NDU5MTNmOTIxOVwvZGdsbzI5eC1kOGNlZDQ3Yi1mMzZjLTRlMjEtYjRmNy1iNTBkZjFjZDAxZTkucG5nIiwid2lkdGgiOiI8PTEyNzgifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.gOX0b8qqaMbYLbwGYuUsRPxGc8owawSigeqQ0ebdl_w",
     "category": "Kids",
     "streamUrl": "https://bks400-tol-110.quieroxview.com.mx/bpk-tv/disney_channel_hd/default/index.mpd",
     "drm": {
@@ -253,7 +252,7 @@
   {
     "name": "Disney Jr.",
     "type": "TV",
-    "logo": "ch_disney_jr",
+    "logo": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/3a9e9425-78dc-4ba0-8cf0-74c8eb23f673/dhiz5f7-24d48289-65a3-42e2-91e1-ce03fd872060.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcLzNhOWU5NDI1LTc4ZGMtNGJhMC04Y2YwLTc0YzhlYjIzZjY3M1wvZGhpejVmNy0yNGQ0ODI4OS02NWEzLTQyZTItOTFlMS1jZTAzZmQ4NzIwNjAucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.uwIQACD8Am2JqUtDmndKy76AIOfLt6-mAoHCY8JeN9o",
     "category": "Kids",
     "streamUrl": "https://bks400-tol-110.quieroxview.com.mx/bpk-tv/disney_jr_hd/default/index.mpd",
     "drm": {
@@ -264,7 +263,7 @@
     {
     "name": "DZMM Teleradyo",
     "type": "TV",
-    "logo": "ch_dzmm_teleradyo",
+    "logo": "https://static.wikia.nocookie.net/russel/images/0/0d/DZMM_TeleRadyo_Logo_2025.png/revision/latest/scale-to-width-down/1200?cb=20250619152431",
     "category": "News",
     "streamUrl": "https://cdn-ue1-prod.tsv2.amagi.tv/linear/amg01006-abs-cbn-teleradyo-dash-abscbnono/index.mpd",
     "drm": {
