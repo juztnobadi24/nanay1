@@ -16,6 +16,7 @@
     aspect-ratio: 16 / 9;
     box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.6);
     transition: all 0.3s ease;
+    display: block;
 }
 
 #videoPlayer {
@@ -25,6 +26,7 @@
     background: #000;
     position: relative;
     z-index: 1;
+    display: block;
 }
 
 .error-message {
@@ -64,6 +66,7 @@
     color: white;
     font-size: 1rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
 }
 
 .fullscreen-toggle-btn.show {
@@ -364,4 +367,55 @@
 :fullscreen .video-container {
     width: 100% !important;
     height: 100% !important;
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+    .video-container {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Fix for iOS fullscreen */
+    .video-container:fullscreen,
+    .video-container:-webkit-full-screen {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+    }
+    
+    #videoPlayer:fullscreen,
+    #videoPlayer:-webkit-full-screen {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+    }
+}
+
+/* Android Chrome specific */
+@media (max-width: 640px) {
+    .video-container:fullscreen,
+    .video-container:-webkit-full-screen {
+        border-radius: 0 !important;
+    }
+}
+
+/* Ensure video player has proper z-index during fullscreen */
+#videoPlayer {
+    z-index: 1;
+}
+
+.video-container:fullscreen #videoPlayer,
+.video-container:-webkit-full-screen #videoPlayer,
+.video-container:-moz-full-screen #videoPlayer {
+    z-index: 1000;
+}
+
+/* Prevent body scroll when in fullscreen */
+:fullscreen,
+:-webkit-full-screen,
+:-moz-full-screen {
+    overflow: hidden !important;
 }
