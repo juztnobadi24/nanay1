@@ -17,6 +17,7 @@
     box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.6);
     transition: all 0.3s ease;
     display: block;
+    margin-bottom: 1.5rem; /* Equal spacing on bottom matching top/left/right padding */
 }
 
 #videoPlayer {
@@ -30,7 +31,7 @@
 }
 
 .error-message {
-    margin-top: 12px;
+    margin-top: 0;
     background: rgba(220, 38, 38, 0.2);
     border-left: 4px solid #ef4444;
     padding: 12px 16px;
@@ -44,7 +45,7 @@
     display: block;
 }
 
-/* Fullscreen Toggle Button */
+/* Fullscreen Toggle Button - No hover/active colors */
 .fullscreen-toggle-btn {
     position: absolute;
     bottom: 20px;
@@ -62,11 +63,13 @@
     z-index: 20;
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
     color: white;
     font-size: 1rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     pointer-events: auto;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .fullscreen-toggle-btn.show {
@@ -74,12 +77,22 @@
     visibility: visible;
 }
 
+/* Remove hover effect - no background color change */
 .fullscreen-toggle-btn:hover {
-    transform: scale(1.05);
+    background: rgba(0, 0, 0, 0.7);
+    transform: none;
 }
 
+/* Remove active/click effect - no scale or color change */
 .fullscreen-toggle-btn:active {
-    transform: scale(0.95);
+    transform: none;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+/* Remove focus outline */
+.fullscreen-toggle-btn:focus {
+    outline: none;
+    box-shadow: none;
 }
 
 /* Fullscreen Styles - Critical for proper fullscreen behavior */
@@ -100,6 +113,7 @@
     right: 0 !important;
     bottom: 0 !important;
     z-index: 9999 !important;
+    margin: 0 !important;
 }
 
 .video-container:fullscreen #videoPlayer,
@@ -172,6 +186,15 @@
 
 /* Mobile optimization */
 @media (max-width: 640px) {
+    .player-area {
+        padding: 0.8rem;
+    }
+    
+    .video-container {
+        margin-bottom: 0.8rem; /* Equal spacing on mobile */
+        border-radius: 20px;
+    }
+    
     .fullscreen-toggle-btn {
         bottom: 16px;
         right: 16px;
@@ -198,6 +221,32 @@
     .control-indicator span:first-child {
         font-size: 1rem;
     }
+    
+    .error-message {
+        margin-top: 0;
+        margin-bottom: 0;
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .player-area {
+        padding: 0.6rem;
+    }
+    
+    .video-container {
+        margin-bottom: 0.6rem;
+        border-radius: 16px;
+    }
+    
+    .fullscreen-toggle-btn {
+        bottom: 12px;
+        right: 12px;
+        width: 28px;
+        height: 28px;
+        font-size: 0.8rem;
+    }
 }
 
 @media (orientation: landscape) and (max-width: 640px) {
@@ -205,23 +254,30 @@
         padding: 6px 12px;
         font-size: 0.75rem;
     }
+    
+    .player-area {
+        padding: 0.6rem;
+    }
+    
+    .video-container {
+        margin-bottom: 0.6rem;
+        border-radius: 16px;
+    }
 }
 
 /* Portrait mode player adjustments */
 @media (max-width: 640px) and (orientation: portrait) {
     .player-area {
-        padding: 0.8rem 0.8rem 0 0.8rem;
-        flex: 0 0 auto;
-        height: auto;
-        overflow-y: visible;
+        padding: 0.8rem;
     }
     
     .video-container {
         border-radius: 20px;
+        margin-bottom: 0.8rem;
     }
     
     .error-message {
-        margin-top: 6px;
+        margin-top: 0;
         margin-bottom: 0;
         padding: 6px 10px;
         font-size: 0.75rem;
@@ -230,19 +286,18 @@
 
 @media (min-width: 641px) and (max-width: 1024px) and (orientation: portrait) {
     .player-area {
-        padding: 1rem 1rem 0 1rem;
-        flex: 0 0 auto;
-        height: auto;
-        overflow-y: visible;
+        padding: 1.2rem;
     }
     
     .video-container {
         border-radius: 24px;
+        margin-bottom: 1.2rem;
     }
     
     .error-message {
-        margin-top: 8px;
+        margin-top: 0;
         margin-bottom: 0;
+        padding: 8px 12px;
     }
 }
 
@@ -254,11 +309,13 @@
     
     .video-container {
         border-radius: 16px;
+        margin-bottom: 0.6rem;
     }
     
     .error-message {
-        margin-top: 6px;
+        margin-top: 0;
         margin-bottom: 0;
+        padding: 6px 10px;
     }
 }
 
@@ -270,16 +327,13 @@
     
     .video-container {
         border-radius: 28px;
+        margin-bottom: 1.5rem;
     }
     
     .fullscreen-toggle-btn {
         width: 38px;
         height: 38px;
         font-size: 1rem;
-    }
-    
-    .fullscreen-toggle-btn:hover {
-        transform: scale(1.05);
     }
 }
 
@@ -300,6 +354,7 @@
     aspect-ratio: auto !important;
     height: 100vh !important;
     width: 100vw !important;
+    margin: 0 !important;
 }
 
 .video-fullscreen-mode #videoPlayer {
@@ -323,7 +378,7 @@
     }
     
     .fullscreen-toggle-btn:active {
-        transform: scale(0.95);
+        transform: none;
     }
 }
 
@@ -355,16 +410,19 @@
 :-webkit-full-screen .video-container {
     width: 100% !important;
     height: 100% !important;
+    margin: 0 !important;
 }
 
 :-moz-full-screen .video-container {
     width: 100% !important;
     height: 100% !important;
+    margin: 0 !important;
 }
 
 :fullscreen .video-container {
     width: 100% !important;
     height: 100% !important;
+    margin: 0 !important;
 }
 
 /* iOS Safari specific fixes */
@@ -382,6 +440,7 @@
         width: 100% !important;
         height: 100% !important;
         object-fit: contain !important;
+        margin: 0 !important;
     }
     
     #videoPlayer:fullscreen,
@@ -397,6 +456,7 @@
     .video-container:fullscreen,
     .video-container:-webkit-full-screen {
         border-radius: 0 !important;
+        margin: 0 !important;
     }
 }
 
@@ -417,4 +477,3 @@
 :-moz-full-screen {
     overflow: hidden !important;
 }
-
