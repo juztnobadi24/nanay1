@@ -20,11 +20,12 @@ class PlayerComponent {
         this.fullscreenTimeout = null;
         this.isFullscreenBtnVisible = false;
         
-        // Fallback fullscreen elements
-        this.fullscreenWrapper = null;
+        // Popout video elements
+        this.popoutPlayer = null;
+        this.popoutContainer = null;
+        this.isPopoutActive = false;
         this.originalParent = null;
         this.originalNextSibling = null;
-        this.exitButton = null;
     }
     
     render() {
@@ -68,10 +69,10 @@ class PlayerComponent {
         // Initially hide the button
         this.hideFullscreenButton();
         
-        // Add click event to toggle fullscreen
+        // Add click event to toggle popout fullscreen
         this.fullscreenBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            this.toggleFullscreen();
+            this.togglePopoutFullscreen();
         });
         
         // Show button when video container is touched/clicked
@@ -103,11 +104,6 @@ class PlayerComponent {
                 this.showFullscreenButton();
             });
         }
-        
-        // Update button icon when fullscreen changes
-        document.addEventListener('fullscreenchange', () => this.updateFullscreenButtonIcon());
-        document.addEventListener('webkitfullscreenchange', () => this.updateFullscreenButtonIcon());
-        document.addEventListener('mozfullscreenchange', () => this.updateFullscreenButtonIcon());
     }
     
     showFullscreenButton() {
@@ -140,14 +136,289 @@ class PlayerComponent {
         }
     }
     
-    updateFullscreenButtonIcon() {
+    async togglePopoutFullscreen() {
+        if (this.isPopoutActive) {
+            await this.closePopoutPlayer();
+        } else {
+            await this.openPopoutPlayer();
+        }
+    }
+    
+    async openPopoutPlayer() {
+        if (!this.videoPlayer || !this.videoContainer) {
+            console.error("No video player to popout");
+            return;
+        }
+        
+        console.log("Opening popout fullscreen player...");
+        
+        // Save current playback state
+        const currentTime = this.videoPlayer.currentTime;
+        const isPlaying = !this.videoPlayer.paused;
+        const currentSrc = this.videoPlayer.src;
+        
+        // Store original parent for restoration
+        this.originalParent = this.videoContainer.parentNode;
+        this.originalNextSibling = this.videoContainer.nextSibling;
+        
+        // Create popout container
+        this.popoutContainer = document.createElement('div');
+        this.popoutContainer.className = 'popout-video-container';
+        this.popoutContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            animation: fadeIn 0.3s ease;
+        `;
+        
+        // Create video wrapper
+        const videoWrapper = document.createElement('div');
+        videoWrapper.className = 'popout-video-wrapper';
+        videoWrapper.style.cssText = `
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+        `;
+        
+        // Move video container to popout
+        videoWrapper.appendChild(this.videoContainer);
+        this.popoutContainer.appendChild(videoWrapper);
+        
+        // Create control bar
+        const controlBar = document.createElement('div');
+        controlBar.className = 'popout-control-bar';
+        controlBar.style.cssText = `
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 10001;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 60px;
+            width: fit-content;
+            margin: 0 auto;
+            left: 50%;
+            transform: translateX(-50%);
+        `;
+        
+        // Close button
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+        closeBtn.style.cssText = `
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        `;
+        closeBtn.onclick = () => this.closePopoutPlayer();
+        
+        // Play/Pause button
+        const playPauseBtn = document.createElement('button');
+        playPauseBtn.innerHTML = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+        playPauseBtn.style.cssText = `
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        `;
+        playPauseBtn.onclick = () => {
+            if (this.videoPlayer.paused) {
+                this.videoPlayer.play();
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                this.videoPlayer.pause();
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+        };
+        
+        // Exit fullscreen button (to return to normal)
+        const exitFullscreenBtn = document.createElement('button');
+        exitFullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+        exitFullscreenBtn.style.cssText = `
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        `;
+        exitFullscreenBtn.onclick = () => this.closePopoutPlayer();
+        
+        controlBar.appendChild(playPauseBtn);
+        controlBar.appendChild(exitFullscreenBtn);
+        controlBar.appendChild(closeBtn);
+        
+        this.popoutContainer.appendChild(controlBar);
+        
+        // Show control bar on tap/click
+        let controlTimeout;
+        const showControls = () => {
+            controlBar.style.opacity = '1';
+            clearTimeout(controlTimeout);
+            controlTimeout = setTimeout(() => {
+                controlBar.style.opacity = '0';
+            }, 3000);
+        };
+        
+        this.popoutContainer.addEventListener('click', showControls);
+        this.popoutContainer.addEventListener('touchstart', showControls);
+        
+        // Add to body
+        document.body.appendChild(this.popoutContainer);
+        
+        // Update video container styles for fullscreen
+        this.videoContainer.style.cssText = `
+            width: 100%;
+            height: 100%;
+            border-radius: 0;
+            aspect-ratio: auto;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        `;
+        
+        this.videoPlayer.style.cssText = `
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        `;
+        
+        // Try to lock orientation to landscape
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(err => {
+                console.log("Orientation lock failed:", err);
+            });
+        }
+        
+        // Restore video state
+        if (currentSrc) {
+            this.videoPlayer.currentTime = currentTime;
+            if (isPlaying) {
+                await this.videoPlayer.play().catch(e => console.log("Play failed:", e));
+            }
+        }
+        
+        this.isPopoutActive = true;
+        this.updateFullscreenButtonIcon(true);
+        
+        // Show controls initially
+        showControls();
+        
+        // Add animation keyframes if not exists
+        if (!document.querySelector('#popout-animation-style')) {
+            const style = document.createElement('style');
+            style.id = 'popout-animation-style';
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideUp {
+                    from { transform: translateY(20px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }
+    
+    async closePopoutPlayer() {
+        if (!this.isPopoutActive) return;
+        
+        console.log("Closing popout fullscreen player...");
+        
+        // Save current state
+        const currentTime = this.videoPlayer.currentTime;
+        const isPlaying = !this.videoPlayer.paused;
+        
+        // Restore video container to original position
+        if (this.originalParent) {
+            if (this.originalNextSibling) {
+                this.originalParent.insertBefore(this.videoContainer, this.originalNextSibling);
+            } else {
+                this.originalParent.appendChild(this.videoContainer);
+            }
+        }
+        
+        // Reset video container styles
+        this.videoContainer.style.cssText = '';
+        this.videoPlayer.style.cssText = '';
+        
+        // Restore original classes
+        this.videoContainer.classList.add('video-container');
+        
+        // Remove popout container
+        if (this.popoutContainer) {
+            this.popoutContainer.remove();
+            this.popoutContainer = null;
+        }
+        
+        // Unlock orientation
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+        }
+        
+        // Restore video state
+        this.videoPlayer.currentTime = currentTime;
+        if (isPlaying) {
+            await this.videoPlayer.play().catch(e => console.log("Play failed:", e));
+        }
+        
+        this.isPopoutActive = false;
+        this.updateFullscreenButtonIcon(false);
+        
+        // Show the button briefly after closing
+        this.showFullscreenButton();
+    }
+    
+    updateFullscreenButtonIcon(isFullscreen = null) {
         if (!this.fullscreenBtn) return;
         
-        const isFullscreen = !!(document.fullscreenElement || 
-                                document.webkitFullscreenElement || 
-                                document.mozFullScreenElement);
+        const active = isFullscreen !== null ? isFullscreen : this.isPopoutActive;
         
-        if (isFullscreen) {
+        if (active) {
             this.fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
             this.fullscreenBtn.title = 'Exit Fullscreen';
         } else {
@@ -156,226 +427,13 @@ class PlayerComponent {
         }
     }
     
-    toggleFullscreen() {
-        if (!this.videoContainer) return;
-        
-        const isFullscreen = !!(document.fullscreenElement || 
-                                document.webkitFullscreenElement || 
-                                document.mozFullScreenElement);
-        
-        if (isFullscreen) {
-            // Exit fullscreen
-            this.exitFullscreen();
-        } else {
-            // Enter fullscreen on video container
-            this.enterFullscreen();
-        }
-    }
-    
-    enterFullscreen() {
-        if (!this.videoContainer) return;
-        
-        console.log("Entering fullscreen with landscape orientation...");
-        
-        const element = this.videoContainer;
-        
-        // Method 1: Try screen orientation API to lock to landscape
-        if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').then(() => {
-                console.log("Screen orientation locked to landscape");
-            }).catch(err => {
-                console.log("Orientation lock failed:", err);
-                this.forceLandscapeWithCSS();
-            });
-        } else if (screen.lockOrientation) {
-            screen.lockOrientation('landscape').catch(err => {
-                console.log("Orientation lock failed:", err);
-                this.forceLandscapeWithCSS();
-            });
-        } else {
-            this.forceLandscapeWithCSS();
-        }
-        
-        // Method 2: Request fullscreen
-        const requestFullscreen = () => {
-            if (element.requestFullscreen) {
-                element.requestFullscreen().catch(err => {
-                    console.error("Fullscreen request failed:", err);
-                    this.fallbackFullscreen();
-                });
-            } else if (element.webkitRequestFullscreen) {
-                element.webkitRequestFullscreen();
-            } else if (element.mozRequestFullScreen) {
-                element.mozRequestFullScreen();
-            } else if (element.msRequestFullscreen) {
-                element.msRequestFullscreen();
-            } else {
-                this.fallbackFullscreen();
-            }
-        };
-        
-        requestFullscreen();
-        
-        // Update button icon
-        this.updateFullscreenButtonIcon();
-        
-        // Show button temporarily after entering fullscreen
-        setTimeout(() => {
-            this.showFullscreenButton();
-        }, 100);
-    }
-    
-    forceLandscapeWithCSS() {
-        console.log("Forcing landscape with CSS transform");
-        this.videoContainer.classList.add('force-landscape');
-        
-        // Listen for exit to remove the class
-        const removeLandscapeClass = () => {
-            this.videoContainer.classList.remove('force-landscape');
-            document.removeEventListener('fullscreenchange', removeLandscapeClass);
-            document.removeEventListener('webkitfullscreenchange', removeLandscapeClass);
-            document.removeEventListener('mozfullscreenchange', removeLandscapeClass);
-        };
-        document.addEventListener('fullscreenchange', removeLandscapeClass);
-        document.addEventListener('webkitfullscreenchange', removeLandscapeClass);
-        document.addEventListener('mozfullscreenchange', removeLandscapeClass);
-    }
-    
-    fallbackFullscreen() {
-        console.log("Using fallback fullscreen method");
-        
-        // Save original parent and position
-        this.originalParent = this.videoContainer.parentNode;
-        this.originalNextSibling = this.videoContainer.nextSibling;
-        
-        // Create wrapper div for fullscreen
-        const wrapper = document.createElement('div');
-        wrapper.style.position = 'fixed';
-        wrapper.style.top = '0';
-        wrapper.style.left = '0';
-        wrapper.style.width = '100%';
-        wrapper.style.height = '100%';
-        wrapper.style.backgroundColor = '#000';
-        wrapper.style.zIndex = '9999';
-        wrapper.style.display = 'flex';
-        wrapper.style.alignItems = 'center';
-        wrapper.style.justifyContent = 'center';
-        wrapper.style.flexDirection = 'column';
-        
-        // Move video container into wrapper
-        wrapper.appendChild(this.videoContainer);
-        document.body.appendChild(wrapper);
-        
-        // Style the video container for fullscreen
-        this.videoContainer.style.width = '100%';
-        this.videoContainer.style.height = '100%';
-        this.videoContainer.style.objectFit = 'contain';
-        this.videoContainer.style.borderRadius = '0';
-        
-        // Add exit button
-        const exitBtn = document.createElement('button');
-        exitBtn.innerHTML = '<i class="fas fa-compress"></i>';
-        exitBtn.style.position = 'fixed';
-        exitBtn.style.top = '20px';
-        exitBtn.style.right = '20px';
-        exitBtn.style.zIndex = '10000';
-        exitBtn.style.background = 'rgba(0,0,0,0.7)';
-        exitBtn.style.backdropFilter = 'blur(8px)';
-        exitBtn.style.color = 'white';
-        exitBtn.style.border = '1px solid rgba(255,255,255,0.2)';
-        exitBtn.style.width = '44px';
-        exitBtn.style.height = '44px';
-        exitBtn.style.borderRadius = '50%';
-        exitBtn.style.fontSize = '1.2rem';
-        exitBtn.style.cursor = 'pointer';
-        exitBtn.style.display = 'flex';
-        exitBtn.style.alignItems = 'center';
-        exitBtn.style.justifyContent = 'center';
-        exitBtn.style.transition = 'all 0.3s ease';
-        exitBtn.onclick = () => this.exitFullscreen();
-        wrapper.appendChild(exitBtn);
-        
-        // Store references for cleanup
-        this.fullscreenWrapper = wrapper;
-        this.exitButton = exitBtn;
-        
-        // Add touch event to hide/show exit button
-        let exitTimeout;
-        const showExitButton = () => {
-            if (exitBtn) {
-                exitBtn.style.opacity = '1';
-                exitBtn.style.visibility = 'visible';
-                clearTimeout(exitTimeout);
-                exitTimeout = setTimeout(() => {
-                    exitBtn.style.opacity = '0';
-                    exitBtn.style.visibility = 'hidden';
-                }, 3000);
-            }
-        };
-        
-        wrapper.addEventListener('click', showExitButton);
-        wrapper.addEventListener('touchstart', showExitButton);
-        
-        // Initially show button
-        showExitButton();
-    }
-    
-    exitFullscreen() {
-        console.log("Exiting fullscreen...");
-        
-        // Clean up fallback fullscreen if used
-        if (this.fullscreenWrapper) {
-            // Restore video container to original position
-            if (this.originalParent) {
-                if (this.originalNextSibling) {
-                    this.originalParent.insertBefore(this.videoContainer, this.originalNextSibling);
-                } else {
-                    this.originalParent.appendChild(this.videoContainer);
-                }
-            }
-            this.fullscreenWrapper.remove();
-            this.fullscreenWrapper = null;
-            this.exitButton = null;
-            
-            // Reset video container styles
-            this.videoContainer.style.width = '';
-            this.videoContainer.style.height = '';
-            this.videoContainer.style.objectFit = '';
-            this.videoContainer.style.borderRadius = '';
-        }
-        
-        // Exit standard fullscreen
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-            document.mozCancelFullScreen();
-        } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
-        }
-        
-        // Remove CSS landscape class
-        this.videoContainer.classList.remove('force-landscape');
-        
-        // Unlock screen orientation
-        if (screen.orientation && screen.orientation.unlock) {
-            screen.orientation.unlock();
-        } else if (screen.unlockOrientation) {
-            screen.unlockOrientation();
-        }
-        
-        // Update button icon
-        this.updateFullscreenButtonIcon();
-        
-        // Show button temporarily after exiting fullscreen
-        setTimeout(() => {
-            this.showFullscreenButton();
-        }, 100);
-    }
-    
     async destroyPlayers() {
         this.isLoading = false;
+        
+        // Close popout if active
+        if (this.isPopoutActive) {
+            await this.closePopoutPlayer();
+        }
         
         // Stop and clear video element
         if (this.videoPlayer) {
