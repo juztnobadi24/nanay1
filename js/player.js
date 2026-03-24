@@ -8,6 +8,8 @@ class PlayerComponent {
         this.drmNoticeSpan = null;
         this.errorMessageDiv = null;
         this.videoContainer = null;
+        this.radioLogoContainer = null;
+        this.radioLogoImg = null;
         
         this.shakaPlayer = null;
         this.hlsPlayer = null;
@@ -31,6 +33,9 @@ class PlayerComponent {
         this.container.innerHTML = `
             <div class="video-container" id="videoContainer">
                 <video id="videoPlayer" playsinline disablePictureInPicture autoplay></video>
+                <div class="radio-logo-container" id="radioLogoContainer" style="display: none;">
+                    <img id="radioLogoImg" class="radio-logo" alt="Radio Logo">
+                </div>
                 <button class="fullscreen-toggle-btn" id="fullscreenToggleBtn">
                     <i class="fas fa-expand"></i>
                 </button>
@@ -41,6 +46,8 @@ class PlayerComponent {
         this.videoPlayer = document.getElementById("videoPlayer");
         this.errorMessageDiv = document.getElementById("errorMessage");
         this.videoContainer = document.getElementById("videoContainer");
+        this.radioLogoContainer = document.getElementById("radioLogoContainer");
+        this.radioLogoImg = document.getElementById("radioLogoImg");
         
         // Remove controls from video player
         if (this.videoPlayer) {
@@ -59,38 +66,71 @@ class PlayerComponent {
         };
     }
     
-    showLoader(message = "Loading stream...") {
-        // Remove existing loader if any
-        this.hideLoader();
+    showRadioLogo(channel) {
+        if (!this.radioLogoContainer || !this.radioLogoImg) return;
         
-        // Create loader overlay
-        this.loaderOverlay = document.createElement('div');
-        this.loaderOverlay.className = 'loader-overlay';
-        this.loaderOverlay.innerHTML = `
-            <div class="loader">
-                <div class="loader-text">${message}</div>
-            </div>
-        `;
+        // Check if it's a radio channel
+        const isRadio = channel.type === "Radio";
         
-        if (this.videoContainer) {
-            this.videoContainer.style.position = 'relative';
-            this.videoContainer.appendChild(this.loaderOverlay);
-        }
-    }
-    
-    hideLoader() {
-        if (this.loaderOverlay && this.loaderOverlay.parentNode) {
-            this.loaderOverlay.remove();
-            this.loaderOverlay = null;
-        }
-    }
-    
-    updateLoaderMessage(message) {
-        if (this.loaderOverlay) {
-            const loaderText = this.loaderOverlay.querySelector('.loader-text');
-            if (loaderText) {
-                loaderText.textContent = message;
+        if (!isRadio) {
+            // Hide logo for TV channels
+            this.radioLogoContainer.style.display = 'none';
+            if (this.videoPlayer) {
+                this.videoPlayer.style.opacity = '1';
             }
+            return;
+        }
+        
+        // Try to get logo from multiple sources
+        let logoUrl = null;
+        
+        // Priority 1: logo from channel object
+        if (channel.logo) {
+            logoUrl = channel.logo;
+        }
+        // Priority 2: logoLocal (if you have local logos)
+        else if (channel.logoLocal) {
+            logoUrl = `images/${channel.logoLocal}.webp`;
+        }
+        // Priority 3: fallback to default radio logo
+        else {
+            logoUrl = 'https://via.placeholder.com/200x200/1a1e2c/f97316?text=📻';
+        }
+        
+        // Set logo image
+        this.radioLogoImg.src = logoUrl;
+        this.radioLogoImg.alt = channel.name;
+        
+        // Handle image load error
+        this.radioLogoImg.onerror = () => {
+            this.radioLogoImg.src = 'https://via.placeholder.com/200x200/1a1e2c/f97316?text=📻';
+            this.radioLogoImg.alt = 'Radio';
+        };
+        
+        // Show logo container
+        this.radioLogoContainer.style.display = 'flex';
+        
+        // Add station name overlay
+        let stationNameElem = this.radioLogoContainer.querySelector('.station-name');
+        if (!stationNameElem) {
+            stationNameElem = document.createElement('div');
+            stationNameElem.className = 'station-name';
+            this.radioLogoContainer.appendChild(stationNameElem);
+        }
+        stationNameElem.textContent = channel.name;
+        
+        // Fade out video player for radio (optional)
+        if (this.videoPlayer) {
+            this.videoPlayer.style.opacity = '0.3';
+        }
+    }
+    
+    hideRadioLogo() {
+        if (this.radioLogoContainer) {
+            this.radioLogoContainer.style.display = 'none';
+        }
+        if (this.videoPlayer) {
+            this.videoPlayer.style.opacity = '1';
         }
     }
     
@@ -383,6 +423,41 @@ class PlayerComponent {
         this.hideLoader();
     }
     
+    showLoader(message = "Loading stream...") {
+        // Remove existing loader if any
+        this.hideLoader();
+        
+        // Create loader overlay
+        this.loaderOverlay = document.createElement('div');
+        this.loaderOverlay.className = 'loader-overlay';
+        this.loaderOverlay.innerHTML = `
+            <div class="loader">
+                <div class="loader-text">${message}</div>
+            </div>
+        `;
+        
+        if (this.videoContainer) {
+            this.videoContainer.style.position = 'relative';
+            this.videoContainer.appendChild(this.loaderOverlay);
+        }
+    }
+    
+    hideLoader() {
+        if (this.loaderOverlay && this.loaderOverlay.parentNode) {
+            this.loaderOverlay.remove();
+            this.loaderOverlay = null;
+        }
+    }
+    
+    updateLoaderMessage(message) {
+        if (this.loaderOverlay) {
+            const loaderText = this.loaderOverlay.querySelector('.loader-text');
+            if (loaderText) {
+                loaderText.textContent = message;
+            }
+        }
+    }
+    
     async loadStream(url, drmConfig = null, headers = null, isRetry = false) {
         console.log("Loading stream:", url);
         
@@ -617,6 +692,13 @@ class PlayerComponent {
         // Show loader immediately
         this.showLoader("Loading channel...");
         
+        // Show or hide radio logo based on channel type
+        if (channel.type === "Radio") {
+            this.showRadioLogo(channel);
+        } else {
+            this.hideRadioLogo();
+        }
+        
         try {
             console.log("Switching to channel:", channel.name);
             this.currentChannel = channel;
@@ -645,11 +727,14 @@ class PlayerComponent {
                 }
             } else {
                 console.error("Failed to play channel:", channel.name);
+                // Hide radio logo on failure
+                this.hideRadioLogo();
             }
             
             return success;
         } catch (error) {
             console.error("Error in playChannel:", error);
+            this.hideRadioLogo();
             this.hideLoader();
             return false;
         } finally {
@@ -664,8 +749,13 @@ class PlayerComponent {
         if (this.videoContainer) {
             if (mode === "tv") {
                 this.videoContainer.style.background = "#000";
+                this.hideRadioLogo();
             } else {
                 this.videoContainer.style.background = "linear-gradient(135deg, #1a1f2e 0%, #0f1222 100%)";
+                // If there's a current channel playing that's radio, show its logo
+                if (this.currentChannel && this.currentChannel.type === "Radio") {
+                    this.showRadioLogo(this.currentChannel);
+                }
             }
         }
     }
