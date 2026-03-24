@@ -169,16 +169,48 @@ class PlayerComponent {
     enterFullscreen() {
         if (!this.videoContainer) return;
         
+        console.log("Entering fullscreen with landscape orientation...");
+        
+        // Force the video container to go fullscreen
         const element = this.videoContainer;
+        
+        // Try to lock screen orientation to landscape first
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(err => {
+                console.log("Screen orientation lock not supported:", err);
+            });
+        } else if (screen.lockOrientation) {
+            screen.lockOrientation('landscape').catch(err => {
+                console.log("Screen orientation lock not supported:", err);
+            });
+        }
+        
+        // Request fullscreen with landscape options
         const requestMethod = element.requestFullscreen || 
                              element.webkitRequestFullscreen || 
                              element.mozRequestFullScreen || 
                              element.msRequestFullscreen;
         
         if (requestMethod) {
-            requestMethod.call(element).catch(err => {
-                console.error("Fullscreen request failed:", err);
-            });
+            // Try with options first (for browsers that support it)
+            if (element.requestFullscreen) {
+                const fullscreenOptions = {
+                    navigationUI: "hide"
+                };
+                
+                element.requestFullscreen(fullscreenOptions).catch(err => {
+                    console.error("Fullscreen with options failed:", err);
+                    // Fallback to regular fullscreen
+                    requestMethod.call(element).catch(err => {
+                        console.error("Fullscreen request failed:", err);
+                    });
+                });
+            } else {
+                // Regular fullscreen request
+                requestMethod.call(element).catch(err => {
+                    console.error("Fullscreen request failed:", err);
+                });
+            }
         }
         
         // Update button icon
@@ -191,6 +223,9 @@ class PlayerComponent {
     }
     
     exitFullscreen() {
+        console.log("Exiting fullscreen...");
+        
+        // Exit fullscreen
         const exitMethod = document.exitFullscreen || 
                           document.webkitExitFullscreen || 
                           document.mozCancelFullScreen || 
@@ -200,6 +235,13 @@ class PlayerComponent {
             exitMethod.call(document).catch(err => {
                 console.error("Exit fullscreen failed:", err);
             });
+        }
+        
+        // Unlock screen orientation to allow portrait again
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+        } else if (screen.unlockOrientation) {
+            screen.unlockOrientation();
         }
         
         // Update button icon
