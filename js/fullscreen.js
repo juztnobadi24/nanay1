@@ -13,6 +13,7 @@ class FullscreenManager {
         this.forceCheckInterval = null;
         this.lastOrientation = null;
         this.fullscreenAttempts = 0;
+        this.manualFullscreen = false; // Track if fullscreen was triggered manually
     }
     
     init(videoContainer, videoPlayer, sidebar, header) {
@@ -33,10 +34,10 @@ class FullscreenManager {
         document.addEventListener('webkitfullscreenchange', this.handleFullscreenChange.bind(this));
         document.addEventListener('mozfullscreenchange', this.handleFullscreenChange.bind(this));
         
-        // Force check orientation every 300ms to ensure fullscreen stays active in landscape
+        // Force check orientation every 500ms to ensure fullscreen stays active in landscape
         this.forceCheckInterval = setInterval(() => {
             this.forceCheckOrientation();
-        }, 300);
+        }, 500);
         
         // Check initial orientation after a short delay
         setTimeout(() => this.forceCheckOrientation(), 500);
@@ -81,26 +82,24 @@ class FullscreenManager {
         }
         
         if (isLandscape) {
-            // LANDSCAPE: Force video container fullscreen
+            // LANDSCAPE: Force video container fullscreen (only if not manually controlled)
             const isVideoFullscreenNow = document.fullscreenElement === this.videoContainer ||
                                          document.webkitFullscreenElement === this.videoContainer ||
                                          document.mozFullScreenElement === this.videoContainer;
             
-            if (!isVideoFullscreenNow && !this.isEnteringFullscreen) {
+            if (!isVideoFullscreenNow && !this.isEnteringFullscreen && !this.manualFullscreen) {
                 console.log("LANDSCAPE: Forcing video container fullscreen...");
                 this.enterVideoFullscreen();
             } else if (isVideoFullscreenNow) {
                 console.log("LANDSCAPE: Video container already in fullscreen");
                 this.fullscreenAttempts = 0;
-            } else if (this.isEnteringFullscreen) {
-                console.log("LANDSCAPE: Waiting for fullscreen entry...");
             }
         } else {
-            // PORTRAIT: Exit video container fullscreen
-            if (document.fullscreenElement === this.videoContainer || 
+            // PORTRAIT: Exit video container fullscreen (only if not manually controlled)
+            if ((document.fullscreenElement === this.videoContainer || 
                 document.webkitFullscreenElement === this.videoContainer ||
                 document.mozFullScreenElement === this.videoContainer || 
-                this.isVideoFullscreen) {
+                this.isVideoFullscreen) && !this.manualFullscreen) {
                 console.log("PORTRAIT: Exiting video container fullscreen...");
                 this.exitVideoFullscreen();
             }
@@ -162,6 +161,13 @@ class FullscreenManager {
                                  element.msRequestFullscreen;
             
             if (requestMethod) {
+                // Try to lock orientation to landscape
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch(err => {
+                        console.log("Screen orientation lock not supported:", err);
+                    });
+                }
+                
                 const promise = requestMethod.call(element);
                 
                 if (promise && promise.then) {
@@ -242,6 +248,13 @@ class FullscreenManager {
         
         exitFullscreen();
         
+        // Unlock screen orientation
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+        } else if (screen.unlockOrientation) {
+            screen.unlockOrientation();
+        }
+        
         // Restore sidebar and header
         if (this.sidebar) this.sidebar.style.display = '';
         if (this.header) this.header.style.display = '';
@@ -263,6 +276,7 @@ class FullscreenManager {
             console.log("Exited fullscreen");
             this.isVideoFullscreen = false;
             this.isEnteringFullscreen = false;
+            this.manualFullscreen = false; // Reset manual flag
             
             // Restore UI
             if (this.sidebar) this.sidebar.style.display = '';
@@ -287,6 +301,17 @@ class FullscreenManager {
                 if (this.sidebar) this.sidebar.style.display = 'none';
                 if (this.header) this.header.style.display = 'none';
             }
+        }
+    }
+    
+    // Method to be called from player button to set manual fullscreen
+    setManualFullscreen(value) {
+        this.manualFullscreen = value;
+        if (value) {
+            // If manual fullscreen is enabled, temporarily disable auto checks
+            console.log("Manual fullscreen mode activated");
+        } else {
+            console.log("Manual fullscreen mode deactivated");
         }
     }
     
