@@ -221,10 +221,10 @@ class PlayerComponent {
                 console.log("Trying fallback on video element...");
                 this.videoPlayer.requestFullscreen().catch(e => {
                     console.error("Video element fullscreen also failed:", e);
-                    showError("Fullscreen not supported in this browser");
+                    this.showError("Fullscreen not supported in this browser");
                 });
             } else {
-                showError("Fullscreen not supported in this browser");
+                this.showError("Fullscreen not supported in this browser");
             }
         });
         
@@ -327,12 +327,26 @@ class PlayerComponent {
             });
             this.shakaPlayer.addEventListener("error", (event) => {
                 console.error("Shaka error", event.detail);
-                showError("Playback error: " + (event.detail?.message || "DRM or stream issue"));
+                this.showError("Playback error: " + (event.detail?.message || "DRM or stream issue"));
             });
             this.isShakaInitialized = true;
             return this.shakaPlayer;
         }
         return null;
+    }
+    
+    showError(msg) {
+        if (this.errorMessageDiv) {
+            this.errorMessageDiv.textContent = msg;
+            this.errorMessageDiv.classList.add("show");
+            setTimeout(() => {
+                if (this.errorMessageDiv) {
+                    this.errorMessageDiv.classList.remove("show");
+                }
+            }, 5000);
+        } else {
+            console.error(msg);
+        }
     }
     
     async loadStream(url, drmConfig = null, headers = null) {
@@ -343,6 +357,12 @@ class PlayerComponent {
         
         const isDash = url.includes(".mpd") || url.includes("manifest.mpd");
         const isHls = url.includes(".m3u8");
+        
+        // Set a timeout for the entire load operation
+        const loadTimeout = setTimeout(() => {
+            console.warn("Stream load timeout for:", url);
+            this.showError("Stream load timeout - trying to reconnect...");
+        }, 30000);
         
         try {
             if (isDash) {
@@ -372,24 +392,31 @@ class PlayerComponent {
                 
                 await player.load(url);
                 
-                // Force play
                 setTimeout(() => {
                     if (this.videoPlayer && !this.videoPlayer.paused) {
                         this.videoPlayer.play().catch(e => console.warn("Play attempt:", e));
                     }
                 }, 100);
                 
+                clearTimeout(loadTimeout);
                 return true;
             } 
             else if (isHls) {
                 console.log("Loading HLS stream");
                 if (Hls.isSupported()) {
                     return new Promise((resolve, reject) => {
+                        let resolved = false;
+                        let timeoutId = null;
+                        
                         this.hlsPlayer = new Hls({
                             enableWorker: true,
                             lowLatencyMode: true,
                             autoStartLoad: true,
                             startPosition: -1,
+                            manifestLoadTimeOut: 15000,
+                            manifestLoadingTimeOut: 15000,
+                            levelLoadingTimeOut: 15000,
+                            fragLoadingTimeOut: 15000,
                             xhrSetup: (xhr, url) => {
                                 if (headers && headers["User-Agent"]) {
                                     xhr.setRequestHeader("User-Agent", headers["User-Agent"]);
@@ -397,11 +424,10 @@ class PlayerComponent {
                             }
                         });
                         
-                        let resolved = false;
-                        
                         this.hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
                             if (!resolved) {
                                 resolved = true;
+                                if (timeoutId) clearTimeout(timeoutId);
                                 this.videoPlayer.play()
                                     .then(() => {
                                         console.log("HLS playback started");
@@ -417,18 +443,23 @@ class PlayerComponent {
                         this.hlsPlayer.on(Hls.Events.ERROR, (event, data) => {
                             console.error("HLS Error:", data);
                             if (data.fatal && !resolved) {
-                                resolved = true;
-                                reject(new Error(data.details || "HLS stream error"));
+                                if (data.type === 'networkError') {
+                                    // Retry network errors silently
+                                    console.warn("Network error, retrying...");
+                                    this.hlsPlayer.startLoad();
+                                } else {
+                                    resolved = true;
+                                    if (timeoutId) clearTimeout(timeoutId);
+                                    reject(new Error(data.details || "HLS stream error"));
+                                }
                             }
                         });
                         
-                        this.hlsPlayer.loadSource(url);
-                        this.hlsPlayer.attachMedia(this.videoPlayer);
-                        
-                        // Fallback timeout
-                        setTimeout(() => {
+                        // Set a timeout for the manifest loading
+                        timeoutId = setTimeout(() => {
                             if (!resolved) {
                                 resolved = true;
+                                console.warn("HLS manifest load timeout, trying play anyway...");
                                 this.videoPlayer.play()
                                     .then(() => {
                                         console.log("HLS playback started (timeout fallback)");
@@ -439,12 +470,16 @@ class PlayerComponent {
                                         resolve(true);
                                     });
                             }
-                        }, 5000);
+                        }, 15000);
+                        
+                        this.hlsPlayer.loadSource(url);
+                        this.hlsPlayer.attachMedia(this.videoPlayer);
                     });
                 } 
                 else if (this.videoPlayer.canPlayType("application/vnd.apple.mpegurl")) {
                     this.videoPlayer.src = url;
                     await this.videoPlayer.play();
+                    clearTimeout(loadTimeout);
                     return true;
                 } else {
                     throw new Error("HLS not supported in this browser");
@@ -454,18 +489,20 @@ class PlayerComponent {
                 console.log("Loading direct stream (MP3/audio)");
                 this.videoPlayer.src = url;
                 await this.videoPlayer.play();
+                clearTimeout(loadTimeout);
                 return true;
             }
         } catch (err) {
+            clearTimeout(loadTimeout);
             console.error("loadStream error:", err);
-            showError(`Cannot play stream: ${err.message || "unknown error"}`);
+            this.showError(`Cannot play stream: ${err.message || "unknown error"}`);
             return false;
         }
     }
     
     async playChannel(channel) {
         if (!channel || !channel.streamUrl) {
-            showError("Invalid channel: missing stream URL");
+            this.showError("Invalid channel: missing stream URL");
             return false;
         }
         
@@ -510,7 +547,7 @@ class PlayerComponent {
             return success;
         } catch (error) {
             console.error("Error in playChannel:", error);
-            showError(`Error playing ${channel.name}: ${error.message}`);
+            this.showError(`Error playing ${channel.name}: ${error.message}`);
             return false;
         } finally {
             // Reset loading flag after a delay
