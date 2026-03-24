@@ -283,6 +283,21 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
+/* Channel Logo Wrapper */
+.channel-logo-wrapper {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+}
+
+.channel-logo-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    object-fit: cover;
+    background: linear-gradient(135deg, #1a1e2c, #0f1119);
+}
+
 .channel-logo {
     width: 48px;
     height: 48px;
@@ -321,6 +336,10 @@
     margin-top: 4px;
 }
 
+.channel-favorite {
+    flex-shrink: 0;
+}
+
 .favorite-icon {
     color: #ffc107;
     font-size: 0.85rem;
@@ -354,7 +373,7 @@
     opacity: 0.5;
 }
 
-/* Scroll to Top Button - Positioned with safe zone for phone navigation */
+/* Scroll to Top Button */
 .scroll-to-top {
     position: absolute;
     bottom: 20px;
@@ -392,7 +411,7 @@
     transform: translateY(0);
 }
 
-/* Mobile specific - ensure button is above navigation bars */
+/* Mobile specific */
 @media (max-width: 768px) {
     .scroll-to-top {
         bottom: 20px;
@@ -403,7 +422,6 @@
     }
 }
 
-/* For devices with bottom navigation bar (Android) */
 @media (max-width: 768px) and (orientation: portrait) {
     .scroll-to-top {
         bottom: calc(20px + constant(safe-area-inset-bottom));
@@ -413,7 +431,6 @@
     }
 }
 
-/* For iOS devices with home indicator */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
     .scroll-to-top {
         bottom: calc(20px + env(safe-area-inset-bottom));
@@ -421,7 +438,6 @@
     }
 }
 
-/* For landscape mode on mobile */
 @media (max-width: 768px) and (orientation: landscape) {
     .scroll-to-top {
         bottom: 12px;
@@ -439,7 +455,6 @@
     }
 }
 
-/* For very small phones */
 @media (max-width: 480px) {
     .scroll-to-top {
         bottom: 16px;
@@ -457,7 +472,6 @@
     }
 }
 
-/* Animation for the button */
 @keyframes bounce {
     0%, 100% {
         transform: translateY(0);
@@ -471,7 +485,7 @@
     animation: bounce 0.5s ease;
 }
 
-/* ========== DESKTOP/LAPTOP LARGE SCREENS ========== */
+/* Desktop/Laptop Large Screens */
 @media (min-width: 1025px) {
     .filter-row {
         gap: 12px;
@@ -494,7 +508,7 @@
     }
 }
 
-/* ========== TABLET AND SMALLER DESKTOP ========== */
+/* Tablet and Smaller Desktop */
 @media (max-width: 1024px) {
     .channel-sidebar {
         width: 320px;
@@ -513,9 +527,20 @@
         padding: 6px 10px;
         font-size: 0.9rem;
     }
+    
+    .channel-logo-wrapper,
+    .channel-logo-img,
+    .channel-logo {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .channel-logo {
+        font-size: 0.9rem;
+    }
 }
 
-/* ========== PORTRAIT MODE SIDEBAR ADJUSTMENTS ========== */
+/* Portrait Mode Sidebar Adjustments */
 @media (max-width: 640px) and (orientation: portrait) {
     .channel-sidebar {
         width: 100%;
@@ -560,9 +585,14 @@
         gap: 8px;
     }
     
+    .channel-logo-wrapper,
+    .channel-logo-img,
     .channel-logo {
         width: 36px;
         height: 36px;
+    }
+    
+    .channel-logo {
         font-size: 0.8rem;
         border-radius: 10px;
     }
@@ -585,7 +615,7 @@
     }
 }
 
-/* ========== SMALL MOBILE (max-width: 480px) ========== */
+/* Small Mobile */
 @media (max-width: 480px) {
     .sidebar-header {
         padding: 0.5rem 0.8rem 0.4rem;
@@ -608,9 +638,16 @@
     .channel-list {
         padding-bottom: 65px;
     }
+    
+    .channel-logo-wrapper,
+    .channel-logo-img,
+    .channel-logo {
+        width: 32px;
+        height: 32px;
+    }
 }
 
-/* ========== LANDSCAPE MODE ========== */
+/* Landscape Mode */
 @media (max-width: 640px) and (orientation: landscape) {
     .channel-sidebar {
         width: 320px;
@@ -634,6 +671,13 @@
     
     .channel-list {
         padding-bottom: 60px;
+    }
+    
+    .channel-logo-wrapper,
+    .channel-logo-img,
+    .channel-logo {
+        width: 32px;
+        height: 32px;
     }
 }
 
