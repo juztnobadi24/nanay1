@@ -88,19 +88,46 @@ function onSearchChange() {
     }
 }
 
+// Global channel switching lock
+window.isSwitchingChannel = false;
+window.channelSwitchTimeout = null;
+
 // Channel select handler - PLAYS CHANNEL AUTOMATICALLY
 async function onChannelSelect(channel) {
     if (!playerComponent) return;
     
     console.log("Selected channel:", channel.name);
     
-    // Prevent rapid switching
+    // Prevent rapid switching - with force clear option
     if (window.isSwitchingChannel) {
-        console.log("Already switching channel, ignoring...");
-        return;
+        console.log("Already switching channel, waiting...");
+        // Wait for the lock to clear instead of ignoring
+        await new Promise(resolve => {
+            const checkLock = setInterval(() => {
+                if (!window.isSwitchingChannel) {
+                    clearInterval(checkLock);
+                    resolve();
+                }
+            }, 100);
+            // Timeout after 3 seconds to prevent infinite wait
+            setTimeout(() => {
+                clearInterval(checkLock);
+                console.log("Lock timeout, forcing clear...");
+                window.isSwitchingChannel = false;
+                if (window.channelSwitchTimeout) clearTimeout(window.channelSwitchTimeout);
+                resolve();
+            }, 3000);
+        });
+        // After waiting, continue to play the channel
+        console.log("Lock cleared, playing channel...");
     }
     
     window.isSwitchingChannel = true;
+    
+    // Clear any existing timeout
+    if (window.channelSwitchTimeout) {
+        clearTimeout(window.channelSwitchTimeout);
+    }
     
     try {
         // First, destroy current player before loading new one
@@ -123,9 +150,10 @@ async function onChannelSelect(channel) {
         showError(`Error playing ${channel.name}: ${error.message}`);
     } finally {
         // Reset switching flag after a delay
-        setTimeout(() => {
+        window.channelSwitchTimeout = setTimeout(() => {
             window.isSwitchingChannel = false;
-        }, 1500);
+            window.channelSwitchTimeout = null;
+        }, 2000);
     }
 }
 
@@ -275,6 +303,11 @@ window.addEventListener('beforeunload', () => {
     // Clean up fullscreen manager
     if (fullscreenManager && fullscreenManager.destroy) {
         fullscreenManager.destroy();
+    }
+    
+    // Clear switching lock
+    if (window.channelSwitchTimeout) {
+        clearTimeout(window.channelSwitchTimeout);
     }
 });
 
