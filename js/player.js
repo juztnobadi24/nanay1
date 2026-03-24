@@ -101,7 +101,7 @@ class PlayerComponent {
         const wrapper = document.createElement('div');
         wrapper.className = 'radio-logo-wrapper';
         
-        // Create logo content container (like button)
+        // Create logo content container
         const logoContent = document.createElement('div');
         logoContent.className = 'radio-logo-content';
         
@@ -121,36 +121,6 @@ class PlayerComponent {
         wrapper.appendChild(logoContent);
         
         this.radioLogoContainer.appendChild(wrapper);
-        
-        // Add sound wave bars at the bottom
-        const soundWaveBars = document.createElement('div');
-        soundWaveBars.className = 'sound-wave-bars';
-        for (let i = 0; i < 12; i++) {
-            const bar = document.createElement('div');
-            bar.className = 'sound-wave-bar';
-            soundWaveBars.appendChild(bar);
-        }
-        this.radioLogoContainer.appendChild(soundWaveBars);
-        
-        // Add side wave bars (left)
-        const leftWaveBars = document.createElement('div');
-        leftWaveBars.className = 'side-wave-bars left';
-        for (let i = 0; i < 6; i++) {
-            const bar = document.createElement('div');
-            bar.className = 'side-wave-bar';
-            leftWaveBars.appendChild(bar);
-        }
-        this.radioLogoContainer.appendChild(leftWaveBars);
-        
-        // Add side wave bars (right)
-        const rightWaveBars = document.createElement('div');
-        rightWaveBars.className = 'side-wave-bars right';
-        for (let i = 0; i < 6; i++) {
-            const bar = document.createElement('div');
-            bar.className = 'side-wave-bar';
-            rightWaveBars.appendChild(bar);
-        }
-        this.radioLogoContainer.appendChild(rightWaveBars);
         
         // Add station name
         const stationName = document.createElement('div');
@@ -193,7 +163,6 @@ class PlayerComponent {
         // Show button when video container is touched/clicked
         if (this.videoContainer) {
             this.videoContainer.addEventListener('click', (e) => {
-                // Don't hide if clicking the button itself
                 if (e.target === this.fullscreenBtn || this.fullscreenBtn.contains(e.target)) {
                     return;
                 }
@@ -201,7 +170,6 @@ class PlayerComponent {
             });
             
             this.videoContainer.addEventListener('touchstart', (e) => {
-                // Don't hide if touching the button itself
                 if (e.target === this.fullscreenBtn || this.fullscreenBtn.contains(e.target)) {
                     return;
                 }
@@ -209,7 +177,6 @@ class PlayerComponent {
             });
         }
         
-        // Also show button when video player is clicked/touched
         if (this.videoPlayer) {
             this.videoPlayer.addEventListener('click', () => {
                 this.showFullscreenButton();
@@ -220,7 +187,6 @@ class PlayerComponent {
             });
         }
         
-        // Listen for fullscreen change events to update button icon
         document.addEventListener('fullscreenchange', () => this.onFullscreenChange());
         document.addEventListener('webkitfullscreenchange', () => this.onFullscreenChange());
         document.addEventListener('mozfullscreenchange', () => this.onFullscreenChange());
@@ -243,25 +209,20 @@ class PlayerComponent {
             }
         }
         
-        // Show button briefly after fullscreen change
         this.showFullscreenButton();
-        
         console.log("Fullscreen changed:", isFullscreen ? "Entered" : "Exited");
     }
     
     showFullscreenButton() {
         if (!this.fullscreenBtn) return;
         
-        // Clear existing timeout
         if (this.fullscreenTimeout) {
             clearTimeout(this.fullscreenTimeout);
         }
         
-        // Show button
         this.fullscreenBtn.classList.add('show');
         this.isFullscreenBtnVisible = true;
         
-        // Hide after 3 seconds
         this.fullscreenTimeout = setTimeout(() => {
             this.hideFullscreenButton();
         }, 3000);
@@ -286,8 +247,6 @@ class PlayerComponent {
                                 document.webkitFullscreenElement || 
                                 document.mozFullScreenElement);
         
-        console.log("Toggle fullscreen - currently:", isFullscreen ? "Fullscreen" : "Not fullscreen");
-        
         if (isFullscreen) {
             this.exitFullscreen();
         } else {
@@ -298,11 +257,8 @@ class PlayerComponent {
     enterFullscreen() {
         if (!this.videoContainer) return;
         
-        console.log("Attempting to enter fullscreen...");
-        
         const element = this.videoContainer;
         
-        // Try all possible fullscreen methods
         const requestFullscreen = () => {
             if (element.requestFullscreen) {
                 return element.requestFullscreen();
@@ -316,11 +272,8 @@ class PlayerComponent {
             return Promise.reject("Fullscreen not supported");
         };
         
-        // Request fullscreen
         requestFullscreen().then(() => {
             console.log("Fullscreen entered successfully");
-            
-            // Try to lock orientation to landscape after entering fullscreen
             setTimeout(() => {
                 if (screen.orientation && screen.orientation.lock) {
                     screen.orientation.lock('landscape').catch(err => {
@@ -332,13 +285,9 @@ class PlayerComponent {
                     });
                 }
             }, 100);
-            
         }).catch(err => {
             console.error("Fullscreen request failed:", err);
-            
-            // Fallback: Try to use the video element directly
             if (this.videoPlayer && this.videoPlayer.requestFullscreen) {
-                console.log("Trying fallback on video element...");
                 this.videoPlayer.requestFullscreen().catch(e => {
                     console.error("Video element fullscreen also failed:", e);
                 });
@@ -347,9 +296,6 @@ class PlayerComponent {
     }
     
     exitFullscreen() {
-        console.log("Attempting to exit fullscreen...");
-        
-        // Try all possible exit fullscreen methods
         const exitFullscreen = () => {
             if (document.exitFullscreen) {
                 return document.exitFullscreen();
@@ -365,8 +311,6 @@ class PlayerComponent {
         
         exitFullscreen().then(() => {
             console.log("Fullscreen exited successfully");
-            
-            // Unlock orientation
             setTimeout(() => {
                 if (screen.orientation && screen.orientation.unlock) {
                     screen.orientation.unlock();
@@ -374,7 +318,6 @@ class PlayerComponent {
                     screen.unlockOrientation();
                 }
             }, 100);
-            
         }).catch(err => {
             console.error("Exit fullscreen failed:", err);
         });
@@ -382,16 +325,12 @@ class PlayerComponent {
     
     async destroyPlayers() {
         this.isLoading = false;
-        
-        // Hide loader when destroying
         this.hideLoader();
         
-        // Exit fullscreen if active
         if (this.isFullscreen) {
             this.exitFullscreen();
         }
         
-        // Stop and clear video element
         if (this.videoPlayer) {
             try {
                 this.videoPlayer.pause();
@@ -402,7 +341,6 @@ class PlayerComponent {
             }
         }
         
-        // Destroy Shaka player
         if (this.shakaPlayer) {
             try {
                 await this.shakaPlayer.destroy();
@@ -412,7 +350,6 @@ class PlayerComponent {
             this.shakaPlayer = null;
         }
         
-        // Destroy HLS player
         if (this.hlsPlayer) {
             try {
                 this.hlsPlayer.destroy();
