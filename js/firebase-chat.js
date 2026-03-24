@@ -26,6 +26,11 @@ class FirebaseChat {
         this.deviceId = null;
         this.isAdmin = false;
         
+        // Persistence keys
+        this.LAST_MESSAGE_VIEW_KEY = 'juzt_last_message_view';
+        this.LAST_NOTIFICATION_VIEW_KEY = 'juzt_last_notification_view';
+        this.READ_NOTIFICATIONS_KEY = 'juzt_read_notifications';
+        
         // Admin fixed name
         this.ADMIN_NAME = "Juzt (Admin)";
         this.ADMIN_ID = "admin_juzt";
@@ -69,6 +74,7 @@ class FirebaseChat {
                     this.getOrCreateDeviceId();
                     await this.identifyUser();
                     await this.loadExistingNotifications();
+                    this.loadLastViewTimes();
                     this.setupListeners();
                     this.createBadge();
                     this.createNotificationBadge();
@@ -94,6 +100,59 @@ class FirebaseChat {
         });
         
         return this.initPromise;
+    }
+    
+    loadLastViewTimes() {
+        // Load last message view timestamp
+        const lastMessageView = localStorage.getItem(this.LAST_MESSAGE_VIEW_KEY);
+        if (lastMessageView) {
+            this.lastMessageViewTime = parseInt(lastMessageView);
+        } else {
+            this.lastMessageViewTime = Date.now();
+            localStorage.setItem(this.LAST_MESSAGE_VIEW_KEY, this.lastMessageViewTime.toString());
+        }
+        
+        // Load last notification view timestamp
+        const lastNotificationView = localStorage.getItem(this.LAST_NOTIFICATION_VIEW_KEY);
+        if (lastNotificationView) {
+            this.lastNotificationViewTime = parseInt(lastNotificationView);
+        } else {
+            this.lastNotificationViewTime = Date.now();
+            localStorage.setItem(this.LAST_NOTIFICATION_VIEW_KEY, this.lastNotificationViewTime.toString());
+        }
+        
+        // Load read notifications set
+        const readNotifications = localStorage.getItem(this.READ_NOTIFICATIONS_KEY);
+        if (readNotifications) {
+            this.readNotificationsSet = new Set(JSON.parse(readNotifications));
+        } else {
+            this.readNotificationsSet = new Set();
+        }
+        
+        console.log("Loaded last view times:", {
+            lastMessageView: new Date(this.lastMessageViewTime).toLocaleString(),
+            lastNotificationView: new Date(this.lastNotificationViewTime).toLocaleString(),
+            readCount: this.readNotificationsSet.size
+        });
+    }
+    
+    saveLastMessageViewTime() {
+        this.lastMessageViewTime = Date.now();
+        localStorage.setItem(this.LAST_MESSAGE_VIEW_KEY, this.lastMessageViewTime.toString());
+    }
+    
+    saveLastNotificationViewTime() {
+        this.lastNotificationViewTime = Date.now();
+        localStorage.setItem(this.LAST_NOTIFICATION_VIEW_KEY, this.lastNotificationViewTime.toString());
+    }
+    
+    saveReadNotification(notificationId) {
+        this.readNotificationsSet.add(notificationId);
+        localStorage.setItem(this.READ_NOTIFICATIONS_KEY, JSON.stringify([...this.readNotificationsSet]));
+    }
+    
+    isNotificationRead(notificationId) {
+        return this.readNotificationsSet.has(notificationId);
     }
     
     async setupCollections() {
@@ -437,9 +496,14 @@ class FirebaseChat {
                             if (change.type === 'added') {
                                 const notification = change.doc.data();
                                 notification.id = change.doc.id;
-                                if (!notification.read) {
+                                // Check if notification is already marked as read from localStorage
+                                const isRead = this.isNotificationRead(notification.id);
+                                if (!isRead && !notification.read) {
                                     console.log("🔔 New notification received:", notification.title);
                                     this.onNewNotification(notification);
+                                } else if (isRead) {
+                                    // Mark as read in Firestore if it was read in localStorage
+                                    this.markNotificationAsRead(notification.id);
                                 }
                             } else if (change.type === 'modified') {
                                 const notification = change.doc.data();
@@ -564,7 +628,9 @@ class FirebaseChat {
         });
         window.dispatchEvent(event);
         
-        if (message.userId !== this.userId) {
+        // Check if message is newer than last view time
+        const messageTime = message.timestampMs || (message.timestamp?.toMillis?.() || Date.now());
+        if (message.userId !== this.userId && messageTime > this.lastMessageViewTime) {
             this.unreadCount++;
             this.updateBadge();
         }
@@ -579,13 +645,18 @@ class FirebaseChat {
         if (!exists) {
             this.notifications.unshift(notification);
             this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
-            this.updateBadge();
-            this.updateNotificationBadge();
-            this.showBrowserNotification(notification);
             
-            const event = new CustomEvent('newNotification', { detail: notification });
-            window.dispatchEvent(event);
-            this.playNotificationSound();
+            // Check if notification is newer than last view time
+            const notifTime = notification.timestampMs || (notification.timestamp?.toMillis?.() || Date.now());
+            if (notifTime > this.lastNotificationViewTime && !this.isNotificationRead(notification.id)) {
+                this.updateBadge();
+                this.updateNotificationBadge();
+                this.showBrowserNotification(notification);
+                
+                const event = new CustomEvent('newNotification', { detail: notification });
+                window.dispatchEvent(event);
+                this.playNotificationSound();
+            }
         }
     }
     
@@ -652,7 +723,14 @@ class FirebaseChat {
     updateNotificationBadge() {
         const badge = document.querySelector('.notification-badge');
         if (badge) {
-            const unreadCount = this.notifications.filter(n => !n.read).length;
+            // Count unread notifications (not marked as read and newer than last view)
+            const unreadCount = this.notifications.filter(n => {
+                const notifTime = n.timestampMs || (n.timestamp?.toMillis?.() || 0);
+                const isNewer = notifTime > this.lastNotificationViewTime;
+                const isRead = this.isNotificationRead(n.id) || n.read;
+                return isNewer && !isRead;
+            }).length;
+            
             if (unreadCount > 0) {
                 badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
                 badge.classList.add('show');
@@ -666,6 +744,7 @@ class FirebaseChat {
     
     resetUnreadCount() {
         this.unreadCount = 0;
+        this.saveLastMessageViewTime();
         this.updateBadge();
     }
     
@@ -824,6 +903,10 @@ class FirebaseChat {
     }
     
     async markNotificationAsRead(notificationId) {
+        // Save to localStorage first
+        this.saveReadNotification(notificationId);
+        
+        // Update in Firestore
         if (!this.mockMode && this.notificationsCollection) {
             try {
                 await this.notificationsCollection.doc(notificationId).update({ read: true });
@@ -832,6 +915,7 @@ class FirebaseChat {
             }
         }
         
+        // Update local array
         const index = this.notifications.findIndex(n => n.id === notificationId);
         if (index !== -1) {
             this.notifications[index].read = true;
@@ -1114,6 +1198,7 @@ class ChatUI {
         this.isOpen = true;
         document.body.style.overflow = 'hidden';
         
+        // Reset unread count and save view time when opening chat
         if (this.chatService) {
             this.chatService.resetUnreadCount();
         }
@@ -1382,9 +1467,10 @@ class NotificationsUI {
         notifications.forEach(notification => {
             const time = this.formatTime(notification.timestampMs || notification.timestamp);
             const isAdminNotif = notification.isAdminNotification || notification.userId === 'admin';
+            const isRead = this.chatService.isNotificationRead(notification.id) || notification.read;
             
             html += `
-                <div class="notification-item ${!notification.read ? 'unread' : ''} ${isAdminNotif ? 'admin-notif' : ''}" data-id="${notification.id}">
+                <div class="notification-item ${!isRead ? 'unread' : ''} ${isAdminNotif ? 'admin-notif' : ''}" data-id="${notification.id}">
                     <div class="notification-icon" style="${isAdminNotif ? 'background: linear-gradient(135deg, #f97316, #ea580c);' : ''}">
                         <i class="fas ${isAdminNotif ? 'fa-crown' : 'fa-bell'}" style="${isAdminNotif ? 'color: white;' : ''}"></i>
                     </div>
@@ -1417,6 +1503,7 @@ class NotificationsUI {
                     this.chatService.markNotificationAsRead(id);
                     item.classList.remove('unread');
                     this.chatService.updateNotificationBadge();
+                    this.renderNotifications();
                 });
             }
         });
@@ -1468,12 +1555,17 @@ class NotificationsUI {
         document.body.style.overflow = 'hidden';
         this.renderNotifications();
         
-        if (this.chatService && this.notifications) {
-            const unreadNotifications = this.notifications.filter(n => !n.read);
-            unreadNotifications.forEach(notification => {
-                this.chatService.markNotificationAsRead(notification.id);
-            });
+        // Save last view time when opening notifications
+        if (this.chatService) {
+            this.chatService.saveLastNotificationViewTime();
             this.chatService.updateNotificationBadge();
+            
+            // Mark all current notifications as read
+            this.notifications.forEach(notification => {
+                if (!this.chatService.isNotificationRead(notification.id)) {
+                    this.chatService.markNotificationAsRead(notification.id);
+                }
+            });
         }
     }
     
