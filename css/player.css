@@ -41,13 +41,13 @@
     display: block;
 }
 
-/* Fullscreen Toggle Button */
+/* Fullscreen Toggle Button - Smaller */
 .fullscreen-toggle-btn {
     position: absolute;
     bottom: 20px;
     right: 20px;
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -61,7 +61,7 @@
     visibility: hidden;
     transition: all 0.3s ease;
     color: white;
-    font-size: 1.2rem;
+    font-size: 1rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
@@ -133,6 +133,9 @@
 :-moz-full-screen .fullscreen-toggle-btn {
     bottom: 30px;
     right: 30px;
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
 }
 
 /* Mobile optimization */
@@ -140,8 +143,18 @@
     .fullscreen-toggle-btn {
         bottom: 16px;
         right: 16px;
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+    
+    :fullscreen .fullscreen-toggle-btn,
+    :-webkit-full-screen .fullscreen-toggle-btn,
+    :-moz-full-screen .fullscreen-toggle-btn {
+        bottom: 20px;
+        right: 20px;
+        width: 36px;
+        height: 36px;
         font-size: 1rem;
     }
     
@@ -227,6 +240,12 @@
         border-radius: 28px;
     }
     
+    .fullscreen-toggle-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
+    }
+    
     .fullscreen-toggle-btn:hover {
         background: rgba(249, 115, 22, 0.9);
         transform: scale(1.05);
@@ -266,8 +285,8 @@
 /* Touch device optimizations */
 @media (hover: none) and (pointer: coarse) {
     .fullscreen-toggle-btn {
-        width: 48px;
-        height: 48px;
+        width: 40px;
+        height: 40px;
         bottom: 20px;
         right: 20px;
     }
