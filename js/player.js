@@ -19,6 +19,12 @@ class PlayerComponent {
         this.fullscreenBtn = null;
         this.fullscreenTimeout = null;
         this.isFullscreenBtnVisible = false;
+        
+        // Fallback fullscreen elements
+        this.fullscreenWrapper = null;
+        this.originalParent = null;
+        this.originalNextSibling = null;
+        this.exitButton = null;
     }
     
     render() {
@@ -171,47 +177,44 @@ class PlayerComponent {
         
         console.log("Entering fullscreen with landscape orientation...");
         
-        // Force the video container to go fullscreen
         const element = this.videoContainer;
         
-        // Try to lock screen orientation to landscape first
+        // Method 1: Try screen orientation API to lock to landscape
         if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(err => {
-                console.log("Screen orientation lock not supported:", err);
+            screen.orientation.lock('landscape').then(() => {
+                console.log("Screen orientation locked to landscape");
+            }).catch(err => {
+                console.log("Orientation lock failed:", err);
+                this.forceLandscapeWithCSS();
             });
         } else if (screen.lockOrientation) {
             screen.lockOrientation('landscape').catch(err => {
-                console.log("Screen orientation lock not supported:", err);
+                console.log("Orientation lock failed:", err);
+                this.forceLandscapeWithCSS();
             });
+        } else {
+            this.forceLandscapeWithCSS();
         }
         
-        // Request fullscreen with landscape options
-        const requestMethod = element.requestFullscreen || 
-                             element.webkitRequestFullscreen || 
-                             element.mozRequestFullScreen || 
-                             element.msRequestFullscreen;
-        
-        if (requestMethod) {
-            // Try with options first (for browsers that support it)
+        // Method 2: Request fullscreen
+        const requestFullscreen = () => {
             if (element.requestFullscreen) {
-                const fullscreenOptions = {
-                    navigationUI: "hide"
-                };
-                
-                element.requestFullscreen(fullscreenOptions).catch(err => {
-                    console.error("Fullscreen with options failed:", err);
-                    // Fallback to regular fullscreen
-                    requestMethod.call(element).catch(err => {
-                        console.error("Fullscreen request failed:", err);
-                    });
-                });
-            } else {
-                // Regular fullscreen request
-                requestMethod.call(element).catch(err => {
+                element.requestFullscreen().catch(err => {
                     console.error("Fullscreen request failed:", err);
+                    this.fallbackFullscreen();
                 });
+            } else if (element.webkitRequestFullscreen) {
+                element.webkitRequestFullscreen();
+            } else if (element.mozRequestFullScreen) {
+                element.mozRequestFullScreen();
+            } else if (element.msRequestFullscreen) {
+                element.msRequestFullscreen();
+            } else {
+                this.fallbackFullscreen();
             }
-        }
+        };
+        
+        requestFullscreen();
         
         // Update button icon
         this.updateFullscreenButtonIcon();
@@ -222,22 +225,140 @@ class PlayerComponent {
         }, 100);
     }
     
+    forceLandscapeWithCSS() {
+        console.log("Forcing landscape with CSS transform");
+        this.videoContainer.classList.add('force-landscape');
+        
+        // Listen for exit to remove the class
+        const removeLandscapeClass = () => {
+            this.videoContainer.classList.remove('force-landscape');
+            document.removeEventListener('fullscreenchange', removeLandscapeClass);
+            document.removeEventListener('webkitfullscreenchange', removeLandscapeClass);
+            document.removeEventListener('mozfullscreenchange', removeLandscapeClass);
+        };
+        document.addEventListener('fullscreenchange', removeLandscapeClass);
+        document.addEventListener('webkitfullscreenchange', removeLandscapeClass);
+        document.addEventListener('mozfullscreenchange', removeLandscapeClass);
+    }
+    
+    fallbackFullscreen() {
+        console.log("Using fallback fullscreen method");
+        
+        // Save original parent and position
+        this.originalParent = this.videoContainer.parentNode;
+        this.originalNextSibling = this.videoContainer.nextSibling;
+        
+        // Create wrapper div for fullscreen
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'fixed';
+        wrapper.style.top = '0';
+        wrapper.style.left = '0';
+        wrapper.style.width = '100%';
+        wrapper.style.height = '100%';
+        wrapper.style.backgroundColor = '#000';
+        wrapper.style.zIndex = '9999';
+        wrapper.style.display = 'flex';
+        wrapper.style.alignItems = 'center';
+        wrapper.style.justifyContent = 'center';
+        wrapper.style.flexDirection = 'column';
+        
+        // Move video container into wrapper
+        wrapper.appendChild(this.videoContainer);
+        document.body.appendChild(wrapper);
+        
+        // Style the video container for fullscreen
+        this.videoContainer.style.width = '100%';
+        this.videoContainer.style.height = '100%';
+        this.videoContainer.style.objectFit = 'contain';
+        this.videoContainer.style.borderRadius = '0';
+        
+        // Add exit button
+        const exitBtn = document.createElement('button');
+        exitBtn.innerHTML = '<i class="fas fa-compress"></i>';
+        exitBtn.style.position = 'fixed';
+        exitBtn.style.top = '20px';
+        exitBtn.style.right = '20px';
+        exitBtn.style.zIndex = '10000';
+        exitBtn.style.background = 'rgba(0,0,0,0.7)';
+        exitBtn.style.backdropFilter = 'blur(8px)';
+        exitBtn.style.color = 'white';
+        exitBtn.style.border = '1px solid rgba(255,255,255,0.2)';
+        exitBtn.style.width = '44px';
+        exitBtn.style.height = '44px';
+        exitBtn.style.borderRadius = '50%';
+        exitBtn.style.fontSize = '1.2rem';
+        exitBtn.style.cursor = 'pointer';
+        exitBtn.style.display = 'flex';
+        exitBtn.style.alignItems = 'center';
+        exitBtn.style.justifyContent = 'center';
+        exitBtn.style.transition = 'all 0.3s ease';
+        exitBtn.onclick = () => this.exitFullscreen();
+        wrapper.appendChild(exitBtn);
+        
+        // Store references for cleanup
+        this.fullscreenWrapper = wrapper;
+        this.exitButton = exitBtn;
+        
+        // Add touch event to hide/show exit button
+        let exitTimeout;
+        const showExitButton = () => {
+            if (exitBtn) {
+                exitBtn.style.opacity = '1';
+                exitBtn.style.visibility = 'visible';
+                clearTimeout(exitTimeout);
+                exitTimeout = setTimeout(() => {
+                    exitBtn.style.opacity = '0';
+                    exitBtn.style.visibility = 'hidden';
+                }, 3000);
+            }
+        };
+        
+        wrapper.addEventListener('click', showExitButton);
+        wrapper.addEventListener('touchstart', showExitButton);
+        
+        // Initially show button
+        showExitButton();
+    }
+    
     exitFullscreen() {
         console.log("Exiting fullscreen...");
         
-        // Exit fullscreen
-        const exitMethod = document.exitFullscreen || 
-                          document.webkitExitFullscreen || 
-                          document.mozCancelFullScreen || 
-                          document.msExitFullscreen;
-        
-        if (exitMethod) {
-            exitMethod.call(document).catch(err => {
-                console.error("Exit fullscreen failed:", err);
-            });
+        // Clean up fallback fullscreen if used
+        if (this.fullscreenWrapper) {
+            // Restore video container to original position
+            if (this.originalParent) {
+                if (this.originalNextSibling) {
+                    this.originalParent.insertBefore(this.videoContainer, this.originalNextSibling);
+                } else {
+                    this.originalParent.appendChild(this.videoContainer);
+                }
+            }
+            this.fullscreenWrapper.remove();
+            this.fullscreenWrapper = null;
+            this.exitButton = null;
+            
+            // Reset video container styles
+            this.videoContainer.style.width = '';
+            this.videoContainer.style.height = '';
+            this.videoContainer.style.objectFit = '';
+            this.videoContainer.style.borderRadius = '';
         }
         
-        // Unlock screen orientation to allow portrait again
+        // Exit standard fullscreen
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+        
+        // Remove CSS landscape class
+        this.videoContainer.classList.remove('force-landscape');
+        
+        // Unlock screen orientation
         if (screen.orientation && screen.orientation.unlock) {
             screen.orientation.unlock();
         } else if (screen.unlockOrientation) {
