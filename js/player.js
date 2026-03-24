@@ -66,6 +66,7 @@ class PlayerComponent {
         // Add click event to toggle fullscreen
         this.fullscreenBtn.addEventListener('click', (e) => {
             e.stopPropagation();
+            e.preventDefault();
             this.toggleFullscreen();
         });
         
@@ -124,6 +125,8 @@ class PlayerComponent {
         
         // Show button briefly after fullscreen change
         this.showFullscreenButton();
+        
+        console.log("Fullscreen changed:", isFullscreen ? "Entered" : "Exited");
     }
     
     showFullscreenButton() {
@@ -163,6 +166,8 @@ class PlayerComponent {
                                 document.webkitFullscreenElement || 
                                 document.mozFullScreenElement);
         
+        console.log("Toggle fullscreen - currently:", isFullscreen ? "Fullscreen" : "Not fullscreen");
+        
         if (isFullscreen) {
             this.exitFullscreen();
         } else {
@@ -173,65 +178,91 @@ class PlayerComponent {
     enterFullscreen() {
         if (!this.videoContainer) return;
         
-        console.log("Entering fullscreen...");
+        console.log("Attempting to enter fullscreen...");
         
-        // Method 1: Try to lock orientation to landscape first (for mobile)
-        if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(err => {
-                console.log("Orientation lock not supported:", err);
-            });
-        } else if (screen.lockOrientation) {
-            screen.lockOrientation('landscape').catch(err => {
-                console.log("Orientation lock not supported:", err);
-            });
-        }
-        
-        // Method 2: Request fullscreen on the video container
         const element = this.videoContainer;
         
-        if (element.requestFullscreen) {
-            element.requestFullscreen().catch(err => {
-                console.error("Fullscreen request failed:", err);
-                // Fallback for older browsers
-                if (element.webkitRequestFullscreen) {
-                    element.webkitRequestFullscreen();
-                } else if (element.mozRequestFullScreen) {
-                    element.mozRequestFullScreen();
-                } else if (element.msRequestFullscreen) {
-                    element.msRequestFullscreen();
+        // Try all possible fullscreen methods
+        const requestFullscreen = () => {
+            if (element.requestFullscreen) {
+                return element.requestFullscreen();
+            } else if (element.webkitRequestFullscreen) {
+                return element.webkitRequestFullscreen();
+            } else if (element.mozRequestFullScreen) {
+                return element.mozRequestFullScreen();
+            } else if (element.msRequestFullscreen) {
+                return element.msRequestFullscreen();
+            }
+            return Promise.reject("Fullscreen not supported");
+        };
+        
+        // Request fullscreen
+        requestFullscreen().then(() => {
+            console.log("Fullscreen entered successfully");
+            
+            // Try to lock orientation to landscape after entering fullscreen
+            setTimeout(() => {
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch(err => {
+                        console.log("Orientation lock failed:", err);
+                    });
+                } else if (screen.lockOrientation) {
+                    screen.lockOrientation('landscape').catch(err => {
+                        console.log("Orientation lock failed:", err);
+                    });
                 }
-            });
-        } else if (element.webkitRequestFullscreen) {
-            element.webkitRequestFullscreen();
-        } else if (element.mozRequestFullScreen) {
-            element.mozRequestFullScreen();
-        } else if (element.msRequestFullscreen) {
-            element.msRequestFullscreen();
-        }
+            }, 100);
+            
+        }).catch(err => {
+            console.error("Fullscreen request failed:", err);
+            
+            // Fallback: Try to use the video element directly
+            if (this.videoPlayer && this.videoPlayer.requestFullscreen) {
+                console.log("Trying fallback on video element...");
+                this.videoPlayer.requestFullscreen().catch(e => {
+                    console.error("Video element fullscreen also failed:", e);
+                    showError("Fullscreen not supported in this browser");
+                });
+            } else {
+                showError("Fullscreen not supported in this browser");
+            }
+        });
         
         // Update button icon will be handled by onFullscreenChange event
     }
     
     exitFullscreen() {
-        console.log("Exiting fullscreen...");
+        console.log("Attempting to exit fullscreen...");
         
-        // Exit fullscreen
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-            document.mozCancelFullScreen();
-        } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
-        }
+        // Try all possible exit fullscreen methods
+        const exitFullscreen = () => {
+            if (document.exitFullscreen) {
+                return document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                return document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                return document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                return document.msExitFullscreen();
+            }
+            return Promise.reject("Exit fullscreen not supported");
+        };
         
-        // Unlock orientation
-        if (screen.orientation && screen.orientation.unlock) {
-            screen.orientation.unlock();
-        } else if (screen.unlockOrientation) {
-            screen.unlockOrientation();
-        }
+        exitFullscreen().then(() => {
+            console.log("Fullscreen exited successfully");
+            
+            // Unlock orientation
+            setTimeout(() => {
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                } else if (screen.unlockOrientation) {
+                    screen.unlockOrientation();
+                }
+            }, 100);
+            
+        }).catch(err => {
+            console.error("Exit fullscreen failed:", err);
+        });
         
         // Update button icon will be handled by onFullscreenChange event
     }
