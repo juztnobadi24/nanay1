@@ -105,7 +105,6 @@
       {
     "name": "Ani-blast",
     "type": "TV",
-    "logo": "https://raw.githubusercontent.com/noodtayo/app/main/images/ch_ani_blast.webp",
     "category": "Anime",
     "streamUrl": "https://amg19223-amg19223c9-amgplt0019.playout.now3.amagi.tv/playlist/amg19223-amg19223c9-amgplt0019/playlist.m3u8"
   },
@@ -595,14 +594,14 @@
  {
     "name": "Game Show Network",
     "type": "TV",
-    "logo": "https://raw.githubusercontent.com/noodtayo/app/main/images/ch_game_show_network.webp",
+    "logo": "https://tse3.mm.bing.net/th/id/OIP.A4lBsmu3xqd66_--R0MxTgHaFj?pid=Api&h=220&P=0",
     "category": "Entertainment",
     "streamUrl": "https://a-cdn.klowdtv.com/live2/gsn_720p/chunks.m3u8"
   },
   {
     "name": "GMA Life TV",
     "type": "TV",
-    "logo": "https://raw.githubusercontent.com/noodtayo/app/main/images/ch_gma_life_tv.webp",
+    "logo": "https://static.wikia.nocookie.net/russel/images/6/61/GMA_Life_TV_Logo_2024.png/revision/latest/scale-to-width-down/1200?cb=20240805140454",
     "category": "Entertainment",
     "dateAdded": "2026-03-19",
     "streamUrl": "https://abslive.akamaized.net/dash/live/2099522/glife3/manifest.mpd",
@@ -616,7 +615,7 @@
   {
     "name": "GMA News TV",
     "type": "TV",
-    "logo": "https://raw.githubusercontent.com/noodtayo/app/main/images/ch_gma_news_tv.webp",
+    "logo": "https://tse3.mm.bing.net/th/id/OIP.djGARVbI9CwVvw9VyRiKDAHaHa?pid=Api&h=220&P=0",
     "category": "Entertainment",
     "dateAdded": "2026-03-19",
     "streamUrl": "https://abslive.akamaized.net/dash/live/2099522/gnews3/manifest.mpd",
@@ -630,7 +629,7 @@
     {
     "name": "GMA Pinoy TV",
     "type": "TV",
-    "logo": "https://raw.githubusercontent.com/noodtayo/app/main/images/ch_gma_pinoy_tv.webp",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.PzOcIsMnVF-X-fNbnBv7ogHaEj?pid=Api&h=220&P=0",
     "category": "Entertainment",
     "dateAdded": "2026-03-19",
     "streamUrl": "https://abslive.akamaized.net/dash/live/2099522/gmapt3/manifest.mpd",
@@ -696,7 +695,7 @@
     {
     "name": "Kartoon Channel!",
     "type": "TV",
-    "logo": "https://raw.githubusercontent.com/noodtayo/app/main/images/ch_kartoon_channel.webp",
+    "logo": "https://tse2.mm.bing.net/th/id/OIP.WH2OZuRGTKifmNl1kvQKXQHaEc?pid=Api&h=220&P=0",
     "category": "Kids",
     "streamUrl": "https://live-manifest.production-public.tubi.io/live/ede882c2-43d6-4eca-9351-ea29e84dc217/playlist.m3u8"
   },
@@ -817,7 +816,7 @@
   {
     "name": "Tennis Channel 2",
     "type": "TV",
-    "logo": "https://raw.githubusercontent.com/noodtayo/app/main/images/ch_tennis_channel_2.webp",
+    "logo": "https://static.wikia.nocookie.net/logopedia/images/8/8a/Tennis_Channel_2003_stacked.svg/revision/latest?cb=20240116025610",
     "category": "Sports",
     "dateAdded": "2026-03-20",
     "streamUrl": "https://otte.live.fly.ww.aiv-cdn.net/pdx-nitro/live/clients/dash/enc/bfigtl960n/out/v1/5ba5484550e84681bff2e8ca994266c1/cenc.mpd",
