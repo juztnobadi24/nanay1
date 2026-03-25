@@ -409,6 +409,13 @@
     }
   },
     {
+    "name": "HypeTV",
+    "type": "TV",
+    "category": "Movies",
+    "streamUrl": "https://live20.bozztv.com/giatvplayout7/giatv-211468/tracks-v1a1/mono.ts.m3u8",
+    "logo": ""
+},
+    {
     "name": "Jeepney TV",
     "type": "TV",
     "logo": "https://4.bp.blogspot.com/-URloFZ0yglM/UIFMSDxlcrI/AAAAAAAASMg/sRS0K4aJmC8/s1600/Jeepney-TV-Logo.jpg",
@@ -436,7 +443,13 @@
     "category": "Movies",
     "streamUrl": "https://amg00353-lionsgatestudio-moviesphere-xumo-zh5u0.amagi.tv/playlist.m3u8"
   },
-
+{
+    "name": "Movie Box Ph",
+    "type": "TV",
+    "category": "Movies",
+    "streamUrl": "https://live20.bozztv.com/giatvplayout7/giatv-210731/tracks-v1a1/mono.ts.m3u8",
+    "logo": ""
+},
     {
     "name": "Movies Now",
     "type": "TV",
@@ -507,6 +520,20 @@
     "dateAdded": "2026-03-19",
     "streamUrl": "https://fce26776.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/U3BvcnRzVHJpYmFsLWV1X1BpY2tsZVRWX0hMUw/playlist.m3u8"
   },
+    {
+    "name": "Sdtv Hd",
+    "type": "TV",
+    "category": "Movies",
+    "streamUrl": "https://live20.bozztv.com/giatvplayout7/giatv-211473/tracks-v1a1/mono.ts.m3u8",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.HVpJv1eFZ90L58njM8sBeQHaHa?pid=Api&h=220&P=0"
+},
+ {
+    "name": "Sdtv Network",
+    "type": "TV",
+    "category": "Movies",
+    "streamUrl": "https://sdtvnetworkph.sanmateocable.workers.dev/playlist.m3u8",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.HVpJv1eFZ90L58njM8sBeQHaHa?pid=Api&h=220&P=0"
+},
 
     {
     "name": "Stories by AMC",
@@ -573,6 +600,31 @@
       "6f0aeae5779f1dcaef23f0bfbc828220": "7bcef3cf93de00e3daeb190d15b1ec05"
     }
   },
+    {
+    "name": "3rs Cartoon Movies",
+    "type": "TV",
+    "category": "Movies",
+    "streamUrl": "https://live20.bozztv.com/giatvplayout7/giatv-211507/tracks-v1a1/mono.ts.m3u8",
+    "logo": ""
+},
+ 
+
+{
+    "name": "3rs Sine Pinoy",
+    "type": "TV",
+    "category": "Movies",
+    "streamUrl": "https://live20.bozztv.com/giatvplayout7/giatv-210267/tracks-v1a1/mono.ts.m3u8",
+    "logo": ""
+},
+
+{
+    "name": "3rs TV",
+    "type": "TV",
+    "category": "Movies",
+    "streamUrl": "https://live20.bozztv.com/giatvplayout7/giatv-210631/tracks-v1a1/mono.ts.m3u8",
+    "logo": ""
+},
+ 
   {
     "name": "[adult swim]",
     "type": "TV",
@@ -703,7 +755,6 @@
     "streamUrl": "https://stream-175.zeno.fm/4vgyas31hc9uv",
     "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/l2P2LqzjVpThF-4OA-N9D4OIV4oMdwRyC9V6lClFtDg/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvNmE2MjgxMWUtOWYyZS00NmJmLTliMzAtN2EwYjQ0ZmYzZTQ4L2ltYWdlLz91PTE3MTM5Mzc3MDkwMDA.webp"
 }
- 
 
 
 ]
