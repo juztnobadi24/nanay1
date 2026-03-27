@@ -54,3 +54,109 @@ function showError(msg) {
         console.error(msg);
     }
 }
+
+// ======================== TOAST NOTIFICATION ========================
+function showToast(message, duration = 3000) {
+    // Remove existing toast
+    const existingToast = document.querySelector('.juzt-toast');
+    if (existingToast) existingToast.remove();
+    
+    const toast = document.createElement('div');
+    toast.className = 'juzt-toast';
+    toast.innerHTML = `
+        <i class="fas fa-check-circle"></i>
+        <span>${escapeHtml(message)}</span>
+    `;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #f97316;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 40px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        z-index: 1001;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        animation: slideUp 0.3s ease;
+        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+// ======================== PWA UTILITIES ========================
+function isPWAInstalled() {
+    // Check if app is running in standalone mode (installed PWA)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true;
+    return isStandalone;
+}
+
+function getPWADisplayMode() {
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        return 'standalone';
+    }
+    if (window.matchMedia('(display-mode: fullscreen)').matches) {
+        return 'fullscreen';
+    }
+    if (window.matchMedia('(display-mode: minimal-ui)').matches) {
+        return 'minimal-ui';
+    }
+    return 'browser';
+}
+
+// ======================== CHECK FOR APP UPDATES ========================
+function checkForAppUpdates() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistration().then(registration => {
+            if (registration) {
+                registration.update();
+                console.log('Checking for app updates...');
+            }
+        });
+    }
+}
+
+// ======================== CLEAR CACHE ========================
+async function clearAppCache() {
+    if ('caches' in window) {
+        try {
+            const cacheNames = await caches.keys();
+            await Promise.all(
+                cacheNames.map(cacheName => {
+                    console.log('Deleting cache:', cacheName);
+                    return caches.delete(cacheName);
+                })
+            );
+            console.log('All caches cleared');
+            showToast('Cache cleared successfully! Refresh to reload.');
+            return true;
+        } catch (error) {
+            console.error('Error clearing cache:', error);
+            showToast('Failed to clear cache');
+            return false;
+        }
+    }
+    return false;
+}
+
+// Export for global use
+window.showToast = showToast;
+window.isPWAInstalled = isPWAInstalled;
+window.getPWADisplayMode = getPWADisplayMode;
+window.checkForAppUpdates = checkForAppUpdates;
+window.clearAppCache = clearAppCache;
+
+// Log PWA status on load
+console.log(`📱 PWA Display Mode: ${getPWADisplayMode()}`);
+console.log(`📱 Installed as PWA: ${isPWAInstalled()}`);
