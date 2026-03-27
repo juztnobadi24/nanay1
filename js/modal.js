@@ -51,7 +51,7 @@ class SettingsModal {
             deviceType,
             os,
             browser,
-            screenSize: `${screenWidth} x ${screenHeight}`,
+            screenSize: `${screen.width} x ${screen.height}`,
             isMobile,
             isTablet,
             isDesktop: !isMobile && !isTablet
@@ -92,6 +92,24 @@ class SettingsModal {
                             <div class="info-row">
                                 <span class="info-label">Viewport:</span>
                                 <span class="info-value" id="viewportSize">${window.innerWidth} x ${window.innerHeight}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- PWA Install Section -->
+                        <div class="settings-section" id="installSection">
+                            <h4><i class="fas fa-download"></i> Install App</h4>
+                            <div class="setting-item">
+                                <div>
+                                    <div class="setting-label">Install JUZT as App</div>
+                                    <div class="setting-description">Install this app on your device for quick access and offline support</div>
+                                </div>
+                                <button id="installAppBtn" class="install-app-btn">
+                                    <i class="fas fa-download"></i> Install
+                                </button>
+                            </div>
+                            <div class="info-note" id="installNote">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Install JUZT on your home screen for the best experience. Works offline for cached content and gives you a native app feel.</span>
                             </div>
                         </div>
                         
@@ -153,6 +171,31 @@ class SettingsModal {
             applyBtn.addEventListener('click', () => this.applySettings());
         }
         
+        // Install button
+        const installBtn = document.getElementById('installAppBtn');
+        if (installBtn) {
+            installBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                if (window.pwaInstaller) {
+                    installBtn.disabled = true;
+                    const originalHtml = installBtn.innerHTML;
+                    installBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Installing...';
+                    
+                    const installed = await window.pwaInstaller.promptInstall();
+                    
+                    if (installed) {
+                        installBtn.innerHTML = '<i class="fas fa-check"></i> Installed!';
+                        setTimeout(() => {
+                            this.close();
+                        }, 1500);
+                    } else {
+                        installBtn.innerHTML = originalHtml;
+                        installBtn.disabled = false;
+                    }
+                }
+            });
+        }
+        
         // Listen for window resize to update viewport size
         window.addEventListener('resize', () => {
             if (this.isOpen) {
@@ -173,6 +216,33 @@ class SettingsModal {
                 this.close();
             }
         });
+        
+        // Listen for install status updates
+        window.addEventListener('beforeinstallprompt', () => {
+            this.updateInstallButton();
+        });
+        
+        window.addEventListener('appinstalled', () => {
+            this.updateInstallButton();
+        });
+    }
+    
+    updateInstallButton() {
+        const installBtn = document.getElementById('installAppBtn');
+        if (installBtn && window.pwaInstaller) {
+            const status = window.pwaInstaller.getInstallStatus();
+            if (status.canInstall) {
+                installBtn.style.display = 'flex';
+                installBtn.disabled = false;
+                installBtn.innerHTML = '<i class="fas fa-download"></i> Install';
+            } else if (status.isInstalled) {
+                installBtn.style.display = 'none';
+            } else {
+                installBtn.style.display = 'flex';
+                installBtn.disabled = false;
+                installBtn.innerHTML = '<i class="fas fa-download"></i> Install';
+            }
+        }
     }
     
     open() {
@@ -180,6 +250,11 @@ class SettingsModal {
         this.modal.classList.add('show');
         this.isOpen = true;
         document.body.style.overflow = 'hidden';
+        
+        // Update install button visibility
+        setTimeout(() => {
+            this.updateInstallButton();
+        }, 100);
     }
     
     close() {
