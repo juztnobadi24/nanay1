@@ -1300,6 +1300,34 @@
     "category": "Movies",
     "streamUrl": "https://live20.bozztv.com/giatvplayout7/giatv-210631/tracks-v1a1/mono.ts.m3u8"
   },
+   {
+    "name": "90.7 Love Radio",
+    "type": "Radio",
+    "category": "FM",
+    "streamUrl": "https://azura.loveradio.com.ph/listen/love_radio_manila/radio.mp3",
+    "logo": "https://upload.wikimedia.org/wikipedia/en/3/32/Love_Radio_2021_logo.png?Love_Radio1184620647"
+},
+  {
+    "name": "91.5 Win Radio Manila",
+    "type": "Radio",
+    "category": "FM",
+    "streamUrl": "https://stream.zeno.fm/nz4ydgnu6hhvv?an-uid=4762660213158558940",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/Ev1_yutQykKjO56VRPMAd2sEQlmrQC9EVrP9p-0rGLo/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYWd4emZucGxibTh0YzNSaGRITnlNZ3NTQ2tGMWRHaERiR2xsYm5RWWdJQ0k3b1NRbEFrTUN4SU9VM1JoZEdsdmJsQnliMlpwYkdVWWdJQ0k5dkRNNmdvTW9nRUVlbVZ1YncvaW1hZ2UvP3U9MTc0NDgyMzQxMjAwMA.webp"
+},
+  {
+    "name": "93.1 MONSTER RX",
+    "type": "Radio",
+    "category": "FM",
+    "streamUrl": "https://in-icecast.eradioportal.com:8443/monsterrrx",
+    "logo": "https://rx931.com/images/logo-main.png"
+},
+  {
+    "name": "94.7 Energy FM Cebu",
+    "type": "Radio",
+    "category": "FM",
+    "streamUrl": "https://stream.zeno.fm/4oa5m3ffwutuv?dyn-uid=4953455941537461585&an-uid=6788999058307340397&dot-uid=0c6f2204002afaac5e3f41c4&amb-uid=8063733765431834548&dbm-uid=CAESEJoN6FTvjvF3Bvl0e_kDWTg&aw_0_req_lsid=b60d41b87dd35514d9cf949f42a559c6",
+    "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/XG-MObHM6PEtkzagDXocTb6RTP9-7aVgC3rLPtQpTp0/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvYzFmNWUxNTgtM2VmOS00MTYzLWE1NWItOTZhMjU2MjIzYmE5L2ltYWdlLz91PTE3MjgzNDg4NTkwMDA.webp"
+},
   {
     "name": "95.5 Star FM Cebu",
     "type": "Radio",
