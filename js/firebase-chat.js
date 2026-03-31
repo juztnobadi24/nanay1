@@ -115,7 +115,6 @@ class FirebaseChat {
     }
     
     loadReadNotifications() {
-        // Load read notifications set
         const readNotifications = localStorage.getItem(this.READ_NOTIFICATIONS_KEY);
         if (readNotifications) {
             this.readNotificationsSet = new Set(JSON.parse(readNotifications));
@@ -598,7 +597,6 @@ class FirebaseChat {
         });
         window.dispatchEvent(event);
         
-        // Log new message without sound
         console.log("New message from:", message.userName);
     }
     
@@ -769,10 +767,8 @@ class FirebaseChat {
     }
     
     async markNotificationAsRead(notificationId) {
-        // Save to localStorage
         this.saveReadNotification(notificationId);
         
-        // Update in Firestore
         if (!this.mockMode && this.notificationsCollection) {
             try {
                 await this.notificationsCollection.doc(notificationId).update({ read: true });
@@ -781,7 +777,6 @@ class FirebaseChat {
             }
         }
         
-        // Update local array
         const index = this.notifications.findIndex(n => n.id === notificationId);
         if (index !== -1) {
             this.notifications[index].read = true;
@@ -796,7 +791,6 @@ class FirebaseChat {
     markAllNotificationsAsRead() {
         let markedCount = 0;
         
-        // Mark all notifications as read in localStorage and in memory
         this.notifications.forEach(notification => {
             if (!this.isNotificationRead(notification.id)) {
                 this.saveReadNotification(notification.id);
@@ -805,7 +799,6 @@ class FirebaseChat {
             }
         });
         
-        // Also update in Firestore if possible
         if (!this.mockMode && this.notificationsCollection) {
             const unreadNotifications = this.notifications.filter(n => !this.isNotificationRead(n.id));
             unreadNotifications.forEach(async (notification) => {
@@ -908,7 +901,9 @@ class ChatUI {
     
     createModal() {
         const existingModal = document.getElementById('chatModal');
-        if (existingModal) existingModal.remove();
+        if (existingModal) {
+            existingModal.remove();
+        }
         
         const userInfo = this.chatService.getUserInfo();
         
@@ -1092,12 +1087,15 @@ class ChatUI {
     }
     
     open() {
-        if (!this.modal) this.createModal();
-        this.modal.classList.add('show');
-        this.isOpen = true;
-        document.body.style.overflow = 'hidden';
-        
-        setTimeout(() => this.scrollToBottom(), 100);
+        if (!this.modal) {
+            this.createModal();
+        }
+        if (this.modal) {
+            this.modal.classList.add('show');
+            this.isOpen = true;
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => this.scrollToBottom(), 100);
+        }
     }
     
     close() {
@@ -1109,7 +1107,7 @@ class ChatUI {
     }
 }
 
-// Announcements UI Component - Clean List Style
+// Announcements UI Component
 class NotificationsUI {
     constructor(chatService) {
         this.chatService = chatService;
@@ -1122,7 +1120,9 @@ class NotificationsUI {
     
     createModal() {
         const existingModal = document.getElementById('notificationsModal');
-        if (existingModal) existingModal.remove();
+        if (existingModal) {
+            existingModal.remove();
+        }
         
         const userInfo = this.chatService.getUserInfo();
         this.isAdminMode = userInfo.isAdmin;
@@ -1385,7 +1385,6 @@ class NotificationsUI {
         
         listContainer.innerHTML = html;
         
-        // Mark as read when clicked (for users)
         if (!this.isAdminMode) {
             listContainer.querySelectorAll('.announcement-item').forEach(item => {
                 const id = item.dataset.id;
@@ -1400,7 +1399,6 @@ class NotificationsUI {
             });
         }
         
-        // Delete buttons for admin
         if (this.isAdminMode) {
             listContainer.querySelectorAll('.announcement-delete').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
@@ -1442,11 +1440,15 @@ class NotificationsUI {
     }
     
     open() {
-        if (!this.modal) this.createModal();
-        this.modal.classList.add('show');
-        this.isOpen = true;
-        document.body.style.overflow = 'hidden';
-        this.renderNotifications();
+        if (!this.modal) {
+            this.createModal();
+        }
+        if (this.modal) {
+            this.modal.classList.add('show');
+            this.isOpen = true;
+            document.body.style.overflow = 'hidden';
+            this.renderNotifications();
+        }
     }
     
     close() {
@@ -1458,7 +1460,7 @@ class NotificationsUI {
     }
 }
 
-// Initialize Firebase Chat
+// Initialize Firebase Chat - SIMPLE VERSION WITHOUT CLONING
 window.firebaseChat = null;
 window.chatUI = null;
 window.notificationsUI = null;
@@ -1470,28 +1472,76 @@ async function initFirebaseChat() {
         
         await window.firebaseChat.initPromise;
         
+        // Create UI instances
         window.chatUI = new ChatUI(window.firebaseChat);
         window.notificationsUI = new NotificationsUI(window.firebaseChat);
         
-        const messageBtn = document.getElementById('messageBtn');
-        const notificationBtn = document.getElementById('notificationBtn');
-        
-        if (messageBtn) {
-            const newMessageBtn = messageBtn.cloneNode(true);
-            messageBtn.parentNode.replaceChild(newMessageBtn, messageBtn);
+        // Simple direct event listener attachment
+        function attachEventListeners() {
+            const messageBtn = document.getElementById('messageBtn');
+            const notificationBtn = document.getElementById('notificationBtn');
             
-            newMessageBtn.addEventListener('click', () => {
-                if (window.chatUI) window.chatUI.open();
-            });
+            let attached = false;
+            
+            if (messageBtn && !messageBtn._chatListenerAttached) {
+                messageBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("Opening chat modal...");
+                    if (window.chatUI) {
+                        window.chatUI.open();
+                    } else {
+                        console.error("Chat UI not available");
+                    }
+                });
+                messageBtn._chatListenerAttached = true;
+                console.log("✅ Chat button listener attached");
+                attached = true;
+            } else if (!messageBtn) {
+                console.log("Message button not found yet, waiting...");
+            }
+            
+            if (notificationBtn && !notificationBtn._notifListenerAttached) {
+                notificationBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log("Opening announcements modal...");
+                    if (window.notificationsUI) {
+                        window.notificationsUI.open();
+                    } else {
+                        console.error("Notifications UI not available");
+                    }
+                });
+                notificationBtn._notifListenerAttached = true;
+                console.log("✅ Notification button listener attached");
+                attached = true;
+            } else if (!notificationBtn) {
+                console.log("Notification button not found yet, waiting...");
+            }
+            
+            return attached;
         }
         
-        if (notificationBtn) {
-            const newNotificationBtn = notificationBtn.cloneNode(true);
-            notificationBtn.parentNode.replaceChild(newNotificationBtn, notificationBtn);
-            
-            newNotificationBtn.addEventListener('click', () => {
-                if (window.notificationsUI) window.notificationsUI.open();
+        // Try to attach immediately
+        if (!attachEventListeners()) {
+            // If buttons not found, use MutationObserver to wait for them
+            const observer = new MutationObserver((mutations, obs) => {
+                if (attachEventListeners()) {
+                    obs.disconnect();
+                    console.log("All buttons found and listeners attached");
+                }
             });
+            
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                observer.disconnect();
+                console.log("Stopped waiting for buttons after 10 seconds");
+            }, 10000);
         }
         
         console.log("✅ Firebase Chat UI initialized");
