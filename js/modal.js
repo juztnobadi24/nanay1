@@ -107,10 +107,6 @@ class SettingsModal {
                                     <i class="fas fa-download"></i> Install
                                 </button>
                             </div>
-                            <div class="info-note" id="installNote">
-                                <i class="fas fa-info-circle"></i>
-                                <span>Install JUZT on your home screen for the best experience. Works offline for cached content and gives you a native app feel.</span>
-                            </div>
                         </div>
                         
                         <div class="settings-section">
@@ -127,13 +123,6 @@ class SettingsModal {
                                     <option value="480p" ${this.qualityPreference === '480p' ? 'selected' : ''}>480p (SD)</option>
                                 </select>
                             </div>
-                        </div>
-                        
-                        <div class="info-note">
-                            <i class="fas fa-info-circle"></i> 
-                            <span>
-                                <strong>Auto Fullscreen:</strong> Video automatically enters fullscreen when rotating to landscape on mobile devices.
-                            </span>
                         </div>
                         
                         <button id="applySettingsBtn" class="settings-btn">
