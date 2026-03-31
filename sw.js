@@ -1,5 +1,12 @@
 // sw.js
-const CACHE_NAME = 'juzt-iptv-v1';
+const CACHE_VERSION = 'juzt-iptv-v2'; // Increment this with each release
+const CACHE_NAME = CACHE_VERSION;
+
+// Function to strip version parameters for caching
+function stripVersionParams(url) {
+    return url.split('?')[0];
+}
+
 const urlsToCache = [
   '/',
   '/index.html',
@@ -12,6 +19,7 @@ const urlsToCache = [
   '/css/firebase-chat.css',
   '/css/loader.css',
   '/css/splash.css',
+  '/css/toggle.css',
   '/js/app.js',
   '/js/header.js',
   '/js/sidebar.js',
@@ -29,63 +37,77 @@ const urlsToCache = [
 
 // Install event - cache core assets
 self.addEventListener('install', event => {
+  console.log('Service Worker installing...', CACHE_VERSION);
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Opened cache');
+        console.log('Opened cache', CACHE_NAME);
         return cache.addAll(urlsToCache);
       })
-  );
-  self.skipWaiting(); // Activate worker immediately
-});
-
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-        // Clone the request because it's a one-time use stream
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then(
-          response => {
-            // Check if we received a valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Clone the response because it's a one-time use stream
-            const responseToCache = response.clone();
-
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          }
-        );
+      .then(() => {
+        return self.skipWaiting();
       })
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
+  console.log('Service Worker activating...', CACHE_VERSION);
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
+    }).then(() => {
+      return self.clients.claim();
     })
   );
-  self.clients.claim(); // Take control of all clients immediately
+});
+
+// Fetch event - strip version params for cache matching
+self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  const cleanUrl = stripVersionParams(event.request.url);
+  
+  // For HTML pages - network first
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(cleanUrl, responseToCache);
+          });
+          return response;
+        })
+        .catch(() => {
+          return caches.match(cleanUrl);
+        })
+    );
+  } else {
+    // For other assets - cache first with network fallback
+    event.respondWith(
+      caches.match(cleanUrl)
+        .then(response => {
+          if (response) {
+            return response;
+          }
+          return fetch(event.request).then(response => {
+            if (!response || response.status !== 200) {
+              return response;
+            }
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(cleanUrl, responseToCache);
+            });
+            return response;
+          });
+        })
+    );
+  }
 });
