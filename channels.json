@@ -100,14 +100,7 @@
     "streamUrl": "https://amc-anime-x-hidive-1-us.tablo.wurl.tv/3000.m3u8"
   },
   {
-    "name": "Aniplus",
-    "type": "TV",
-    "logo": "https://images.seeklogo.com/logo-png/42/1/aniplus-logo-png_seeklogo-428978.png",
-    "category": "Anime",
-    "streamUrl": "https://amg18481-amg18481c1-amgplt0352.playout.now3.amagi.tv/ts-eu-w1-n2/playlist/amg18481-amg18481c1-amgplt0352/playlist.m3u8"
-  },
-  {
-    "name": "AniPlus 2",
+    "name": "AniPlus",
     "type": "TV",
     "logo": "https://images.seeklogo.com/logo-png/42/1/aniplus-logo-png_seeklogo-428978.png",
     "category": "Anime",
@@ -1362,5 +1355,240 @@
     "category": "FM",
     "streamUrl": "https://stream.zeno.fm/klewk28qlqquv?aw_0_req_lsid=376d510357a82bad906197fa7ba84f93",
     "logo": "https://zeno.fm/_ipx/_/https://images.zeno.fm/-Y6IS9jaU9PriXP_3E3JHF4c-256Ob8Pl-9D5q48VjE/rs:fill:288:288/g:ce:0:0/aHR0cHM6Ly9wcm94eS56ZW5vLmZtL2NvbnRlbnQvc3RhdGlvbnMvMjI5Y2YzNmYtZDJlMi00ZGRlLWJhMTMtZDUwYWMyOGM2NjMwL2ltYWdlLz91PTE3Mzk4NjUxMjIwMDA.webp"
-  }
+  },
+{
+  "name": "Avatar: Fire and Ash (2025)",
+  "type": "Movies",
+  "logo": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/2e317a1c-f1ce-4a5f-90db-d88cc01db2d0/djhzagl-63312e6a-3fb3-44df-bbfb-3b7eafb7ee8d.png/v1/fill/w_1280,h_1898,q_80,strp/avatar_3_fire_and_ash_teaser_logo_poster_2025_by_mrandrew7w7_djhzagl-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9MTg5OCIsInBhdGgiOiJcL2ZcLzJlMzE3YTFjLWYxY2UtNGE1Zi05MGRiLWQ4OGNjMDFkYjJkMFwvZGpoemFnbC02MzMxMmU2YS0zZmIzLTQ0ZGYtYmJmYi0zYjdlYWZiN2VlOGQucG5nIiwid2lkdGgiOiI8PTEyODAifV1dLCJhdWQiOlsidXJuOnNlcnZpY2U6aW1hZ2Uub3BlcmF0aW9ucyJdfQ.9VIDGuXOp8pKBs7V-vS6YDkwTldUMQ3YcQKtNCVJTqk",
+  "category": "Action",
+  "streamUrl": "https://vidlink.pro/movie/83533",
+  "isEmbed": true
+},
+ {
+  "name": "Crime 101 (2026)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/8L1IKxEfrFHmo2Zg0qjL9yAMnbP.jpg",
+  "category": "Crime and Thriller",
+  "streamUrl": "https://vidlink.pro/movie/1171145",
+  "isEmbed": true
+},
+{
+  "name": "David (2025)",
+  "type": "Movies",
+  "logo": "https://tse2.mm.bing.net/th/id/OIP.u_Q5FpJ6RV9lQVdWCMRMZQHaHa?pid=Api&P=0&h=220",
+  "category": "Animated",
+  "streamUrl": "https://vidlink.pro/movie/1167307",
+  "isEmbed": true
+},
+ {
+  "name": "Demon Slayer: Kimetsu no Yaiba Infinity Castle (2025)",
+  "type": "Movies",
+  "logo": "https://lrmonline.com/wp-content/uploads/2025/05/Demon-Slayer-Infinity-Castle-Square-Thumbnail.jpg",
+  "category": "Anime",
+  "streamUrl": "https://vidlink.pro/movie/1311031",
+  "isEmbed": true
+},
+  {
+  "name": "Facing the Giants (2006)",
+  "type": "Movies",
+  "logo": "https://www.themoviedb.org/t/p/w600_and_h900_face/1eY8O7fIGcmwetNqvwnnkQB0LYK.jpg",
+  "category": "Christian",
+  "streamUrl": "https://vidlink.pro/movie/18925",
+  "isEmbed": true
+},
+{
+  "name": "Furiosa: A Mad Max Saga",
+  "type": "Movies",
+  "logo": "https://m.media-amazon.com/images/I/814hx5tswlL._AC_SY879_.jpg",
+  "category": "Action",
+  "streamUrl": "https://vidlink.pro/movie/786892",
+  "isEmbed": true
+},
+{
+  "name": "GOAT (2026)",
+  "type": "Movies",
+  "logo": "https://4kwallpapers.com/images/wallpapers/goat-2026-8k-movie-1920x1200-23667.png",
+  "category": "Animated",
+  "streamUrl": "https://vidlink.pro/movie/1297842",
+  "isEmbed": true
+},
+{
+  "name": "God's Not Dead (2014)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/yKUzBolWrwyByevBtDPfy3kIumv.jpg",
+  "category": "Christian",
+  "streamUrl": "https://vidlink.pro/movie/249660",
+  "isEmbed": true
+},
+{
+  "name": "Hoppers (2026)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/xjtWQ2CL1mpmMNwuU5HeS4Iuwuu.jpg",
+  "category": "Animated",
+  "streamUrl": "https://vidlink.pro/movie/1327819",
+  "isEmbed": true
+},
+{
+  "name": "Home Alone (1990)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/onTSipZ8R3bliBdKfPtsDuHTdlL.jpg",
+  "category": "Comedy and Family",
+  "streamUrl": "https://vidlink.pro/movie/771",
+  "isEmbed": true
+},{
+  "name": "Home Alone 2: Lost in New York (1992)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/9CAkQ9nfrDaIAyncWndwg0tfC8g.jpg",
+  "category": "Comedy and Family",
+  "streamUrl": "https://vidlink.pro/movie/772",
+  "isEmbed": true
+},
+{
+  "name": "Home Alone 3 (1997)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/6uOadrCfle0n2LOOxHbgWEdnrm2.jpg",
+  "category": "Comedy and Family",
+  "streamUrl": "https://vidlink.pro/movie/9714",
+  "isEmbed": true
+},
+
+{
+  "name": "How to Train Your Dragon (2025)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/41dfWUWtg1kUZcJYe6Zk6ewxzMu.jpg",
+  "category": "Fantasy",
+  "streamUrl": "https://vidlink.pro/movie/1087192",
+  "isEmbed": true
+},
+{
+  "name": "KPop Demon Hunters (2025)",
+  "type": "Movies",
+  "logo": "https://images.seeklogo.com/logo-png/63/1/kpop-demon-hunters-logo-png_seeklogo-632042.png",
+  "category": "Animated",
+  "streamUrl": "https://vidlink.pro/movie/803796",
+  "isEmbed": true
+},
+{
+  "name": "Mercy (2026)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/pyok1kZJCfyuFapYXzHcy7BLlQa.jpg",
+  "category": "Science Fiction",
+  "streamUrl": "https://vidlink.pro/movie/1236153",
+  "isEmbed": true
+},
+{
+  "name": "Peaky Blinders: The Immortal Man (2026)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/4FXce93JqyDQl1B9lNv454Hs6qe.jpg",
+  "category": "Crime and Drama",
+  "streamUrl": "https://vidlink.pro/movie/875828",
+  "isEmbed": true
+},
+{
+  "name": "Project Hail Mary (2026)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/yihdXomYb5kTeSivtFndMy5iDmf.jpg",
+  "category": "Science Fiction",
+  "streamUrl": "https://vidlink.pro/movie/687163",
+  "isEmbed": true
+},
+{
+  "name": "Ready or Not: Here I Come (2026)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/jRf89HVEtBZiSnOXXWDhZOfuTwW.jpg",
+  "category": "Horror",
+  "streamUrl": "https://vidlink.pro/movie/1266127",
+  "isEmbed": true
+},
+{
+  "name": "Scream 7 (2026)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/jjyuk0edLiW8vOSnlfwWCCLpbh5.jpg",
+  "category": "Horror",
+  "streamUrl": "https://vidlink.pro/movie/1159559",
+  "isEmbed": true
+},
+{
+  "name": "Send Help (2026)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/mjkS2iAgWj3ik1DTjvI15nHZ7yl.jpg",
+  "category": "Horror",
+  "streamUrl": "https://vidlink.pro/movie/1198994",
+  "isEmbed": true
+},
+{
+  "name": "Spider-Man: Across the Spider-Verse (2023)",
+  "type": "Movies",
+  "logo": "https://static1.colliderimages.com/wordpress/wp-content/uploads/2023/03/spider-man-across-the-spider-verse-poster.jpg",
+  "category": "Animated",
+  "streamUrl": "https://vidlink.pro/movie/569094",
+  "isEmbed": true
+},
+{
+  "name": "The Parent Trap (1998)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/p4dGmi8u9W0HHyVXcgWPoiFfKTF.jpg",
+  "category": "Comedy and Family",
+  "streamUrl": "https://vidlink.pro/movie/9820",
+  "isEmbed": true
+},
+{
+  "name": "The Prince of Egypt (1998)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/2xUjYwL6Ol7TLJPPKs7sYW5PWLX.jpg",
+  "category": "Animated",
+  "streamUrl": "https://vidlink.pro/movie/9837",
+  "isEmbed": true
+},
+{
+  "name": "The Shadow's Edge (2025)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/e0RU6KpdnrqFxDKlI3NOqN8nHL6.jpg",
+  "category": "Action",
+  "streamUrl": "https://vidlink.pro/movie/1419406",
+  "isEmbed": true
+},
+{
+  "name": "The SpongeBob Movie: Search for SquarePants (2025)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/xJnOMMsFASxNiFnG7v3TNIQ3ife.jpg",
+  "category": "Action",
+  "streamUrl": "https://vidlink.pro/movie/991494",
+  "isEmbed": true
+},
+{
+  "name": "War Machine (2026)",
+  "type": "Movies",
+  "logo": "https://tse3.mm.bing.net/th/id/OIP.g9K8LLZbF924ZNzPKvPvBAHaFA?pid=Api&P=0&h=220",
+  "category": "Action",
+  "streamUrl": "https://vidlink.pro/movie/1265609",
+  "isEmbed": true
+},
+{
+  "name": "Your Name (2016)",
+  "type": "Movies",
+  "logo": "https://tse2.mm.bing.net/th/id/OIP.Hz20N2Opf3nfuk32pOQZNgHaKe?pid=Api&P=0&h=220",
+  "category": "Animated",
+  "streamUrl": "https://vidlink.pro/movie/372058",
+  "isEmbed": true
+},
+{
+  "name": "Zootopia (2016)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/hlK0e0wAQ3VLuJcsfIYPvb4JVud.jpg",
+  "category": "Animated",
+  "streamUrl": "https://vidlink.pro/movie/269149",
+  "isEmbed": true
+},
+{
+  "name": "Zootopia 2 (2025)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/oJ7g2CifqpStmoYQyaLQgEU32qO.jpg",
+  "category": "Animated",
+  "streamUrl": "https://vidlink.pro/movie/1084242",
+  "isEmbed": true
+}
+
+ 
+  
 ]
