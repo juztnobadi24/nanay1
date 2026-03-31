@@ -1,252 +1,373 @@
 /* Header Component Styles */
 .header {
-    background: linear-gradient(135deg, #0f1222 0%, #11141f 100%);
-    padding: 1rem 1.8rem;
+    background: var(--bg-primary);
+    padding: 0.75rem 1.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
     z-index: 10;
+    backdrop-filter: blur(10px);
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo-image {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+    transition: transform var(--transition-fast);
+}
+
+.logo-image:hover {
+    transform: scale(1.02);
 }
 
 .logo-area h1 {
-    font-size: 1.65rem;
-    font-weight: 700;
-    background: linear-gradient(120deg, #e0b3ff, #ff9f4a);
+    font-size: 1.5rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #f97316, #ea580c);
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
     letter-spacing: -0.3px;
+    margin: 0;
 }
 
-.logo-area h1 i {
-    background: none;
-    background-clip: unset;
-    -webkit-background-clip: unset;
-    color: #ff9f4a;
-    margin-right: 8px;
+/* Light theme - keep same orange gradient for JUZT text */
+[data-theme="light"] .logo-area h1 {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
 }
 
-.header-icons {
+[data-theme="light"] .logo-image {
+    filter: brightness(1);
+}
+
+.header-controls {
     display: flex;
     align-items: center;
     gap: 12px;
+    position: relative;
 }
 
-.icon-btn {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 12px;
+/* Icon container */
+.icon-with-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 40px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    backdrop-filter: blur(8px);
+}
+
+.theme-toggle-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: scale(1.02);
+}
+
+.theme-toggle-btn:active {
+    transform: scale(0.98);
+}
+
+/* Hamburger Menu */
+.hamburger {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    transition: all var(--transition-fast);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
     position: relative;
 }
 
-.icon-svg {
-    width: 24px;
-    height: 24px;
-    display: block;
-    color: #9aa2bf;
-    transition: color 0.2s ease;
-}
-
-.icon-btn:hover {
-    background: rgba(249, 115, 22, 0.15);
-    transform: translateY(-2px);
-}
-
-.icon-btn:hover .icon-svg {
-    color: #f97316;
-}
-
-.icon-btn:active {
-    transform: translateY(0);
-}
-
-.icon-btn.active .icon-svg {
-    color: #f97316;
-}
-
-.icon-btn.active {
+.hamburger:hover {
     background: rgba(249, 115, 22, 0.1);
 }
 
-/* TV/Radio Toggle Switch */
-.mode-toggle-switch {
+.hamburger svg {
+    height: 1.8em;
+    transition: transform 600ms cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.line {
+    fill: none;
+    stroke: var(--text-secondary);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 3;
+    transition: stroke-dasharray 600ms cubic-bezier(0.4, 0, 0.2, 1),
+                stroke-dashoffset 600ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.line-top-bottom {
+    stroke-dasharray: 12 63;
+}
+
+.hamburger.active svg {
+    transform: rotate(-45deg);
+}
+
+.hamburger.active svg .line-top-bottom {
+    stroke-dasharray: 20 300;
+    stroke-dashoffset: -32.42;
+}
+
+.hamburger:hover .line {
+    stroke: var(--accent);
+}
+
+/* Dropdown Menu */
+.dropdown-menu-icons {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 8px;
+    min-width: 180px;
+    display: none;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 1000;
+    box-shadow: var(--shadow-lg);
+    backdrop-filter: blur(10px);
+    animation: fadeInDown 0.2s ease;
+}
+
+.dropdown-menu-icons.show {
+    display: flex;
+}
+
+.dropdown-item {
     display: flex;
     align-items: center;
     gap: 12px;
-    background: #1a1e2c;
-    padding: 4px;
-    border-radius: 40px;
-    border: 1px solid #2d3246;
+    padding: 10px 16px;
+    border-radius: 12px;
+    transition: all var(--transition-fast);
+    width: 100%;
+    background: transparent;
+    border: none;
     cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.toggle-track {
     position: relative;
-    width: 48px;
-    height: 24px;
-    background: #2d3246;
-    border-radius: 24px;
-    transition: all 0.3s ease;
 }
 
-.toggle-thumb {
-    position: absolute;
-    top: 2px;
-    left: 2px;
+.dropdown-item:hover {
+    background: rgba(249, 115, 22, 0.1);
+    transform: translateX(4px);
+}
+
+.dropdown-item .icon-svg {
     width: 20px;
     height: 20px;
-    background: #f97316;
-    border-radius: 50%;
-    transition: transform 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
 }
 
-.mode-toggle-switch.radio-mode .toggle-thumb {
-    transform: translateX(24px);
+.dropdown-item:hover .icon-svg {
+    color: var(--accent);
 }
 
-.toggle-labels {
-    display: flex;
-    gap: 8px;
-    padding-right: 12px;
-}
-
-.toggle-label {
-    font-size: 0.8rem;
+.dropdown-label {
+    font-size: 0.85rem;
     font-weight: 500;
-    color: #9aa2bf;
-    transition: color 0.3s ease;
-    cursor: pointer;
+    color: var(--text-primary);
+    flex: 1;
+    text-align: left;
 }
 
-.toggle-label.active {
-    color: #f97316;
+.dropdown-item:hover .dropdown-label {
+    color: var(--accent);
 }
 
-.mode-toggle-switch:hover {
-    border-color: #f97316;
-    background: #1e2438;
+/* Animations */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-@media (max-width: 780px) {
+/* Responsive Header */
+@media (max-width: 768px) {
     .header {
-        padding: 0.8rem 1rem;
+        padding: 0.7rem 1rem;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
     }
-    .header-icons {
-        gap: 12px;
+    
+    .logo-image {
+        height: 32px;
     }
-    .icon-btn {
-        padding: 6px;
+    
+    .logo-area h1 {
+        font-size: 1.3rem;
     }
-    .icon-svg {
-        width: 20px;
-        height: 20px;
-    }
-    .mode-toggle-switch {
+    
+    .logo-area {
         gap: 8px;
-        padding: 3px;
     }
-    .toggle-track {
+    
+    .header-controls {
+        gap: 8px;
+    }
+    
+    .theme-toggle-btn {
         width: 40px;
-        height: 20px;
+        height: 40px;
+        font-size: 1rem;
     }
-    .toggle-thumb {
-        width: 16px;
-        height: 16px;
-        top: 2px;
-        left: 2px;
+    
+    .hamburger {
+        width: 40px;
+        height: 40px;
     }
-    .mode-toggle-switch.radio-mode .toggle-thumb {
-        transform: translateX(20px);
+    
+    .hamburger svg {
+        height: 1.6em;
     }
-    .toggle-label {
-        font-size: 0.7rem;
+    
+    .dropdown-menu-icons {
+        min-width: 160px;
     }
-    .toggle-labels {
-        padding-right: 8px;
-        gap: 6px;
+    
+    .dropdown-item {
+        padding: 8px 12px;
+    }
+    
+    .dropdown-item .icon-svg {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .dropdown-label {
+        font-size: 0.8rem;
     }
 }
 
 @media (max-width: 640px) {
     .header {
-        align-items: flex-start;
+        padding: 0.6rem 1rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
-    .header-icons {
-        align-self: flex-end;
-    }
-}
-
-/* ========== PORTRAIT MODE HEADER ADJUSTMENTS ========== */
-@media (max-width: 640px) and (orientation: portrait) {
-    .header {
-        padding: 0.7rem 1rem;
-        flex-shrink: 0;
+    
+    .logo-image {
+        height: 28px;
     }
     
     .logo-area h1 {
-        font-size: 1.35rem;
+        font-size: 1.2rem;
     }
     
-    .header-icons {
-        gap: 8px;
-    }
-    
-    .icon-btn {
-        padding: 5px;
-    }
-    
-    .icon-svg {
-        width: 18px;
-        height: 18px;
-    }
-    
-    .mode-toggle-switch {
+    .logo-area {
         gap: 6px;
-        padding: 2px;
     }
     
-    .toggle-track {
-        width: 36px;
-        height: 18px;
+    .theme-toggle-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 0.9rem;
     }
     
-    .toggle-thumb {
-        width: 14px;
-        height: 14px;
-        top: 2px;
-        left: 2px;
+    .hamburger {
+        width: 38px;
+        height: 38px;
     }
     
-    .mode-toggle-switch.radio-mode .toggle-thumb {
-        transform: translateX(18px);
+    .hamburger svg {
+        height: 1.5em;
     }
     
-    .toggle-label {
-        font-size: 0.65rem;
-    }
-    
-    .toggle-labels {
-        padding-right: 6px;
-        gap: 4px;
+    .dropdown-menu-icons {
+        min-width: 150px;
+        right: -10px;
     }
 }
 
-@media (min-width: 641px) and (max-width: 1024px) and (orientation: portrait) {
+@media (max-width: 480px) {
     .header {
-        padding: 0.9rem 1.2rem;
+        padding: 0.5rem 0.8rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .logo-image {
+        height: 24px;
     }
     
     .logo-area h1 {
-        font-size: 1.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .logo-area {
+        gap: 6px;
+    }
+    
+    .theme-toggle-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 0.85rem;
+    }
+    
+    .hamburger {
+        width: 34px;
+        height: 34px;
+    }
+    
+    .hamburger svg {
+        height: 1.3em;
+    }
+    
+    .dropdown-menu-icons {
+        min-width: 140px;
+        right: -5px;
+    }
+    
+    .dropdown-item {
+        padding: 6px 10px;
+    }
+    
+    .dropdown-item .icon-svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .dropdown-label {
+        font-size: 0.75rem;
     }
 }
