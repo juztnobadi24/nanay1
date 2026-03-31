@@ -1,0 +1,162 @@
+/* ======================== GLASS TOGGLE STYLES ======================== */
+/* Compact three-way toggle for TV, Radio, and Movies modes - Icons Only */
+
+.glass-radio-group {
+  --bg: rgba(255, 255, 255, 0.05);
+  --text: var(--text-secondary);
+  display: flex;
+  position: relative;
+  background: var(--bg);
+  border-radius: 2rem;
+  backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.05),
+              inset 0 -1px 2px rgba(0, 0, 0, 0.1),
+              0 2px 6px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  width: fit-content;
+  height: 44px;
+  min-width: 160px;
+}
+
+.glass-radio-group input {
+  display: none;
+}
+
+.glass-radio-group label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  font-size: 0;
+  padding: 0 18px;
+  cursor: pointer;
+  color: var(--text);
+  position: relative;
+  z-index: 2;
+  transition: color 0.25s ease;
+  white-space: nowrap;
+  height: 100%;
+}
+
+.glass-radio-group label i {
+  font-size: 18px;
+  transition: transform 0.2s ease;
+}
+
+.glass-radio-group label:hover {
+  color: var(--text-primary);
+}
+
+.glass-radio-group label:hover i {
+  transform: scale(1.05);
+}
+
+.glass-radio-group input:checked + label {
+  color: #fff;
+}
+
+.glass-glider {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  width: calc((100% - 8px) / 3);
+  border-radius: 2rem;
+  z-index: 1;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* TV Mode */
+#glass-tv:checked ~ .glass-glider {
+  transform: translateX(4px);
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+}
+
+/* Radio Mode */
+#glass-radio:checked ~ .glass-glider {
+  transform: translateX(calc(100% + 4px));
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+}
+
+/* Movies Mode */
+#glass-movies:checked ~ .glass-glider {
+  transform: translateX(calc(200% + 8px));
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+}
+
+/* Hover effect */
+.glass-radio-group:hover .glass-glider {
+  filter: brightness(1.1);
+}
+
+/* Active state */
+.glass-radio-group:active .glass-glider {
+  transform: scale(0.98);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .glass-radio-group {
+    height: 40px;
+    min-width: 140px;
+  }
+  
+  .glass-radio-group label {
+    min-width: 46px;
+    padding: 0 14px;
+  }
+  
+  .glass-radio-group label i {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .glass-radio-group {
+    height: 38px;
+    min-width: 130px;
+  }
+  
+  .glass-radio-group label {
+    min-width: 42px;
+    padding: 0 12px;
+  }
+  
+  .glass-radio-group label i {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .glass-radio-group {
+    height: 36px;
+    min-width: 120px;
+  }
+  
+  .glass-radio-group label {
+    min-width: 38px;
+    padding: 0 10px;
+  }
+  
+  .glass-radio-group label i {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .glass-radio-group {
+    height: 34px;
+    min-width: 110px;
+  }
+  
+  .glass-radio-group label {
+    min-width: 34px;
+    padding: 0 8px;
+  }
+  
+  .glass-radio-group label i {
+    font-size: 13px;
+  }
+}
