@@ -4,11 +4,68 @@
     box-sizing: border-box;
 }
 
+:root {
+    /* Dark Theme (default) */
+    --bg-primary: #0a0c12;
+    --bg-secondary: #0f1119;
+    --bg-tertiary: #14161f;
+    --bg-card: #1a1d2a;
+    --bg-hover: #232634;
+    --border-color: #2a2e3a;
+    --text-primary: #eef2ff;
+    --text-secondary: #9aa2bf;
+    --text-muted: #6a6f8a;
+    --accent: #f97316;
+    --accent-dark: #ea580c;
+    --accent-glow: rgba(249, 115, 22, 0.2);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --gradient-1: linear-gradient(135deg, #1a1d2a, #0f1119);
+    --gradient-2: linear-gradient(135deg, #0f1119, #0a0c12);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+}
+
+/* Light Theme Variables */
+[data-theme="light"] {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f1f5f9;
+    --bg-card: #ffffff;
+    --bg-hover: #f1f5f9;
+    --border-color: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --accent: #f97316;
+    --accent-dark: #ea580c;
+    --accent-glow: rgba(249, 115, 22, 0.1);
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --gradient-1: linear-gradient(135deg, #ffffff, #f8fafc);
+    --gradient-2: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Smooth theme transition */
+* {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
 body {
     font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
-    background: #0a0c12;
-    color: #eef2ff;
+    background: var(--bg-primary);
+    color: var(--text-primary);
     overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .app-container {
@@ -16,6 +73,7 @@ body {
     flex-direction: column;
     height: 100vh;
     overflow: hidden;
+    background: var(--bg-primary);
 }
 
 .main-layout {
@@ -23,6 +81,7 @@ body {
     flex: 1;
     overflow: hidden;
     min-height: 0;
+    background: var(--bg-secondary);
 }
 
 ::-webkit-scrollbar {
@@ -31,27 +90,26 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-    background: #141824;
+    background: var(--bg-tertiary);
+    border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #3e445e;
+    background: var(--text-muted);
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #f97316;
+    background: var(--accent);
 }
 
 /* ========== PORTRAIT MODE LAYOUT REARRANGEMENT ========== */
-/* For portrait orientation: player below header, channels at bottom */
 @media (max-width: 640px) and (orientation: portrait) {
     .main-layout {
         flex-direction: column;
         gap: 0;
     }
     
-    /* Player area goes below header (already first in column) */
     .player-area {
         order: 1;
         flex: 0 0 auto;
@@ -59,13 +117,10 @@ body {
         padding-bottom: 0;
     }
     
-    /* Sidebar moves to bottom */
     .channel-sidebar {
         order: 2;
         width: 100%;
         flex: 1;
-        border-right: none;
-        border-top: 1px solid #202433;
         margin-top: 0;
         min-height: 0;
     }
@@ -75,9 +130,7 @@ body {
     }
 }
 
-/* ========== LANDSCAPE MODE - Force portrait layout, video fullscreen only ========== */
 @media (max-width: 768px) and (orientation: landscape) {
-    /* Force portrait layout even in landscape */
     .main-layout {
         flex-direction: column !important;
         gap: 0 !important;
@@ -95,8 +148,6 @@ body {
         width: 100% !important;
         max-height: 40vh !important;
         flex: 1 !important;
-        border-right: none !important;
-        border-top: 1px solid #202433 !important;
         margin-top: 0 !important;
         min-height: 0 !important;
     }
@@ -108,7 +159,6 @@ body {
     }
 }
 
-/* For tablets in landscape */
 @media (min-width: 641px) and (max-width: 1024px) and (orientation: landscape) {
     .main-layout {
         flex-direction: column !important;
@@ -122,8 +172,6 @@ body {
     .channel-sidebar {
         width: 100% !important;
         max-height: 35vh !important;
-        border-right: none !important;
-        border-top: 1px solid #202433 !important;
     }
 }
 
@@ -134,7 +182,7 @@ body {
     }
 }
 
-/* Website Fullscreen Styles */
+/* Fullscreen Styles */
 .website-fullscreen {
     overflow: hidden;
 }
@@ -144,16 +192,14 @@ body {
     overflow: hidden;
 }
 
-/* When in website fullscreen, optimize for portrait mode */
 .website-fullscreen .header {
-    background: linear-gradient(135deg, #0f1222 0%, #11141f 100%);
+    background: var(--bg-primary);
 }
 
 .website-fullscreen .channel-sidebar {
-    background: #0c0f17;
+    background: var(--bg-secondary);
 }
 
-/* Video Fullscreen Mode - When video is fullscreen, hide everything else */
 .video-fullscreen-mode .channel-sidebar,
 .video-fullscreen-mode .header {
     display: none !important;
@@ -177,16 +223,16 @@ body {
     object-fit: contain !important;
 }
 
-/* Transition for smooth fullscreen changes */
+/* Transitions */
 .app-container,
 .header,
 .channel-sidebar,
 .player-area,
 .video-container {
-    transition: all 0.3s ease;
+    transition: all var(--transition-normal);
 }
 
-/* Improve fullscreen experience */
+/* Fullscreen Experience */
 :fullscreen .app-container,
 :-webkit-full-screen .app-container,
 :-moz-full-screen .app-container {
@@ -226,7 +272,6 @@ body {
     display: flex !important;
 }
 
-/* Ensure proper styling in fullscreen */
 :fullscreen .app-container,
 :-webkit-full-screen .app-container,
 :-moz-full-screen .app-container {
@@ -234,24 +279,22 @@ body {
     overflow: hidden;
 }
 
-/* Prevent pull-to-refresh and overscroll on all devices */
+/* Prevent overscroll */
 body {
     overscroll-behavior: none;
     touch-action: pan-y pinch-zoom;
     -webkit-touch-callout: none;
 }
 
-/* Ensure content doesn't shift when address bar hides */
 .main-layout {
     transition: height 0.2s ease;
 }
 
-/* Additional scroll behavior for smooth address bar hiding */
 .app-container {
     scroll-behavior: smooth;
 }
 
-/* Fix for iOS Safari 100vh issue */
+/* iOS Safari 100vh fix */
 @supports (height: 100dvh) {
     .app-container {
         height: 100dvh;
@@ -266,13 +309,11 @@ body {
     }
 }
 
-/* Prevent text selection on double-tap */
 .no-select {
     user-select: none;
     -webkit-user-select: none;
 }
 
-/* Ensure video player fills container */
 #videoPlayer {
     width: 100%;
     height: 100%;
@@ -280,22 +321,21 @@ body {
     background: #000;
 }
 
-/* Player Area Styles */
 .player-area {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: #07090f;
+    background: var(--bg-tertiary);
     padding: 1.5rem;
     overflow-y: auto;
 }
 
 .error-message {
     margin-top: 12px;
-    background: rgba(220, 38, 38, 0.2);
-    border-left: 4px solid #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    border-left: 3px solid var(--error);
     padding: 12px 16px;
-    border-radius: 14px;
+    border-radius: 12px;
     font-size: 0.85rem;
     color: #fecaca;
     display: none;
@@ -305,7 +345,7 @@ body {
     display: block;
 }
 
-/* Portrait mode player adjustments */
+/* Responsive */
 @media (max-width: 640px) and (orientation: portrait) {
     .player-area {
         padding: 0.8rem 0.8rem 0 0.8rem;
@@ -316,7 +356,6 @@ body {
     
     .error-message {
         margin-top: 6px;
-        margin-bottom: 0;
         padding: 6px 10px;
         font-size: 0.75rem;
     }
@@ -332,11 +371,9 @@ body {
     
     .error-message {
         margin-top: 8px;
-        margin-bottom: 0;
     }
 }
 
-/* For landscape on small screens - video takes priority */
 @media (max-width: 640px) and (orientation: landscape) {
     .player-area {
         padding: 0;
@@ -346,29 +383,25 @@ body {
     
     .error-message {
         margin-top: 6px;
-        margin-bottom: 0;
     }
 }
 
-/* Desktop/Laptop Styles */
 @media (min-width: 1025px) {
     .player-area {
         padding: 1.5rem;
     }
     
     .video-container {
-        border-radius: 28px;
+        border-radius: 20px;
     }
 }
 
-/* Fix for Chrome on Android */
 @media (max-width: 640px) {
     .app-container {
         min-height: -webkit-fill-available;
     }
 }
 
-/* Ensure proper layering */
 .app-container {
     z-index: 1;
 }
@@ -377,7 +410,6 @@ body {
     z-index: 1000;
 }
 
-/* Hide scroll indicator */
 .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -387,10 +419,59 @@ body {
     display: none;
 }
 
-/* Prevent content shift on address bar hide/show */
 .video-container,
 .channel-sidebar,
 .header {
     will-change: transform;
     backface-visibility: hidden;
+}
+
+/* Light theme specific adjustments */
+[data-theme="light"] .glass-radio-group {
+    --bg: rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02), inset 0 -1px 2px rgba(0, 0, 0, 0.03), 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .dropdown-menu-icons {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+    box-shadow: var(--shadow-lg);
+}
+
+[data-theme="light"] .channel-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .channel-item:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent);
+}
+
+[data-theme="light"] .channel-logo {
+    background: var(--bg-tertiary);
+    color: var(--accent);
+}
+
+[data-theme="light"] .search-input-field {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+[data-theme="light"] .search-input-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+[data-theme="light"] .modal-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .info-row:not(:last-child) {
+    border-bottom-color: var(--border-color);
+}
+
+[data-theme="light"] .setting-item:not(:last-child) {
+    border-bottom-color: var(--border-color);
 }
