@@ -907,8 +907,11 @@ class ChatUI {
     }
     
     createModal() {
+        // Remove existing modal if any
         const existingModal = document.getElementById('chatModal');
-        if (existingModal) existingModal.remove();
+        if (existingModal) {
+            existingModal.remove();
+        }
         
         const userInfo = this.chatService.getUserInfo();
         
@@ -1093,11 +1096,12 @@ class ChatUI {
     
     open() {
         if (!this.modal) this.createModal();
-        this.modal.classList.add('show');
-        this.isOpen = true;
-        document.body.style.overflow = 'hidden';
-        
-        setTimeout(() => this.scrollToBottom(), 100);
+        if (this.modal) {
+            this.modal.classList.add('show');
+            this.isOpen = true;
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => this.scrollToBottom(), 100);
+        }
     }
     
     close() {
@@ -1109,7 +1113,7 @@ class ChatUI {
     }
 }
 
-// Announcements UI Component - Clean List Style
+// Announcements UI Component
 class NotificationsUI {
     constructor(chatService) {
         this.chatService = chatService;
@@ -1121,8 +1125,11 @@ class NotificationsUI {
     }
     
     createModal() {
+        // Remove existing modal if any
         const existingModal = document.getElementById('notificationsModal');
-        if (existingModal) existingModal.remove();
+        if (existingModal) {
+            existingModal.remove();
+        }
         
         const userInfo = this.chatService.getUserInfo();
         this.isAdminMode = userInfo.isAdmin;
@@ -1443,10 +1450,12 @@ class NotificationsUI {
     
     open() {
         if (!this.modal) this.createModal();
-        this.modal.classList.add('show');
-        this.isOpen = true;
-        document.body.style.overflow = 'hidden';
-        this.renderNotifications();
+        if (this.modal) {
+            this.modal.classList.add('show');
+            this.isOpen = true;
+            document.body.style.overflow = 'hidden';
+            this.renderNotifications();
+        }
     }
     
     close() {
@@ -1470,28 +1479,70 @@ async function initFirebaseChat() {
         
         await window.firebaseChat.initPromise;
         
+        // Create UI instances
         window.chatUI = new ChatUI(window.firebaseChat);
         window.notificationsUI = new NotificationsUI(window.firebaseChat);
         
+        // Wait for DOM to be ready and buttons to exist
+        const waitForButtons = () => {
+            return new Promise((resolve) => {
+                const checkButtons = setInterval(() => {
+                    const messageBtn = document.getElementById('messageBtn');
+                    const notificationBtn = document.getElementById('notificationBtn');
+                    if (messageBtn && notificationBtn) {
+                        clearInterval(checkButtons);
+                        resolve();
+                    }
+                }, 100);
+                // Timeout after 5 seconds
+                setTimeout(() => {
+                    clearInterval(checkButtons);
+                    resolve();
+                }, 5000);
+            });
+        };
+        
+        await waitForButtons();
+        
+        // Get buttons
         const messageBtn = document.getElementById('messageBtn');
         const notificationBtn = document.getElementById('notificationBtn');
         
+        console.log("Buttons found:", { messageBtn: !!messageBtn, notificationBtn: !!notificationBtn });
+        
+        // Remove existing event listeners by cloning and replacing
         if (messageBtn) {
             const newMessageBtn = messageBtn.cloneNode(true);
             messageBtn.parentNode.replaceChild(newMessageBtn, messageBtn);
             
-            newMessageBtn.addEventListener('click', () => {
-                if (window.chatUI) window.chatUI.open();
+            newMessageBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("Message button clicked - opening chat");
+                if (window.chatUI) {
+                    window.chatUI.open();
+                } else {
+                    console.error("Chat UI not initialized");
+                }
             });
+            console.log("Message button event listener attached");
         }
         
         if (notificationBtn) {
             const newNotificationBtn = notificationBtn.cloneNode(true);
             notificationBtn.parentNode.replaceChild(newNotificationBtn, notificationBtn);
             
-            newNotificationBtn.addEventListener('click', () => {
-                if (window.notificationsUI) window.notificationsUI.open();
+            newNotificationBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log("Notification button clicked - opening announcements");
+                if (window.notificationsUI) {
+                    window.notificationsUI.open();
+                } else {
+                    console.error("Notifications UI not initialized");
+                }
             });
+            console.log("Notification button event listener attached");
         }
         
         console.log("✅ Firebase Chat UI initialized");
