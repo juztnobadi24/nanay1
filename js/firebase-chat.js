@@ -14,7 +14,6 @@ class FirebaseChat {
         this.messageListener = null;
         this.notificationListener = null;
         this.globalNotificationListener = null;
-        this.unreadCount = 0;
         this.notifications = [];
         this.isInitialized = false;
         this.initPromise = null;
@@ -27,9 +26,8 @@ class FirebaseChat {
         this.isAdmin = false;
         
         // Persistence keys
-        this.LAST_MESSAGE_VIEW_KEY = 'juzt_last_message_view';
-        this.LAST_NOTIFICATION_VIEW_KEY = 'juzt_last_notification_view';
         this.READ_NOTIFICATIONS_KEY = 'juzt_read_notifications';
+        this.LAST_MESSAGE_VIEW_KEY = 'juzt_last_message_view';
         
         // Admin fixed name
         this.ADMIN_NAME = "Juzt (Admin)";
@@ -74,10 +72,9 @@ class FirebaseChat {
                     this.getOrCreateDeviceId();
                     await this.identifyUser();
                     await this.loadExistingNotifications();
-                    this.loadLastViewTimes();
+                    this.loadReadNotifications();
+                    this.loadLastMessageViewTime();
                     this.setupListeners();
-                    this.createBadge();
-                    this.createNotificationBadge();
                     this.isInitialized = true;
                     console.log("✅ Firebase Chat initialized successfully");
                     resolve(true);
@@ -102,8 +99,7 @@ class FirebaseChat {
         return this.initPromise;
     }
     
-    loadLastViewTimes() {
-        // Load last message view timestamp
+    loadLastMessageViewTime() {
         const lastMessageView = localStorage.getItem(this.LAST_MESSAGE_VIEW_KEY);
         if (lastMessageView) {
             this.lastMessageViewTime = parseInt(lastMessageView);
@@ -111,29 +107,6 @@ class FirebaseChat {
             this.lastMessageViewTime = Date.now();
             localStorage.setItem(this.LAST_MESSAGE_VIEW_KEY, this.lastMessageViewTime.toString());
         }
-        
-        // Load last notification view timestamp
-        const lastNotificationView = localStorage.getItem(this.LAST_NOTIFICATION_VIEW_KEY);
-        if (lastNotificationView) {
-            this.lastNotificationViewTime = parseInt(lastNotificationView);
-        } else {
-            this.lastNotificationViewTime = Date.now();
-            localStorage.setItem(this.LAST_NOTIFICATION_VIEW_KEY, this.lastNotificationViewTime.toString());
-        }
-        
-        // Load read notifications set
-        const readNotifications = localStorage.getItem(this.READ_NOTIFICATIONS_KEY);
-        if (readNotifications) {
-            this.readNotificationsSet = new Set(JSON.parse(readNotifications));
-        } else {
-            this.readNotificationsSet = new Set();
-        }
-        
-        console.log("Loaded last view times:", {
-            lastMessageView: new Date(this.lastMessageViewTime).toLocaleString(),
-            lastNotificationView: new Date(this.lastNotificationViewTime).toLocaleString(),
-            readCount: this.readNotificationsSet.size
-        });
     }
     
     saveLastMessageViewTime() {
@@ -141,9 +114,15 @@ class FirebaseChat {
         localStorage.setItem(this.LAST_MESSAGE_VIEW_KEY, this.lastMessageViewTime.toString());
     }
     
-    saveLastNotificationViewTime() {
-        this.lastNotificationViewTime = Date.now();
-        localStorage.setItem(this.LAST_NOTIFICATION_VIEW_KEY, this.lastNotificationViewTime.toString());
+    loadReadNotifications() {
+        // Load read notifications set
+        const readNotifications = localStorage.getItem(this.READ_NOTIFICATIONS_KEY);
+        if (readNotifications) {
+            this.readNotificationsSet = new Set(JSON.parse(readNotifications));
+        } else {
+            this.readNotificationsSet = new Set();
+        }
+        console.log("Loaded read notifications count:", this.readNotificationsSet.size);
     }
     
     saveReadNotification(notificationId) {
@@ -225,7 +204,6 @@ class FirebaseChat {
                             this.notifications.push(notif);
                         });
                         this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
-                        this.updateNotificationBadge();
                     }
                 } else {
                     console.log(`✅ User already has ${userNotifications.size} notifications`);
@@ -235,7 +213,6 @@ class FirebaseChat {
                         this.notifications.push(notif);
                     });
                     this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
-                    this.updateNotificationBadge();
                 }
             } catch (error) {
                 console.error("Error loading existing notifications:", error);
@@ -261,7 +238,6 @@ class FirebaseChat {
                 }
             });
             this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
-            this.updateNotificationBadge();
             console.log(`✅ Loaded ${this.notifications.length} notifications without index`);
         } catch (error) {
             console.error("Error loading notifications without ordering:", error);
@@ -496,14 +472,10 @@ class FirebaseChat {
                             if (change.type === 'added') {
                                 const notification = change.doc.data();
                                 notification.id = change.doc.id;
-                                // Check if notification is already marked as read from localStorage
                                 const isRead = this.isNotificationRead(notification.id);
                                 if (!isRead && !notification.read) {
-                                    console.log("🔔 New notification received:", notification.title);
+                                    console.log("🔔 New announcement received:", notification.title);
                                     this.onNewNotification(notification);
-                                } else if (isRead) {
-                                    // Mark as read in Firestore if it was read in localStorage
-                                    this.markNotificationAsRead(notification.id);
                                 }
                             } else if (change.type === 'modified') {
                                 const notification = change.doc.data();
@@ -511,16 +483,15 @@ class FirebaseChat {
                                 const index = this.notifications.findIndex(n => n.id === notification.id);
                                 if (index !== -1) {
                                     this.notifications[index].read = notification.read;
-                                    this.updateNotificationBadge();
                                 }
                             }
                         });
                     });
-                console.log("✅ Notification listener attached (simplified query)");
+                console.log("✅ Announcement listener attached");
             } catch (error) {
                 console.error("❌ Error attaching notification listener:", error);
                 if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                    console.warn("⚠️ Firestore index required for notifications. Please create the index.");
+                    console.warn("⚠️ Firestore index required. Please create the index.");
                     this.loadNotificationsWithoutListener();
                 }
             }
@@ -540,15 +511,15 @@ class FirebaseChat {
                                 );
                                 
                                 if (!alreadyReceived && globalNotification.notificationId) {
-                                    console.log("🌍 New global notification received, creating personal copy...");
+                                    console.log("🌍 New global announcement received, creating personal copy...");
                                     await this.createNotificationForUser(globalNotification);
                                 }
                             }
                         });
                     });
-                console.log("✅ Global notification listener attached");
+                console.log("✅ Global announcement listener attached");
             } catch (error) {
-                console.error("❌ Error attaching global notification listener:", error);
+                console.error("❌ Error attaching global announcement listener:", error);
             }
         }
         
@@ -557,7 +528,7 @@ class FirebaseChat {
     
     async loadNotificationsWithoutListener() {
         try {
-            console.log("📥 Loading notifications without real-time listener...");
+            console.log("📥 Loading announcements without real-time listener...");
             const snapshot = await this.notificationsCollection
                 .where('userId', '==', this.userId)
                 .get();
@@ -570,10 +541,9 @@ class FirebaseChat {
                 }
             });
             this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
-            this.updateNotificationBadge();
-            console.log(`✅ Loaded ${this.notifications.length} notifications`);
+            console.log(`✅ Loaded ${this.notifications.length} announcements`);
         } catch (error) {
-            console.error("Error loading notifications:", error);
+            console.error("Error loading announcements:", error);
         }
     }
     
@@ -596,12 +566,12 @@ class FirebaseChat {
         
         try {
             const docRef = await this.notificationsCollection.add(userNotification);
-            console.log("📢 Global notification received and saved for user:", this.userName);
+            console.log("📢 Global announcement received and saved for user:", this.userName);
             
             userNotification.id = docRef.id;
             this.onNewNotification(userNotification);
         } catch (error) {
-            console.error("Error saving global notification for user:", error);
+            console.error("Error saving global announcement for user:", error);
         }
     }
     
@@ -628,16 +598,8 @@ class FirebaseChat {
         });
         window.dispatchEvent(event);
         
-        // Check if message is newer than last view time
-        const messageTime = message.timestampMs || (message.timestamp?.toMillis?.() || Date.now());
-        if (message.userId !== this.userId && messageTime > this.lastMessageViewTime) {
-            this.unreadCount++;
-            this.updateBadge();
-        }
-        
-        if (message.userId !== this.userId && !document.hasFocus()) {
-            this.playNotificationSound();
-        }
+        // Log new message without sound
+        console.log("New message from:", message.userName);
     }
     
     onNewNotification(notification) {
@@ -646,106 +608,12 @@ class FirebaseChat {
             this.notifications.unshift(notification);
             this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
             
-            // Check if notification is newer than last view time
-            const notifTime = notification.timestampMs || (notification.timestamp?.toMillis?.() || Date.now());
-            if (notifTime > this.lastNotificationViewTime && !this.isNotificationRead(notification.id)) {
-                this.updateBadge();
-                this.updateNotificationBadge();
-                this.showBrowserNotification(notification);
-                
+            if (!this.isNotificationRead(notification.id)) {
+                console.log("New announcement:", notification.title);
                 const event = new CustomEvent('newNotification', { detail: notification });
                 window.dispatchEvent(event);
-                this.playNotificationSound();
             }
         }
-    }
-    
-    playNotificationSound() {
-        try {
-            const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
-            audio.volume = 0.3;
-            audio.play().catch(e => console.log("Audio play failed:", e));
-        } catch (e) {}
-    }
-    
-    showBrowserNotification(notification) {
-        if (!("Notification" in window)) return;
-        
-        if (Notification.permission === "granted") {
-            new Notification(notification.title, {
-                body: notification.message,
-                icon: "https://via.placeholder.com/64?text=JUZT",
-                tag: notification.id
-            });
-        } else if (Notification.permission !== "denied") {
-            Notification.requestPermission();
-        }
-    }
-    
-    createBadge() {
-        const messageBtn = document.getElementById('messageBtn');
-        if (messageBtn && !messageBtn.querySelector('.message-badge')) {
-            messageBtn.style.position = 'relative';
-            const badge = document.createElement('span');
-            badge.className = 'message-badge';
-            messageBtn.appendChild(badge);
-            this.updateBadge();
-            console.log("✅ Message badge created");
-        }
-    }
-    
-    createNotificationBadge() {
-        const notificationBtn = document.getElementById('notificationBtn');
-        if (notificationBtn && !notificationBtn.querySelector('.notification-badge')) {
-            notificationBtn.style.position = 'relative';
-            const badge = document.createElement('span');
-            badge.className = 'notification-badge';
-            notificationBtn.appendChild(badge);
-            this.updateNotificationBadge();
-            console.log("✅ Notification badge created");
-        }
-    }
-    
-    updateBadge() {
-        const badge = document.querySelector('.message-badge');
-        if (badge) {
-            if (this.unreadCount > 0) {
-                badge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
-                badge.classList.add('show');
-                badge.classList.add('pulse');
-                setTimeout(() => badge.classList.remove('pulse'), 500);
-            } else {
-                badge.classList.remove('show');
-            }
-        }
-    }
-    
-    updateNotificationBadge() {
-        const badge = document.querySelector('.notification-badge');
-        if (badge) {
-            // Count unread notifications (not marked as read and newer than last view)
-            const unreadCount = this.notifications.filter(n => {
-                const notifTime = n.timestampMs || (n.timestamp?.toMillis?.() || 0);
-                const isNewer = notifTime > this.lastNotificationViewTime;
-                const isRead = this.isNotificationRead(n.id) || n.read;
-                return isNewer && !isRead;
-            }).length;
-            
-            if (unreadCount > 0) {
-                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
-                badge.classList.add('show');
-                badge.classList.add('pulse');
-                setTimeout(() => badge.classList.remove('pulse'), 500);
-            } else {
-                badge.classList.remove('show');
-            }
-        }
-    }
-    
-    resetUnreadCount() {
-        this.unreadCount = 0;
-        this.saveLastMessageViewTime();
-        this.updateBadge();
     }
     
     async sendMessage(messageText) {
@@ -791,7 +659,7 @@ class FirebaseChat {
     
     async sendAdminNotification(title, message, type = 'info', targetAll = true) {
         if (!this.isAdmin) {
-            console.log("Only admin can send notifications");
+            console.log("Only admin can send announcements");
             return false;
         }
         
@@ -814,7 +682,7 @@ class FirebaseChat {
         if (!this.mockMode && this.globalNotificationsCollection) {
             try {
                 await this.globalNotificationsCollection.add(notification);
-                console.log("📢 Admin notification saved to global collection");
+                console.log("📢 Admin announcement saved to global collection");
                 
                 const adminPersonalNotif = {
                     ...notification,
@@ -827,11 +695,11 @@ class FirebaseChat {
                 
                 return true;
             } catch (error) {
-                console.error("Error sending admin notification:", error);
+                console.error("Error sending admin announcement:", error);
                 return false;
             }
         } else {
-            console.log("Mock mode - notification not sent");
+            console.log("Mock mode - announcement not sent");
             return false;
         }
     }
@@ -853,7 +721,7 @@ class FirebaseChat {
                 notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
                 return notifications;
             } catch (error) {
-                console.error("Error getting all notifications:", error);
+                console.error("Error getting all announcements:", error);
                 return [];
             }
         }
@@ -866,10 +734,10 @@ class FirebaseChat {
         if (!this.mockMode && this.notificationsCollection) {
             try {
                 await this.notificationsCollection.doc(notificationId).delete();
-                console.log("Notification deleted");
+                console.log("Announcement deleted");
                 return true;
             } catch (error) {
-                console.error("Error deleting notification:", error);
+                console.error("Error deleting announcement:", error);
                 return false;
             }
         }
@@ -887,15 +755,13 @@ class FirebaseChat {
                     batch.delete(doc.ref);
                 });
                 await batch.commit();
-                console.log("All notifications cleared");
+                console.log("All announcements cleared");
                 
                 this.notifications = [];
-                this.updateBadge();
-                this.updateNotificationBadge();
                 
                 return true;
             } catch (error) {
-                console.error("Error clearing notifications:", error);
+                console.error("Error clearing announcements:", error);
                 return false;
             }
         }
@@ -903,7 +769,7 @@ class FirebaseChat {
     }
     
     async markNotificationAsRead(notificationId) {
-        // Save to localStorage first
+        // Save to localStorage
         this.saveReadNotification(notificationId);
         
         // Update in Firestore
@@ -911,7 +777,7 @@ class FirebaseChat {
             try {
                 await this.notificationsCollection.doc(notificationId).update({ read: true });
             } catch (error) {
-                console.error("Error marking notification as read:", error);
+                console.error("Error marking announcement as read:", error);
             }
         }
         
@@ -919,7 +785,44 @@ class FirebaseChat {
         const index = this.notifications.findIndex(n => n.id === notificationId);
         if (index !== -1) {
             this.notifications[index].read = true;
-            this.updateNotificationBadge();
+        }
+    }
+    
+    markAllMessagesAsRead() {
+        this.saveLastMessageViewTime();
+        console.log("All messages marked as read.");
+    }
+    
+    markAllNotificationsAsRead() {
+        let markedCount = 0;
+        
+        // Mark all notifications as read in localStorage and in memory
+        this.notifications.forEach(notification => {
+            if (!this.isNotificationRead(notification.id)) {
+                this.saveReadNotification(notification.id);
+                notification.read = true;
+                markedCount++;
+            }
+        });
+        
+        // Also update in Firestore if possible
+        if (!this.mockMode && this.notificationsCollection) {
+            const unreadNotifications = this.notifications.filter(n => !this.isNotificationRead(n.id));
+            unreadNotifications.forEach(async (notification) => {
+                if (notification.id) {
+                    try {
+                        await this.notificationsCollection.doc(notification.id).update({ read: true });
+                    } catch (error) {
+                        console.error("Error marking notification as read:", error);
+                    }
+                }
+            });
+        }
+        
+        if (markedCount > 0) {
+            console.log(`Marked ${markedCount} announcements as read.`);
+        } else {
+            console.log("No unread announcements to mark as read.");
         }
     }
     
@@ -962,10 +865,6 @@ class FirebaseChat {
     
     getNotifications() {
         return this.notifications;
-    }
-    
-    getUnreadCount() {
-        return this.unreadCount;
     }
     
     getUserInfo() {
@@ -1198,11 +1097,6 @@ class ChatUI {
         this.isOpen = true;
         document.body.style.overflow = 'hidden';
         
-        // Reset unread count and save view time when opening chat
-        if (this.chatService) {
-            this.chatService.resetUnreadCount();
-        }
-        
         setTimeout(() => this.scrollToBottom(), 100);
     }
     
@@ -1215,7 +1109,7 @@ class ChatUI {
     }
 }
 
-// Notifications UI Component
+// Announcements UI Component - Clean List Style
 class NotificationsUI {
     constructor(chatService) {
         this.chatService = chatService;
@@ -1234,35 +1128,35 @@ class NotificationsUI {
         this.isAdminMode = userInfo.isAdmin;
         
         const modalHTML = `
-            <div id="notificationsModal" class="modal notifications-modal">
+            <div id="notificationsModal" class="modal announcements-modal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3><i class="fas fa-bell"></i> Notifications</h3>
+                        <h3><i class="fas fa-bullhorn"></i> Announcements</h3>
                         <button class="modal-close">&times;</button>
                     </div>
                     <div class="modal-body" style="padding: 0;">
-                        <div class="notifications-container">
-                            <div class="notifications-header" style="padding: 1rem 1.5rem 0 1.5rem;">
-                                <div class="notifications-header-left">
-                                    <h4><i class="fas fa-history"></i> Recent Notifications</h4>
+                        <div class="announcements-container">
+                            <div class="announcements-header">
+                                <div class="announcements-header-left">
+                                    <h4><i class="fas fa-newspaper"></i> Latest Announcements</h4>
                                 </div>
-                                <div class="notifications-header-right">
+                                <div class="announcements-header-right">
                                     ${this.isAdminMode ? `
-                                        <button class="compose-notification-btn" id="composeNotificationBtn">
-                                            <i class="fas fa-plus"></i> New Notification
+                                        <button class="compose-announcement-btn" id="composeAnnouncementBtn">
+                                            <i class="fas fa-plus"></i> New Announcement
                                         </button>
                                     ` : ''}
                                     ${this.isAdminMode ? `
-                                        <button class="notification-clear-btn" id="clearNotificationsBtn">
+                                        <button class="clear-announcements-btn" id="clearAnnouncementsBtn">
                                             <i class="fas fa-trash-alt"></i> Clear All
                                         </button>
                                     ` : ''}
                                 </div>
                             </div>
-                            <div class="notifications-list" id="notificationsList">
-                                <div class="notifications-empty">
-                                    <i class="fas fa-bell-slash"></i>
-                                    <p>No notifications yet</p>
+                            <div class="announcements-list" id="announcementsList">
+                                <div class="announcements-empty">
+                                    <i class="fas fa-bullhorn"></i>
+                                    <p>No announcements yet</p>
                                 </div>
                             </div>
                         </div>
@@ -1281,8 +1175,8 @@ class NotificationsUI {
         if (!this.modal) return;
         
         const closeBtn = this.modal.querySelector('.modal-close');
-        const clearBtn = document.getElementById('clearNotificationsBtn');
-        const composeBtn = document.getElementById('composeNotificationBtn');
+        const clearBtn = document.getElementById('clearAnnouncementsBtn');
+        const composeBtn = document.getElementById('composeAnnouncementBtn');
         
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.close());
@@ -1290,7 +1184,7 @@ class NotificationsUI {
         
         if (clearBtn && this.isAdminMode) {
             clearBtn.addEventListener('click', () => {
-                if (confirm('Delete all notifications? This action cannot be undone.')) {
+                if (confirm('Delete all announcements? This action cannot be undone.')) {
                     this.chatService.clearNotifications();
                     this.renderNotifications();
                 }
@@ -1319,34 +1213,30 @@ class NotificationsUI {
     }
     
     openComposeModal() {
-        const existingCompose = document.getElementById('composeNotificationModal');
+        const existingCompose = document.getElementById('composeAnnouncementModal');
         if (existingCompose) existingCompose.remove();
         
         const composeHTML = `
-            <div id="composeNotificationModal" class="modal compose-modal">
+            <div id="composeAnnouncementModal" class="modal compose-announcement-modal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3><i class="fas fa-bullhorn"></i> Send Notification to All Users</h3>
+                        <h3><i class="fas fa-bullhorn"></i> Create Announcement</h3>
                         <button class="modal-close compose-close">&times;</button>
                     </div>
                     <div class="modal-body">
                         <div class="compose-form">
                             <div class="form-group">
                                 <label><i class="fas fa-tag"></i> Title</label>
-                                <input type="text" id="notificationTitle" class="form-input" placeholder="Enter notification title...">
+                                <input type="text" id="announcementTitle" class="form-input" placeholder="Enter announcement title...">
                             </div>
                             <div class="form-group">
                                 <label><i class="fas fa-envelope"></i> Message</label>
-                                <textarea id="notificationMessage" class="form-textarea" rows="4" placeholder="Enter notification message..."></textarea>
-                            </div>
-                            <div class="info-note">
-                                <i class="fas fa-globe"></i>
-                                <span>This notification will be sent to ALL users (current and future visitors)</span>
+                                <textarea id="announcementMessage" class="form-textarea" rows="4" placeholder="Enter announcement message..."></textarea>
                             </div>
                             <div class="compose-actions">
                                 <button class="btn-cancel" id="cancelComposeBtn">Cancel</button>
-                                <button class="btn-send" id="sendNotificationBtn">
-                                    <i class="fas fa-paper-plane"></i> Send to All Users
+                                <button class="btn-send" id="sendAnnouncementBtn">
+                                    <i class="fas fa-paper-plane"></i> Post Announcement
                                 </button>
                             </div>
                         </div>
@@ -1356,11 +1246,11 @@ class NotificationsUI {
         `;
         
         document.body.insertAdjacentHTML('beforeend', composeHTML);
-        this.composeModal = document.getElementById('composeNotificationModal');
+        this.composeModal = document.getElementById('composeAnnouncementModal');
         
         const closeCompose = this.composeModal.querySelector('.compose-close');
         const cancelBtn = document.getElementById('cancelComposeBtn');
-        const sendBtn = document.getElementById('sendNotificationBtn');
+        const sendBtn = document.getElementById('sendAnnouncementBtn');
         
         if (closeCompose) {
             closeCompose.addEventListener('click', () => this.closeComposeModal());
@@ -1371,7 +1261,7 @@ class NotificationsUI {
         }
         
         if (sendBtn) {
-            sendBtn.addEventListener('click', () => this.sendNotification());
+            sendBtn.addEventListener('click', () => this.sendAnnouncement());
         }
         
         this.composeModal.addEventListener('click', (e) => {
@@ -1393,9 +1283,9 @@ class NotificationsUI {
         }
     }
     
-    async sendNotification() {
-        const title = document.getElementById('notificationTitle')?.value.trim();
-        const message = document.getElementById('notificationMessage')?.value.trim();
+    async sendAnnouncement() {
+        const title = document.getElementById('announcementTitle')?.value.trim();
+        const message = document.getElementById('announcementMessage')?.value.trim();
         
         if (!title) {
             alert('Please enter a title');
@@ -1407,24 +1297,24 @@ class NotificationsUI {
             return;
         }
         
-        const sendBtn = document.getElementById('sendNotificationBtn');
+        const sendBtn = document.getElementById('sendAnnouncementBtn');
         const originalText = sendBtn.innerHTML;
-        sendBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Sending to all users...';
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Posting...';
         sendBtn.disabled = true;
         
         try {
             const sent = await this.chatService.sendAdminNotification(title, message, 'info', true);
             
             if (sent) {
-                alert('✅ Notification sent to all users successfully!');
+                alert('✅ Announcement posted successfully!');
                 this.closeComposeModal();
                 setTimeout(() => this.renderNotifications(), 1000);
             } else {
-                alert('❌ Failed to send notification. Please try again.');
+                alert('❌ Failed to post announcement. Please try again.');
             }
         } catch (error) {
-            console.error("Error sending notification:", error);
-            alert('Error sending notification: ' + error.message);
+            console.error("Error sending announcement:", error);
+            alert('Error posting announcement: ' + error.message);
         } finally {
             sendBtn.innerHTML = originalText;
             sendBtn.disabled = false;
@@ -1432,7 +1322,7 @@ class NotificationsUI {
     }
     
     async renderNotifications() {
-        const listContainer = document.getElementById('notificationsList');
+        const listContainer = document.getElementById('announcementsList');
         if (!listContainer) return;
         
         let notifications;
@@ -1455,9 +1345,9 @@ class NotificationsUI {
         
         if (!notifications || notifications.length === 0) {
             listContainer.innerHTML = `
-                <div class="notifications-empty">
-                    <i class="fas fa-bell-slash"></i>
-                    <p>No notifications yet</p>
+                <div class="announcements-empty">
+                    <i class="fas fa-bullhorn"></i>
+                    <p>No announcements yet</p>
                 </div>
             `;
             return;
@@ -1470,22 +1360,22 @@ class NotificationsUI {
             const isRead = this.chatService.isNotificationRead(notification.id) || notification.read;
             
             html += `
-                <div class="notification-item ${!isRead ? 'unread' : ''} ${isAdminNotif ? 'admin-notif' : ''}" data-id="${notification.id}">
-                    <div class="notification-icon" style="${isAdminNotif ? 'background: linear-gradient(135deg, #f97316, #ea580c);' : ''}">
-                        <i class="fas ${isAdminNotif ? 'fa-crown' : 'fa-bell'}" style="${isAdminNotif ? 'color: white;' : ''}"></i>
+                <div class="announcement-item ${!isRead ? 'unread' : ''}" data-id="${notification.id}">
+                    <div class="announcement-icon">
+                        <i class="fas ${isAdminNotif ? 'fa-crown' : 'fa-bullhorn'}"></i>
                     </div>
-                    <div class="notification-content">
-                        <div class="notification-title">
-                            ${escapeHtml(notification.title)}
-                            ${isAdminNotif ? '<span class="admin-notif-badge"><i class="fas fa-crown"></i> Admin</span>' : ''}
+                    <div class="announcement-content">
+                        <div class="announcement-title-row">
+                            <span class="announcement-title">${escapeHtml(notification.title)}</span>
+                            ${isAdminNotif ? '<span class="announcement-badge"><i class="fas fa-check-circle"></i> Official</span>' : ''}
                         </div>
-                        <div class="notification-message">${escapeHtml(notification.message)}</div>
-                        <div class="notification-time">
+                        <div class="announcement-message">${escapeHtml(notification.message)}</div>
+                        <div class="announcement-date">
                             <i class="far fa-clock"></i> ${time}
                         </div>
                     </div>
                     ${this.isAdminMode ? `
-                        <button class="notification-delete-btn" data-id="${notification.id}" title="Delete notification">
+                        <button class="announcement-delete" data-id="${notification.id}" title="Delete">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     ` : ''}
@@ -1495,25 +1385,28 @@ class NotificationsUI {
         
         listContainer.innerHTML = html;
         
-        listContainer.querySelectorAll('.notification-item').forEach(item => {
-            const id = item.dataset.id;
-            if (id && item.classList.contains('unread')) {
-                item.addEventListener('click', (e) => {
-                    if (e.target.closest('.notification-delete-btn')) return;
-                    this.chatService.markNotificationAsRead(id);
-                    item.classList.remove('unread');
-                    this.chatService.updateNotificationBadge();
-                    this.renderNotifications();
-                });
-            }
-        });
+        // Mark as read when clicked (for users)
+        if (!this.isAdminMode) {
+            listContainer.querySelectorAll('.announcement-item').forEach(item => {
+                const id = item.dataset.id;
+                if (id && item.classList.contains('unread')) {
+                    item.addEventListener('click', (e) => {
+                        if (e.target.closest('.announcement-delete')) return;
+                        this.chatService.markNotificationAsRead(id);
+                        item.classList.remove('unread');
+                        this.renderNotifications();
+                    });
+                }
+            });
+        }
         
+        // Delete buttons for admin
         if (this.isAdminMode) {
-            listContainer.querySelectorAll('.notification-delete-btn').forEach(btn => {
+            listContainer.querySelectorAll('.announcement-delete').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     const id = btn.dataset.id;
-                    if (id && confirm('Delete this notification?')) {
+                    if (id && confirm('Delete this announcement?')) {
                         await this.chatService.deleteNotification(id);
                         this.renderNotifications();
                     }
@@ -1554,19 +1447,6 @@ class NotificationsUI {
         this.isOpen = true;
         document.body.style.overflow = 'hidden';
         this.renderNotifications();
-        
-        // Save last view time when opening notifications
-        if (this.chatService) {
-            this.chatService.saveLastNotificationViewTime();
-            this.chatService.updateNotificationBadge();
-            
-            // Mark all current notifications as read
-            this.notifications.forEach(notification => {
-                if (!this.chatService.isNotificationRead(notification.id)) {
-                    this.chatService.markNotificationAsRead(notification.id);
-                }
-            });
-        }
     }
     
     close() {
@@ -1620,7 +1500,7 @@ async function initFirebaseChat() {
         if (userInfo.isAdmin) {
             console.log("%c👑 Admin Mode Active", "color: #f97316; font-size: 14px; font-weight: bold;");
             console.log("%cYou are logged in as: Juzt (Admin)", "color: #f97316;");
-            console.log("%cTo send notifications, click the bell icon and press 'New Notification'", "color: #9aa2bf;");
+            console.log("%cTo post announcements, click the bell icon and press 'New Announcement'", "color: #9aa2bf;");
         } else {
             console.log("%c👤 Logged in as: " + userInfo.name, "color: #9aa2bf;");
             console.log("%c🆔 Device ID: " + (userInfo.deviceId ? userInfo.deviceId : "unknown"), "color: #9aa2bf;");
