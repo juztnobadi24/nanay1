@@ -1,4 +1,4 @@
-/* Modal Styles */
+/* Modal Styles - Clean Professional Design */
 .modal {
     display: none;
     position: fixed;
@@ -6,12 +6,12 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(8px);
     z-index: 1000;
     justify-content: center;
     align-items: center;
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.2s ease;
 }
 
 .modal.show {
@@ -19,63 +19,84 @@
 }
 
 .modal-content {
-    background: linear-gradient(135deg, #1a1f2e 0%, #0f1222 100%);
-    border-radius: 28px;
+    background: var(--bg-secondary);
+    border-radius: 24px;
     width: 90%;
     max-width: 500px;
     max-height: 85vh;
     overflow: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    border: 1px solid #2d3246;
-    animation: slideUp 0.3s ease;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.25s ease;
 }
 
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.2rem 1.5rem;
-    border-bottom: 1px solid #2d3246;
-    background: rgba(249, 115, 22, 0.05);
+    padding: 1rem 1.5rem;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .modal-header h3 {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     font-weight: 600;
-    color: #f97316;
+    color: var(--text-primary);
+    letter-spacing: -0.2px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
 }
 
 .modal-header h3 i {
-    margin-right: 8px;
+    color: var(--accent);
+    font-size: 1.1rem;
 }
 
 .modal-close {
-    background: none;
+    background: transparent;
     border: none;
-    font-size: 1.8rem;
+    font-size: 1.2rem;
     cursor: pointer;
-    color: #9aa2bf;
+    color: var(--text-muted);
     transition: all 0.2s ease;
-    line-height: 1;
-    padding: 0;
     width: 32px;
     height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
+    border-radius: 8px;
 }
 
 .modal-close:hover {
-    color: #f97316;
+    color: var(--accent);
     background: rgba(249, 115, 22, 0.1);
-    transform: rotate(90deg);
 }
 
 .modal-body {
     padding: 1.5rem;
     overflow-y: auto;
     max-height: calc(85vh - 70px);
+    background: var(--bg-secondary);
+}
+
+.modal-body::-webkit-scrollbar {
+    width: 4px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: var(--text-muted);
+    border-radius: 4px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
 }
 
 /* Device Info Section */
@@ -84,83 +105,90 @@
 }
 
 .device-info h4 {
-    font-size: 1rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: #eef2ff;
+    color: var(--text-secondary);
     margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #f97316;
-    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .device-info h4 i {
-    color: #f97316;
-    margin-right: 8px;
+    color: var(--accent);
+    font-size: 0.85rem;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #2d3246;
+    padding: 0.6rem 0;
 }
 
-.info-row:last-child {
-    border-bottom: none;
+.info-row:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .info-label {
     font-weight: 500;
-    color: #9aa2bf;
-    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
 }
 
 .info-value {
-    color: #eef2ff;
+    color: var(--text-primary);
     font-weight: 500;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 2px 8px;
+    border-radius: 4px;
 }
 
 /* Settings Section */
 .settings-section {
     margin-top: 1.5rem;
-    padding-top: 1rem;
-    border-top: 1px solid #2d3246;
 }
 
 .settings-section h4 {
-    font-size: 1rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: #eef2ff;
+    color: var(--text-secondary);
     margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .settings-section h4 i {
-    color: #f97316;
-    margin-right: 8px;
+    color: var(--accent);
+    font-size: 0.85rem;
 }
 
 .setting-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #2d3246;
+    padding: 0.6rem 0;
 }
 
-.setting-item:last-child {
-    border-bottom: none;
+.setting-item:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .setting-label {
-    font-size: 0.9rem;
-    color: #eef2ff;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
 }
 
 .setting-description {
     font-size: 0.7rem;
-    color: #9aa2bf;
+    color: var(--text-muted);
     margin-top: 2px;
 }
 
@@ -186,25 +214,25 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #2d3246;
-    transition: 0.3s;
+    background-color: rgba(255, 255, 255, 0.15);
+    transition: 0.2s;
     border-radius: 22px;
 }
 
 .toggle-slider:before {
     position: absolute;
     content: "";
-    height: 16px;
-    width: 16px;
-    left: 3px;
-    bottom: 3px;
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
     background-color: white;
-    transition: 0.3s;
+    transition: 0.2s;
     border-radius: 50%;
 }
 
 input:checked + .toggle-slider {
-    background-color: #f97316;
+    background-color: var(--accent);
 }
 
 input:checked + .toggle-slider:before {
@@ -213,29 +241,35 @@ input:checked + .toggle-slider:before {
 
 /* Select Dropdown */
 .setting-select {
-    background: #1a1e2c;
-    border: 1px solid #2d3246;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     padding: 6px 10px;
-    color: #eef2ff;
+    color: var(--text-primary);
     font-size: 0.8rem;
     cursor: pointer;
     outline: none;
     flex-shrink: 0;
+    transition: all 0.2s ease;
 }
 
 .setting-select:hover {
-    border-color: #f97316;
+    border-color: var(--accent);
+    background: rgba(249, 115, 22, 0.05);
+}
+
+.setting-select:focus {
+    border-color: var(--accent);
 }
 
 .setting-select option {
-    background: #1a1e2c;
-    color: #eef2ff;
+    background: var(--bg-card);
+    color: var(--text-primary);
 }
 
 /* Button */
 .settings-btn {
-    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    background: var(--accent);
     border: none;
     border-radius: 40px;
     padding: 10px 20px;
@@ -244,53 +278,60 @@ input:checked + .toggle-slider:before {
     cursor: pointer;
     transition: all 0.2s ease;
     width: 100%;
-    margin-top: 1rem;
-    font-size: 0.9rem;
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
 }
 
 .settings-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(249, 115, 22, 0.3);
+    background: var(--accent-dark);
+    transform: translateY(-1px);
 }
 
-/* Info Note */
-.info-note {
+.settings-btn:active {
+    transform: translateY(0);
+}
+
+/* Install App Button */
+.install-app-btn {
     background: rgba(249, 115, 22, 0.1);
-    border-left: 3px solid #f97316;
-    padding: 8px 12px;
-    border-radius: 8px;
-    margin: 12px 0;
-    font-size: 0.75rem;
-    color: #9aa2bf;
+    border: 1px solid rgba(249, 115, 22, 0.2);
+    border-radius: 40px;
+    padding: 8px 16px;
+    color: var(--accent);
+    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
 }
 
-.info-note i {
-    color: #f97316;
-    font-size: 0.9rem;
-    flex-shrink: 0;
+.install-app-btn:hover {
+    background: var(--accent);
+    color: white;
+    transform: translateY(-1px);
+    border-color: transparent;
 }
 
-.info-note span {
-    flex: 1;
-    line-height: 1.4;
+.install-app-btn:active {
+    transform: translateY(0);
+}
+
+.install-app-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* Animations */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @keyframes slideUp {
     from {
-        transform: translateY(30px);
+        transform: translateY(20px);
         opacity: 0;
     }
     to {
@@ -299,11 +340,16 @@ input:checked + .toggle-slider:before {
     }
 }
 
-/* ========== MOBILE PHONE STYLES (max-width: 640px) ========== */
+/* Toast */
+.juzt-toast {
+    animation: slideUp 0.2s ease;
+}
+
+/* Responsive */
 @media (max-width: 640px) {
     .modal-content {
-        width: 80%;
-        max-width: 80%;
+        width: 90%;
+        max-width: 90%;
         border-radius: 20px;
         max-height: 80vh;
     }
@@ -316,296 +362,48 @@ input:checked + .toggle-slider:before {
         font-size: 1rem;
     }
     
-    .modal-header h3 i {
-        font-size: 0.9rem;
-    }
-    
-    .modal-close {
-        width: 28px;
-        height: 28px;
-        font-size: 1.5rem;
-    }
-    
     .modal-body {
         padding: 1rem;
-        max-height: calc(80vh - 56px);
     }
     
-    /* Device Info - Compact */
-    .device-info {
-        margin-bottom: 1rem;
-    }
-    
-    .device-info h4 {
-        font-size: 0.85rem;
-        margin-bottom: 0.6rem;
-        padding-bottom: 0.3rem;
-    }
-    
-    .device-info h4 i {
-        font-size: 0.8rem;
-    }
-    
-    .info-row {
-        padding: 0.5rem 0;
-    }
-    
-    .info-label {
-        font-size: 0.75rem;
-    }
-    
-    .info-value {
-        font-size: 0.75rem;
-    }
-    
-    /* Settings Section - Compact */
-    .settings-section {
-        margin-top: 1rem;
-        padding-top: 0.8rem;
-    }
-    
-    .settings-section h4 {
-        font-size: 0.85rem;
-        margin-bottom: 0.6rem;
-    }
-    
-    .settings-section h4 i {
-        font-size: 0.8rem;
-    }
-    
+    .info-row,
     .setting-item {
         padding: 0.5rem 0;
     }
     
+    .info-label,
+    .info-value,
     .setting-label {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
     
-    .setting-description {
-        font-size: 0.65rem;
-    }
-    
-    /* Toggle Switch - Smaller */
     .toggle-switch {
-        width: 38px;
+        width: 40px;
         height: 20px;
     }
     
-    .toggle-slider {
-        border-radius: 20px;
-    }
-    
     .toggle-slider:before {
-        height: 14px;
-        width: 14px;
-        left: 3px;
-        bottom: 3px;
+        height: 16px;
+        width: 16px;
     }
     
     input:checked + .toggle-slider:before {
-        transform: translateX(18px);
+        transform: translateX(20px);
     }
     
-    /* Select Dropdown - Smaller */
-    .setting-select {
-        padding: 4px 8px;
-        font-size: 0.7rem;
-    }
-    
-    /* Button - Smaller */
     .settings-btn {
         padding: 8px 16px;
         font-size: 0.8rem;
-        margin-top: 0.8rem;
-    }
-    
-    /* Info Note - Smaller */
-    .info-note {
-        padding: 6px 10px;
-        margin: 10px 0;
-        font-size: 0.65rem;
-    }
-    
-    .info-note i {
-        font-size: 0.8rem;
     }
 }
 
-/* ========== SMALL MOBILE (max-width: 480px) ========== */
 @media (max-width: 480px) {
     .modal-content {
-        width: 90%;
-        max-width: 80%;
+        width: 95%;
         border-radius: 18px;
-        max-height: 85vh;
     }
     
     .modal-header {
-        padding: 0.7rem 0.9rem;
+        padding: 0.7rem 0.8rem;
     }
-    
-    .modal-header h3 {
-        font-size: 0.95rem;
-    }
-    
-    .modal-body {
-        padding: 0.8rem;
-        max-height: calc(85vh - 52px);
-    }
-    
-    .info-row {
-        padding: 0.4rem 0;
-    }
-    
-    .info-label, .info-value {
-        font-size: 0.7rem;
-    }
-    
-    .setting-label {
-        font-size: 0.75rem;
-    }
-    
-    .setting-description {
-        font-size: 0.6rem;
-    }
-    
-    .toggle-switch {
-        width: 34px;
-        height: 18px;
-    }
-    
-    .toggle-slider:before {
-        height: 12px;
-        width: 12px;
-        left: 3px;
-        bottom: 3px;
-    }
-    
-    input:checked + .toggle-slider:before {
-        transform: translateX(16px);
-    }
-    
-    .setting-select {
-        padding: 3px 6px;
-        font-size: 0.65rem;
-    }
-    
-    .settings-btn {
-        padding: 6px 12px;
-        font-size: 0.75rem;
-    }
-    
-    .info-note {
-        padding: 5px 8px;
-        font-size: 0.6rem;
-    }
-}
-
-/* ========== LANDSCAPE MODE ON MOBILE ========== */
-@media (max-width: 640px) and (orientation: landscape) {
-    .modal-content {
-        max-height: 90vh;
-        width: 80%;
-        max-width: 80%;
-    }
-    
-    .modal-body {
-        max-height: calc(90vh - 60px);
-    }
-    
-    .device-info h4 {
-        font-size: 0.8rem;
-    }
-    
-    .info-row {
-        padding: 0.35rem 0;
-    }
-    
-    .info-label, .info-value {
-        font-size: 0.7rem;
-    }
-    
-    .setting-item {
-        padding: 0.4rem 0;
-    }
-    
-    .setting-label {
-        font-size: 0.75rem;
-    }
-    
-    .setting-description {
-        font-size: 0.6rem;
-    }
-}
-
-/* ========== TABLET STYLES (641px - 1024px) ========== */
-@media (min-width: 641px) and (max-width: 1024px) {
-    .modal-content {
-        max-width: 450px;
-    }
-    
-    .modal-header {
-        padding: 1rem 1.2rem;
-    }
-    
-    .modal-header h3 {
-        font-size: 1.1rem;
-    }
-    
-    .modal-body {
-        padding: 1.2rem;
-    }
-}
-
-/* ========== DESKTOP/LAPTOP STYLES (min-width: 1025px) ========== */
-@media (min-width: 1025px) {
-    .modal-content {
-        max-width: 500px;
-    }
-}
-/* Install App Button */
-.install-app-btn {
-    background: linear-gradient(135deg, #f97316, #ea580c);
-    border: none;
-    border-radius: 40px;
-    padding: 8px 16px;
-    color: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.8rem;
-    transition: all 0.2s ease;
-}
-
-.install-app-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4);
-}
-
-.install-app-btn:active {
-    transform: translateY(0);
-}
-
-.install-app-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* Toast animation */
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateX(-50%) translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-    }
-}
-
-.juzt-toast {
-    animation: slideUp 0.3s ease;
-    transition: opacity 0.3s ease;
 }
