@@ -178,5 +178,3 @@ if (document.readyState === 'loading') {
 
 
 
-
-
