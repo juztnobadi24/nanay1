@@ -56,42 +56,60 @@ function showError(msg) {
 }
 
 // ======================== TOAST NOTIFICATION ========================
-function showToast(message, duration = 3000) {
-    // Remove existing toast
-    const existingToast = document.querySelector('.juzt-toast');
-    if (existingToast) existingToast.remove();
+let activeToastTimeout = null;
+let currentToast = null;
+
+function showToast(message, duration = 3500) {
+    // Remove existing toast if any
+    if (currentToast && currentToast.parentNode) {
+        // Clear existing timeout
+        if (activeToastTimeout) {
+            clearTimeout(activeToastTimeout);
+            activeToastTimeout = null;
+        }
+        // Remove current toast
+        currentToast.remove();
+        currentToast = null;
+    }
     
+    // Create new toast
     const toast = document.createElement('div');
     toast.className = 'juzt-toast';
+    
+    // Add icon based on message type
+    let icon = 'fa-check-circle';
+    if (message.toLowerCase().includes('dark')) {
+        icon = 'fa-moon';
+    } else if (message.toLowerCase().includes('light')) {
+        icon = 'fa-sun';
+    }
+    
     toast.innerHTML = `
-        <i class="fas fa-check-circle"></i>
+        <i class="fas ${icon}"></i>
         <span>${escapeHtml(message)}</span>
     `;
-    toast.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #f97316;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 40px;
-        font-size: 0.9rem;
-        font-weight: 500;
-        z-index: 1001;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        animation: slideUp 0.3s ease;
-        font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
-    `;
-    document.body.appendChild(toast);
     
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 300);
-    }, duration);
+    // Add to body
+    document.body.appendChild(toast);
+    currentToast = toast;
+    
+    // Force reflow to ensure animation works
+    toast.offsetHeight;
+    
+    // Auto remove after exactly 3500ms (3.5 seconds)
+    activeToastTimeout = setTimeout(() => {
+        if (currentToast && currentToast.parentNode) {
+            currentToast.style.opacity = '0';
+            currentToast.style.transform = 'translateY(-5px)';
+            setTimeout(() => {
+                if (currentToast && currentToast.parentNode) {
+                    currentToast.remove();
+                    currentToast = null;
+                }
+                activeToastTimeout = null;
+            }, 200);
+        }
+    }, 3500);
 }
 
 // ======================== PWA UTILITIES ========================
@@ -139,11 +157,11 @@ async function clearAppCache() {
                 })
             );
             console.log('All caches cleared');
-            showToast('Cache cleared successfully! Refresh to reload.');
+            showToast('Cache cleared successfully! Refresh to reload.', 3500);
             return true;
         } catch (error) {
             console.error('Error clearing cache:', error);
-            showToast('Failed to clear cache');
+            showToast('Failed to clear cache', 3500);
             return false;
         }
     }
