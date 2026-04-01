@@ -175,3 +175,5 @@ if (document.readyState === 'loading') {
         initSplashScreen();
     }
 }
+
+
