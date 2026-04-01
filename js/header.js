@@ -433,4 +433,3 @@ class HeaderComponent {
 }
 
 window.HeaderComponent = HeaderComponent;
-
