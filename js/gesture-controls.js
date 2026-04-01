@@ -508,5 +508,6 @@ class GestureControls {
     }
 }
 
+
 window.GestureControls = GestureControls;
 
