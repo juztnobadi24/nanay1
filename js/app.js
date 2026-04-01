@@ -1,5 +1,5 @@
 // ======================== VERSION MANAGEMENT ========================
-const APP_VERSION = '7.0.0'; // Update this version number with each release
+const APP_VERSION = '2.0.0'; // Update this version number with each release
 const STORAGE_VERSION_KEY = 'juzt_app_version';
 
 // Check and handle version updates
@@ -657,3 +657,5 @@ window.getFirebaseChat = function() {
 console.log(`%cJUZT IPTV v${APP_VERSION}`, 'color: #f97316; font-size: 14px; font-weight: bold;');
 console.log('%c🔥 Firebase Chat & Announcements ready', 'color: #9aa2bf; font-size: 12px;');
 console.log('%c💬 Admin password: JUZT_ADMIN_2026', 'color: #9aa2bf; font-size: 12px;');
+
+
