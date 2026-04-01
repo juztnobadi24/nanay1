@@ -6,6 +6,9 @@ class HeaderComponent {
         this.currentMode = "tv";
         this.settingsModal = null;
         this.menuOpen = false;
+        this.activeButton = null;
+        this.modalCheckInterval = null;
+        this.firebaseChat = null;
     }
     
     hideAddressBar() {
@@ -61,23 +64,24 @@ class HeaderComponent {
                 
                 <!-- Dropdown Menu -->
                 <div class="dropdown-menu-icons" id="dropdownMenu">
-                    <button class="icon-btn dropdown-item" id="messageBtn" title="Chat">
-                        <div class="icon-with-badge">
-                            <svg class="icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M20 2H4C2.9 2 2 2.9 2 4V16C2 17.1 2.9 18 4 18H8L12 22L16 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                                <path d="M7 9H17M7 13H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                            </svg>
-                        </div>
-                        <span class="dropdown-label">Chat</span>
+                    <button class="icon-btn dropdown-item" id="profileBtn" title="Profile">
+                        <svg class="icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                        </svg>
+                        <span class="dropdown-label">Profile</span>
                     </button>
-                    <button class="icon-btn dropdown-item" id="notificationBtn" title="Announcements">
-                        <div class="icon-with-badge">
-                            <svg class="icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M18 8C18 4.68629 15.3137 2 12 2C8.68629 2 6 4.68629 6 8V11.1C6 12.4 5.5 13.6 4.7 14.5L4.5 14.7C3.5 15.9 4.2 17.6 5.8 17.9C10.4 18.7 13.6 18.7 18.2 17.9C19.8 17.6 20.5 15.9 19.5 14.7L19.3 14.5C18.5 13.6 18 12.3 18 11.1V8Z" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                                <path d="M9 19C9.3978 20.1648 10.3356 21.0826 11.5 21.478C12.6644 21.8734 13.9356 21.7246 15 20.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                            </svg>
-                        </div>
+                    <button class="icon-btn dropdown-item" id="announcementsBtn" title="Announcements">
+                        <svg class="icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 11h18M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                            <path d="M12 16v3" stroke="currentColor" stroke-width="1.5"/>
+                        </svg>
                         <span class="dropdown-label">Announcements</span>
+                    </button>
+                    <button class="icon-btn dropdown-item" id="chatBtn" title="Live Chat">
+                        <svg class="icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="1.5" fill="none"/>
+                        </svg>
+                        <span class="dropdown-label">Live Chat</span>
                     </button>
                     <button class="icon-btn dropdown-item" id="settingsBtn" title="Settings">
                         <svg class="icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -92,6 +96,13 @@ class HeaderComponent {
         this.addBadgeStyles();
         this.attachEvents();
         this.initTheme();
+        
+        // Initialize Firebase Chat after DOM is ready
+        setTimeout(() => {
+            if (typeof initFirebaseChat === 'function') {
+                this.firebaseChat = initFirebaseChat();
+            }
+        }, 500);
     }
     
     addBadgeStyles() {
@@ -100,15 +111,22 @@ class HeaderComponent {
         const style = document.createElement('style');
         style.id = 'badge-styles';
         style.textContent = `
-            .icon-with-badge {
-                position: relative;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
             .dropdown-item {
                 position: relative;
+                transition: all 0.2s ease;
+            }
+            
+            .dropdown-item.active {
+                background: rgba(249, 115, 22, 0.15);
+                color: var(--accent);
+            }
+            
+            .dropdown-item.active .icon-svg {
+                color: var(--accent);
+            }
+            
+            .dropdown-item.active .dropdown-label {
+                color: var(--accent);
             }
         `;
         document.head.appendChild(style);
@@ -161,10 +179,46 @@ class HeaderComponent {
         
         // Show toast notification
         if (window.showToast) {
-            window.showToast(`${newTheme === 'dark' ? 'Dark' : 'Light'} mode activated`);
+            const themeName = newTheme === 'dark' ? 'Dark Mode' : 'Light Mode';
+            window.showToast(themeName);
         }
         
         console.log(`Theme changed to: ${newTheme} mode`);
+    }
+    
+    removeActiveFromIcons() {
+        const profileBtn = document.getElementById('profileBtn');
+        const announcementsBtn = document.getElementById('announcementsBtn');
+        const chatBtn = document.getElementById('chatBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        
+        if (profileBtn) profileBtn.classList.remove('active');
+        if (announcementsBtn) announcementsBtn.classList.remove('active');
+        if (chatBtn) chatBtn.classList.remove('active');
+        if (settingsBtn) settingsBtn.classList.remove('active');
+        
+        // Clear any existing interval
+        if (this.modalCheckInterval) {
+            clearInterval(this.modalCheckInterval);
+            this.modalCheckInterval = null;
+        }
+    }
+    
+    startModalCheck(button, modalCheckFunction) {
+        // Clear any existing interval
+        if (this.modalCheckInterval) {
+            clearInterval(this.modalCheckInterval);
+            this.modalCheckInterval = null;
+        }
+        
+        // Check modal status periodically
+        this.modalCheckInterval = setInterval(() => {
+            if (modalCheckFunction()) {
+                button.classList.remove('active');
+                clearInterval(this.modalCheckInterval);
+                this.modalCheckInterval = null;
+            }
+        }, 100);
     }
     
     attachEvents() {
@@ -267,68 +321,79 @@ class HeaderComponent {
             });
         }
         
-        // Message button
-        const messageBtn = document.getElementById("messageBtn");
-        const notificationBtn = document.getElementById("notificationBtn");
+        // Profile button (first)
+        const profileBtn = document.getElementById("profileBtn");
+        if (profileBtn) {
+            profileBtn.addEventListener("click", () => {
+                this.hideAddressBar();
+                this.removeActiveFromIcons();
+                profileBtn.classList.add('active');
+                closeDropdown();
+                
+                if (this.firebaseChat) {
+                    this.firebaseChat.openProfile();
+                } else if (typeof initFirebaseChat === 'function') {
+                    this.firebaseChat = initFirebaseChat();
+                    setTimeout(() => {
+                        if (this.firebaseChat) this.firebaseChat.openProfile();
+                    }, 500);
+                }
+                
+                this.startModalCheck(profileBtn, () => this.firebaseChat && !this.firebaseChat.profileModal?.classList.contains('show'));
+            });
+        }
+        
+        // Announcements button (second)
+        const announcementsBtn = document.getElementById("announcementsBtn");
+        if (announcementsBtn) {
+            announcementsBtn.addEventListener("click", () => {
+                this.hideAddressBar();
+                this.removeActiveFromIcons();
+                announcementsBtn.classList.add('active');
+                closeDropdown();
+                
+                if (this.firebaseChat) {
+                    this.firebaseChat.openAnnouncements();
+                } else if (typeof initFirebaseChat === 'function') {
+                    this.firebaseChat = initFirebaseChat();
+                    setTimeout(() => {
+                        if (this.firebaseChat) this.firebaseChat.openAnnouncements();
+                    }, 500);
+                }
+                
+                this.startModalCheck(announcementsBtn, () => this.firebaseChat && !this.firebaseChat.announcementsModal?.classList.contains('show'));
+            });
+        }
+        
+        // Chat button (third)
+        const chatBtn = document.getElementById("chatBtn");
+        if (chatBtn) {
+            chatBtn.addEventListener("click", () => {
+                this.hideAddressBar();
+                this.removeActiveFromIcons();
+                chatBtn.classList.add('active');
+                closeDropdown();
+                
+                if (this.firebaseChat) {
+                    this.firebaseChat.openChat();
+                } else if (typeof initFirebaseChat === 'function') {
+                    this.firebaseChat = initFirebaseChat();
+                    setTimeout(() => {
+                        if (this.firebaseChat) this.firebaseChat.openChat();
+                    }, 500);
+                }
+                
+                this.startModalCheck(chatBtn, () => this.firebaseChat && !this.firebaseChat.chatModal?.classList.contains('show'));
+            });
+        }
+        
+        // Settings button (fourth)
         const settingsBtn = document.getElementById("settingsBtn");
-        
-        const removeActiveFromIcons = () => {
-            [messageBtn, notificationBtn, settingsBtn].forEach(icon => {
-                if (icon) icon.classList.remove('active');
-            });
-        };
-        
-        if (messageBtn) {
-            messageBtn.addEventListener("click", () => {
-                this.hideAddressBar();
-                removeActiveFromIcons();
-                messageBtn.classList.add('active');
-                
-                // Close the dropdown
-                closeDropdown();
-                
-                if (window.chatUI) {
-                    window.chatUI.open();
-                }
-                
-                const checkModalClose = setInterval(() => {
-                    if (window.chatUI && !window.chatUI.isOpen) {
-                        messageBtn.classList.remove('active');
-                        clearInterval(checkModalClose);
-                    }
-                }, 100);
-            });
-        }
-        
-        if (notificationBtn) {
-            notificationBtn.addEventListener("click", () => {
-                this.hideAddressBar();
-                removeActiveFromIcons();
-                notificationBtn.classList.add('active');
-                
-                // Close the dropdown
-                closeDropdown();
-                
-                if (window.notificationsUI) {
-                    window.notificationsUI.open();
-                }
-                
-                const checkModalClose = setInterval(() => {
-                    if (window.notificationsUI && !window.notificationsUI.isOpen) {
-                        notificationBtn.classList.remove('active');
-                        clearInterval(checkModalClose);
-                    }
-                }, 100);
-            });
-        }
-        
         if (settingsBtn) {
             settingsBtn.addEventListener("click", () => {
                 this.hideAddressBar();
-                removeActiveFromIcons();
+                this.removeActiveFromIcons();
                 settingsBtn.classList.add('active');
-                
-                // Close the dropdown
                 closeDropdown();
                 
                 if (!this.settingsModal) {
@@ -337,12 +402,7 @@ class HeaderComponent {
                 }
                 this.settingsModal.open();
                 
-                const checkModalClose = setInterval(() => {
-                    if (!this.settingsModal.isOpen) {
-                        settingsBtn.classList.remove('active');
-                        clearInterval(checkModalClose);
-                    }
-                }, 100);
+                this.startModalCheck(settingsBtn, () => this.settingsModal && !this.settingsModal.isOpen);
             });
         }
         
