@@ -652,4 +652,3 @@ class SidebarComponent {
 }
 
 window.SidebarComponent = SidebarComponent;
-
