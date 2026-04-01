@@ -214,3 +214,4 @@ class FullscreenManager {
 }
 
 window.FullscreenManager = FullscreenManager;
+
