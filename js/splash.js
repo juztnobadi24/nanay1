@@ -10,6 +10,7 @@ class SplashScreen {
         this.startTime = null;
         this.timeoutId = null;
     }
+
     
     create() {
         // Check if splash already exists
