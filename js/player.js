@@ -24,10 +24,14 @@ class PlayerComponent {
         this.slideshowContainer = null;
         this.slideshowImages = [];
         this.currentSlideIndex = 0;
+        this.originalSlideIndex = 0;
         this.slideshowInterval = null;
         this.slideshowEnabled = true;
-        this.slideshowDuration = 5000; // 5 seconds per slide
+        this.slideshowDuration = 5000;
         this.isLooping = true;
+        this.isSlideshowActive = false;
+        this.totalSlides = 0;
+        this.slideshowInitialized = false;
         
         // Fullscreen button elements
         this.fullscreenBtn = null;
@@ -42,7 +46,7 @@ class PlayerComponent {
         this.container.innerHTML = `
             <div class="video-container" id="videoContainer">
                 <video id="videoPlayer" playsinline disablePictureInPicture autoplay style="display: none;"></video>
-                <div class="slideshow-container" id="slideshowContainer">
+                <div class="slideshow-container" id="slideshowContainer" style="display: flex;">
                     <div class="slideshow-wrapper" id="slideshowWrapper">
                         <div class="slideshow-slides" id="slideshowSlides"></div>
                         <button class="slideshow-prev" id="slideshowPrevBtn"><i class="fas fa-chevron-left"></i></button>
@@ -92,11 +96,6 @@ class PlayerComponent {
         // Define slideshow images with channel links
         this.slideshowImages = [
             {
-                image: "sdtv.jpg",
-                title: "Sdtv Network",
-                channelName: "Sdtv Network",
-            },
-             {
                 image: "https://image.tmdb.org/t/p/original/vDQb06miaaW7C2GUPeMNDmyqWec.jpg",
                 title: "The Prince of Egypt",
                 channelName: "The Prince of Egypt (1998)",
@@ -123,7 +122,6 @@ class PlayerComponent {
                 title: "NBA TV",
                 channelName: "NBA TV"
             },
-
             {
                 image: "https://cdn-images-3.listennotes.com/podcasts/barangay-love-stories-barangay-ls-971-RKoFbLgJBxS-vTnha6cPKXt.1400x1400.jpg",
                 title: "97.1 Barangay LS",
@@ -135,11 +133,15 @@ class PlayerComponent {
                 title: "Kartoon Channel HD",
                 channelName: "Kartoon Channel HD"
             }
-
         ];
         
+        this.totalSlides = this.slideshowImages.length;
+        
         this.renderSlideshow();
-        this.startSlideshow();
+        
+        // Don't auto-start slideshow - wait for it to be shown
+        this.isSlideshowActive = true;
+        this.slideshowEnabled = true;
         
         // Attach navigation buttons
         const prevBtn = document.getElementById("slideshowPrevBtn");
@@ -187,20 +189,29 @@ class PlayerComponent {
                 this.resetSlideshowTimer();
             }
         });
+        
+        this.slideshowInitialized = true;
+        
+        // Start slideshow only if no channel is playing
+        if (!this.currentChannel) {
+            this.startSlideshow();
+        } else {
+            // Slideshow is visible but paused because a channel is playing
+            this.pauseSlideshow();
+        }
     }
     
     renderSlideshow() {
         if (!this.slideshowSlides || !this.slideshowDots) return;
         
         // Create array for infinite loop by duplicating slides
-        // This creates a seamless infinite loop effect
         const infiniteImages = [...this.slideshowImages, ...this.slideshowImages, ...this.slideshowImages];
         
         // Render slides
         let slidesHtml = '';
         let dotsHtml = '';
         
-        // Only create dots for original images (not duplicates)
+        // Only create dots for original images
         this.slideshowImages.forEach((slide, index) => {
             dotsHtml += `
                 <div class="slideshow-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></div>
@@ -224,11 +235,11 @@ class PlayerComponent {
         this.slideshowSlides.innerHTML = slidesHtml;
         this.slideshowDots.innerHTML = dotsHtml;
         
-        // Set initial position to the first set of images (start at the middle set)
-        const slideWidth = this.slideshowContainer ? this.slideshowContainer.clientWidth : 0;
+        // Set initial position to the middle set
         const startPosition = -(this.slideshowImages.length * 100);
         this.slideshowSlides.style.transform = `translateX(${startPosition}%)`;
         this.currentSlideIndex = this.slideshowImages.length;
+        this.originalSlideIndex = 0;
         
         // Add click handlers to slides
         document.querySelectorAll('.slideshow-slide').forEach(slide => {
@@ -239,23 +250,17 @@ class PlayerComponent {
                 const isMovies = slide.dataset.isMovies === 'true';
                 
                 if (channelName) {
-                    // Find and play the specific channel
                     const channel = window.channelsData.find(ch => ch.name === channelName);
                     if (channel && typeof window.onChannelSelect === 'function') {
-                        this.stopSlideshow();
                         await window.onChannelSelect(channel);
                     }
                 } else if (isRadio) {
-                    // Switch to radio mode and show radio stations
                     if (typeof window.onModeChange === 'function') {
                         window.onModeChange('radio');
-                        this.stopSlideshow();
                     }
                 } else if (isMovies) {
-                    // Switch to movies mode
                     if (typeof window.onModeChange === 'function') {
                         window.onModeChange('movies');
-                        this.stopSlideshow();
                     }
                 }
             });
@@ -276,32 +281,25 @@ class PlayerComponent {
     }
     
     updateActiveSlide(index) {
-        // Get the actual position based on the infinite loop
         const slideWidth = this.slideshowContainer ? this.slideshowContainer.clientWidth : 0;
         const position = -(index * 100);
         
-        // Smooth transition
         this.slideshowSlides.style.transition = 'transform 0.5s ease-in-out';
         this.slideshowSlides.style.transform = `translateX(${position}%)`;
         
-        // Handle infinite loop reset
         setTimeout(() => {
             if (index >= this.slideshowImages.length * 2) {
-                // Reset to the beginning of the middle set
                 this.slideshowSlides.style.transition = 'none';
                 const resetPosition = -(this.slideshowImages.length * 100);
                 this.slideshowSlides.style.transform = `translateX(${resetPosition}%)`;
                 this.currentSlideIndex = this.slideshowImages.length;
-                // Force reflow
                 this.slideshowSlides.offsetHeight;
                 this.slideshowSlides.style.transition = 'transform 0.5s ease-in-out';
             } else if (index < this.slideshowImages.length) {
-                // Reset to the end of the middle set
                 this.slideshowSlides.style.transition = 'none';
                 const resetPosition = -(this.slideshowImages.length * 2 * 100);
                 this.slideshowSlides.style.transform = `translateX(${resetPosition}%)`;
                 this.currentSlideIndex = this.slideshowImages.length * 2;
-                // Force reflow
                 this.slideshowSlides.offsetHeight;
                 this.slideshowSlides.style.transition = 'transform 0.5s ease-in-out';
             } else {
@@ -309,8 +307,8 @@ class PlayerComponent {
             }
         }, 500);
         
-        // Update active dot based on the original image index
         const originalIndex = index % this.slideshowImages.length;
+        this.originalSlideIndex = originalIndex;
         this.updateActiveDot(originalIndex);
     }
     
@@ -329,8 +327,10 @@ class PlayerComponent {
             clearInterval(this.slideshowInterval);
         }
         
+        if (!this.isSlideshowActive || !this.slideshowEnabled) return;
+        
         this.slideshowInterval = setInterval(() => {
-            if (this.slideshowEnabled && this.slideshowContainer && this.slideshowContainer.style.display !== 'none') {
+            if (this.isSlideshowActive && this.slideshowEnabled && this.slideshowContainer && this.slideshowContainer.style.display !== 'none') {
                 this.nextSlide();
             }
         }, this.slideshowDuration);
@@ -341,6 +341,7 @@ class PlayerComponent {
             clearInterval(this.slideshowInterval);
             this.slideshowInterval = null;
         }
+        this.isSlideshowActive = false;
         this.slideshowEnabled = false;
     }
     
@@ -352,47 +353,44 @@ class PlayerComponent {
     }
     
     resumeSlideshow() {
-        if (!this.slideshowEnabled) return;
+        if (!this.isSlideshowActive || !this.slideshowEnabled) return;
         
         if (this.slideshowInterval) {
             clearInterval(this.slideshowInterval);
         }
         
         this.slideshowInterval = setInterval(() => {
-            if (this.slideshowEnabled && this.slideshowContainer && this.slideshowContainer.style.display !== 'none') {
+            if (this.isSlideshowActive && this.slideshowEnabled && this.slideshowContainer && this.slideshowContainer.style.display !== 'none') {
                 this.nextSlide();
             }
         }, this.slideshowDuration);
     }
     
     resetSlideshowTimer() {
-        if (!this.slideshowEnabled) return;
+        if (!this.isSlideshowActive || !this.slideshowEnabled) return;
         
         if (this.slideshowInterval) {
             clearInterval(this.slideshowInterval);
         }
         
         this.slideshowInterval = setInterval(() => {
-            if (this.slideshowEnabled && this.slideshowContainer && this.slideshowContainer.style.display !== 'none') {
+            if (this.isSlideshowActive && this.slideshowEnabled && this.slideshowContainer && this.slideshowContainer.style.display !== 'none') {
                 this.nextSlide();
             }
         }, this.slideshowDuration);
     }
     
     nextSlide() {
-        // Move to next slide (right to left movement)
         let nextIndex = this.currentSlideIndex + 1;
         this.updateActiveSlide(nextIndex);
     }
     
     prevSlide() {
-        // Move to previous slide (left to right movement)
         let prevIndex = this.currentSlideIndex - 1;
         this.updateActiveSlide(prevIndex);
     }
     
     goToSlide(originalIndex) {
-        // Calculate the actual position to show the desired original image
         const targetIndex = this.currentSlideIndex + (originalIndex - (this.currentSlideIndex % this.slideshowImages.length));
         this.updateActiveSlide(targetIndex);
     }
@@ -400,14 +398,11 @@ class PlayerComponent {
     showSlideshow() {
         if (this.slideshowContainer) {
             this.slideshowContainer.style.display = 'flex';
-            // Reset to the middle set when showing
-            const resetPosition = -(this.slideshowImages.length * 100);
-            this.slideshowSlides.style.transition = 'none';
-            this.slideshowSlides.style.transform = `translateX(${resetPosition}%)`;
-            this.currentSlideIndex = this.slideshowImages.length;
-            // Force reflow
-            this.slideshowSlides.offsetHeight;
-            this.slideshowSlides.style.transition = 'transform 0.5s ease-in-out';
+            this.isSlideshowActive = true;
+            this.slideshowEnabled = true;
+            
+            // Don't reset position - keep current slide
+            this.startSlideshow();
         }
         if (this.videoPlayer) {
             this.videoPlayer.style.display = 'none';
@@ -415,29 +410,25 @@ class PlayerComponent {
         if (this.radioLogoContainer) {
             this.radioLogoContainer.style.display = 'none';
         }
-        this.slideshowEnabled = true;
-        this.startSlideshow();
     }
     
     hideSlideshow() {
         if (this.slideshowContainer) {
             this.slideshowContainer.style.display = 'none';
+            this.isSlideshowActive = false;
+            this.pauseSlideshow();
         }
         if (this.videoPlayer) {
             this.videoPlayer.style.display = '';
         }
-        this.slideshowEnabled = false;
-        this.pauseSlideshow();
     }
     
     showRadioLogo(channel) {
         if (!this.radioLogoContainer) return;
         
-        // Check if it's a radio channel
         const isRadio = channel.type === "Radio";
         
         if (!isRadio) {
-            // Hide logo for TV channels
             this.radioLogoContainer.style.display = 'none';
             if (this.videoPlayer) {
                 this.videoPlayer.style.opacity = '1';
@@ -448,43 +439,31 @@ class PlayerComponent {
         // Hide slideshow when radio is playing
         this.hideSlideshow();
         
-        // Try to get logo from multiple sources
         let logoUrl = null;
         
-        // Priority 1: logo from channel object
         if (channel.logo) {
             logoUrl = channel.logo;
-        }
-        // Priority 2: logoLocal (if you have local logos)
-        else if (channel.logoLocal) {
+        } else if (channel.logoLocal) {
             logoUrl = `images/${channel.logoLocal}.webp`;
-        }
-        // Priority 3: fallback to default radio logo
-        else {
+        } else {
             logoUrl = 'https://via.placeholder.com/200x200/1a1e2c/f97316?text=📻';
         }
         
-        // Clear existing content
         this.radioLogoContainer.innerHTML = '';
         
-        // Create wrapper
         const wrapper = document.createElement('div');
         wrapper.className = 'radio-logo-wrapper';
         
-        // Create logo content container
         const logoContent = document.createElement('div');
         logoContent.className = 'radio-logo-content';
         
-        // Create logo image
         const img = document.createElement('img');
         img.className = 'radio-logo';
         img.src = logoUrl;
         img.alt = channel.name;
         
-        // Handle image load error
         img.onerror = () => {
             img.src = 'https://via.placeholder.com/200x200/1a1e2c/f97316?text=📻';
-            img.alt = 'Radio';
         };
         
         logoContent.appendChild(img);
@@ -492,16 +471,13 @@ class PlayerComponent {
         
         this.radioLogoContainer.appendChild(wrapper);
         
-        // Add station name
         const stationName = document.createElement('div');
         stationName.className = 'station-name';
         stationName.textContent = channel.name;
         this.radioLogoContainer.appendChild(stationName);
         
-        // Show logo container
         this.radioLogoContainer.style.display = 'flex';
         
-        // Fade out video player for radio
         if (this.videoPlayer) {
             this.videoPlayer.style.opacity = '0.3';
         }
@@ -520,17 +496,14 @@ class PlayerComponent {
         this.fullscreenBtn = document.getElementById('fullscreenToggleBtn');
         if (!this.fullscreenBtn) return;
         
-        // Initially hide the button
         this.hideFullscreenButton();
         
-        // Add click event to toggle fullscreen
         this.fullscreenBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             e.preventDefault();
             this.toggleFullscreen();
         });
         
-        // Show button when video container is touched/clicked
         if (this.videoContainer) {
             this.videoContainer.addEventListener('click', (e) => {
                 if (e.target === this.fullscreenBtn || this.fullscreenBtn.contains(e.target)) {
@@ -580,7 +553,6 @@ class PlayerComponent {
         }
         
         this.showFullscreenButton();
-        console.log("Fullscreen changed:", isFullscreen ? "Entered" : "Exited");
     }
     
     showFullscreenButton() {
@@ -657,11 +629,6 @@ class PlayerComponent {
             }, 100);
         }).catch(err => {
             console.error("Fullscreen request failed:", err);
-            if (this.videoPlayer && this.videoPlayer.requestFullscreen) {
-                this.videoPlayer.requestFullscreen().catch(e => {
-                    console.error("Video element fullscreen also failed:", e);
-                });
-            }
         });
     }
     
@@ -702,13 +669,11 @@ class PlayerComponent {
             this.showSlideshow();
         }
         
-        // Remove any embedded iframe
         const existingIframe = this.videoContainer?.querySelector('.embed-iframe');
         if (existingIframe) {
             existingIframe.remove();
         }
         
-        // Restore custom fullscreen button when switching away from embedded content
         if (this.fullscreenBtn) {
             this.fullscreenBtn.style.display = 'flex';
         }
@@ -813,29 +778,23 @@ class PlayerComponent {
     }
     
     async loadEmbeddedContent(url, channel) {
-        // No loader for embedded content - just show immediately
         console.log("Loading embedded content:", channel.name);
         
-        // Hide slideshow when playing content
         this.hideSlideshow();
         
-        // Remove any existing iframe
         const existingIframe = this.videoContainer?.querySelector('.embed-iframe');
         if (existingIframe) {
             existingIframe.remove();
         }
         
-        // Hide video player
         if (this.videoPlayer) {
             this.videoPlayer.style.display = 'none';
         }
         
-        // Hide custom fullscreen button for embedded content
         if (this.fullscreenBtn) {
             this.fullscreenBtn.style.display = 'none';
         }
         
-        // Create iframe
         const iframe = document.createElement('iframe');
         iframe.className = 'embed-iframe';
         iframe.src = url;
@@ -871,7 +830,6 @@ class PlayerComponent {
     async loadStream(url, drmConfig = null, headers = null, isRetry = false) {
         console.log("Loading stream:", url);
         
-        // Hide slideshow when loading stream
         this.hideSlideshow();
         
         await this.destroyPlayers();
@@ -1073,15 +1031,12 @@ class PlayerComponent {
             return false;
         }
         
-        // Hide slideshow when playing a channel
         this.hideSlideshow();
         
-        // Check if this is an embedded content channel
         if (channel.isEmbed === true) {
             console.log("Loading embedded content:", channel.name);
             this.currentChannel = channel;
             
-            // Hide custom fullscreen button for embedded content
             if (this.fullscreenBtn) {
                 this.fullscreenBtn.style.display = 'none';
             }
@@ -1097,12 +1052,10 @@ class PlayerComponent {
             return await this.loadEmbeddedContent(channel.streamUrl, channel);
         }
         
-        // For regular streams, restore custom fullscreen button
         if (this.fullscreenBtn) {
             this.fullscreenBtn.style.display = 'flex';
         }
         
-        // For regular streams, remove iframe if present
         const existingIframe = this.videoContainer?.querySelector('.embed-iframe');
         if (existingIframe) {
             existingIframe.remove();
@@ -1133,7 +1086,6 @@ class PlayerComponent {
         
         this.showLoader("Loading channel...");
         
-        // Show or hide radio logo based on channel type
         if (channel.type === "Radio") {
             this.showRadioLogo(channel);
         } else {
@@ -1165,7 +1117,6 @@ class PlayerComponent {
             } else {
                 console.error("Failed to play channel:", channel.name);
                 this.hideRadioLogo();
-                // Show slideshow if playback fails
                 this.showSlideshow();
             }
             
@@ -1174,7 +1125,6 @@ class PlayerComponent {
             console.error("Error in playChannel:", error);
             this.hideRadioLogo();
             this.hideLoader();
-            // Show slideshow on error
             this.showSlideshow();
             return false;
         } finally {
@@ -1185,43 +1135,46 @@ class PlayerComponent {
     }
     
     updateModeUI(mode) {
+        // Mode toggling should NOT restart slideshow
+        // Slideshow state is managed separately by showSlideshow() and hideSlideshow()
+        // This method only updates visual styling, not the slideshow
+        
         if (this.videoContainer) {
             if (mode === "tv") {
                 this.videoContainer.style.background = "#000";
-                this.hideRadioLogo();
-                // Show slideshow when switching to TV mode without a playing channel
-                if (!this.currentChannel) {
-                    this.showSlideshow();
-                }
             } else {
                 this.videoContainer.style.background = "linear-gradient(135deg, #1a1f2e 0%, #0f1222 100%)";
-                if (this.currentChannel && this.currentChannel.type === "Radio") {
-                    this.showRadioLogo(this.currentChannel);
-                } else if (!this.currentChannel) {
-                    this.showSlideshow();
-                }
+            }
+        }
+        
+        // Slideshow continues playing if it was active
+        // No restart here
+    }
+    
+    setSlideshowImages(images) {
+        if (images && Array.isArray(images)) {
+            const wasPlaying = this.isSlideshowActive && this.slideshowEnabled;
+            this.slideshowImages = images;
+            this.totalSlides = images.length;
+            this.renderSlideshow();
+            if (wasPlaying) {
+                this.startSlideshow();
             }
         }
     }
     
-    // Method to set custom slideshow images
-    setSlideshowImages(images) {
-        if (images && Array.isArray(images)) {
-            this.slideshowImages = images;
-            this.renderSlideshow();
-            this.startSlideshow();
-        }
-    }
-    
-    // Method to add a slide
     addSlide(image, title, channelName) {
+        const wasPlaying = this.isSlideshowActive && this.slideshowEnabled;
         this.slideshowImages.push({
             image: image,
             title: title,
             channelName: channelName
         });
+        this.totalSlides = this.slideshowImages.length;
         this.renderSlideshow();
-        this.startSlideshow();
+        if (wasPlaying) {
+            this.startSlideshow();
+        }
     }
 }
 
