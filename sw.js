@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_VERSION = 'juzt-iptv-v7'; // Increment this with each release
+const CACHE_VERSION = 'juzt-iptv-v7';
 const CACHE_NAME = CACHE_VERSION;
 
 // Function to strip version parameters for caching
@@ -7,7 +7,7 @@ function stripVersionParams(url) {
     return url.split('?')[0];
 }
 
-// List of files to cache - use absolute paths
+// List of files to cache - use relative paths
 const urlsToCache = [
   '/',
   '/index.html',
@@ -63,7 +63,7 @@ self.addEventListener('activate', event => {
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME && cacheName.startsWith('juzt-iptv-')) {
+          if (cacheName !== CACHE_NAME && (cacheName.startsWith('juzt-iptv-') || cacheName.startsWith('juzt-iptv'))) {
             console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -85,13 +85,14 @@ self.addEventListener('fetch', event => {
     return;
   }
   
-  // Skip Firebase and external APIs
+  // Skip Firebase and external APIs to prevent errors
   if (url.hostname.includes('googleapis.com') || 
       url.hostname.includes('gstatic.com') ||
       url.hostname.includes('firebase') ||
       url.hostname.includes('amagi.tv') ||
       url.hostname.includes('m3u8') ||
-      url.hostname.includes('mpd')) {
+      url.hostname.includes('mpd') ||
+      url.hostname.includes('cdn.jsdelivr.net')) {
     return;
   }
   
@@ -119,7 +120,7 @@ self.addEventListener('fetch', event => {
         })
     );
   } 
-  // For assets - cache first with network fallback
+  // For CSS/JS assets - cache first with network fallback
   else if (urlsToCache.some(cachedUrl => cleanUrl.endsWith(cachedUrl) || cleanUrl.includes(cachedUrl))) {
     event.respondWith(
       caches.match(cleanUrl)
