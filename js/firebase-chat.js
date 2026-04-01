@@ -11,6 +11,7 @@ class FirebaseChat {
         this.announcementListener = null;
         this.userId = null;
         this.userName = null;
+        this.userOriginalName = null;
         this.userIP = null;
         this.isAdmin = false;
         this.adminPassword = 'JUZT_ADMIN_2026';
@@ -27,13 +28,27 @@ class FirebaseChat {
         // Get unique user ID based on IP
         await this.getUserIP();
         this.userId = this.getUserId();
-        this.userName = this.getUserName();
+        
+        // Generate original name from IP (or stored original)
+        this.userOriginalName = this.getOriginalName();
+        
+        // Check if user was admin before
         this.checkAdminStatus();
+        
+        // Set current name based on admin status
+        if (this.isAdmin) {
+            this.userName = 'JUZT';
+        } else {
+            this.userName = this.userOriginalName;
+        }
+        
+        // Save current name to localStorage
+        localStorage.setItem('juzt_user_name', this.userName);
         
         this.isInitialized = true;
         
         console.log("Firebase Chat initialized");
-        console.log("User:", this.userName, "IP:", this.userIP, "Admin:", this.isAdmin);
+        console.log("User:", this.userName, "Original:", this.userOriginalName, "Admin:", this.isAdmin);
         
         // Initialize Firestore
         await this.initFirestore();
@@ -42,6 +57,48 @@ class FirebaseChat {
         await this.registerUser();
         
         return true;
+    }
+
+    getOriginalName() {
+        // Check if we have a stored original name
+        let originalName = localStorage.getItem('juzt_original_name');
+        
+        if (!originalName) {
+            // Generate original name from IP
+            originalName = this.generateUserNameFromIP();
+            localStorage.setItem('juzt_original_name', originalName);
+        }
+        
+        return originalName;
+    }
+
+    generateUserNameFromIP() {
+        let name;
+        
+        if (this.userIP && !this.userIP.startsWith('device_')) {
+            // Generate name from IP address
+            const ipParts = this.userIP.split('.');
+            const lastOctet = ipParts[ipParts.length - 1];
+            const firstOctet = ipParts[0] || '0';
+            
+            const prefixes = ['Viewer', 'Watcher', 'Listener', 'Guest', 'User', 'Visitor', 'Fan'];
+            const suffixes = ['Blue', 'Red', 'Green', 'Gold', 'Silver', 'Star', 'Moon', 'Sun', 'Sky', 'Ocean'];
+            
+            const prefixIndex = parseInt(firstOctet) % prefixes.length;
+            const suffixIndex = parseInt(lastOctet) % suffixes.length;
+            
+            name = prefixes[prefixIndex] + suffixes[suffixIndex] + '_' + lastOctet;
+        } else {
+            // Generate unique name for devices without IP
+            const adjectives = ['Happy', 'Cool', 'Smart', 'Fast', 'Kind', 'Brave', 'Calm', 'Wise'];
+            const nouns = ['Viewer', 'Fan', 'Watcher', 'Listener', 'Explorer', 'Traveler'];
+            const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+            const uniqueNum = Math.floor(Math.random() * 10000);
+            name = randomAdj + randomNoun + uniqueNum;
+        }
+        
+        return name;
     }
 
     async initFirestore() {
@@ -86,6 +143,7 @@ class FirebaseChat {
                 await userRef.set({
                     userId: this.userId,
                     name: this.userName,
+                    originalName: this.userOriginalName,
                     ip: this.userIP,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     isAdmin: this.isAdmin
@@ -93,7 +151,10 @@ class FirebaseChat {
                 console.log("✅ User registered in Firestore");
             } else {
                 await userRef.update({
-                    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+                    lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
+                    name: this.userName,
+                    originalName: this.userOriginalName,
+                    isAdmin: this.isAdmin
                 });
                 console.log("✅ User updated in Firestore");
             }
@@ -162,34 +223,6 @@ class FirebaseChat {
         return Math.abs(hash).toString(36);
     }
 
-    getUserName() {
-        let name = localStorage.getItem('juzt_user_name');
-        if (!name) {
-            if (this.userIP && !this.userIP.startsWith('device_')) {
-                const ipParts = this.userIP.split('.');
-                const lastOctet = ipParts[ipParts.length - 1];
-                const firstOctet = ipParts[0] || '0';
-                
-                const prefixes = ['Viewer', 'Watcher', 'Listener', 'Guest', 'User', 'Visitor', 'Fan'];
-                const suffixes = ['Blue', 'Red', 'Green', 'Gold', 'Silver', 'Star', 'Moon', 'Sun', 'Sky', 'Ocean'];
-                
-                const prefixIndex = parseInt(firstOctet) % prefixes.length;
-                const suffixIndex = parseInt(lastOctet) % suffixes.length;
-                
-                name = prefixes[prefixIndex] + suffixes[suffixIndex] + '_' + lastOctet;
-            } else {
-                const adjectives = ['Happy', 'Cool', 'Smart', 'Fast', 'Kind', 'Brave', 'Calm', 'Wise'];
-                const nouns = ['Viewer', 'Fan', 'Watcher', 'Listener', 'Explorer', 'Traveler'];
-                const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
-                const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
-                const uniqueNum = Math.floor(Math.random() * 10000);
-                name = randomAdj + randomNoun + uniqueNum;
-            }
-            localStorage.setItem('juzt_user_name', name);
-        }
-        return name;
-    }
-
     checkAdminStatus() {
         const savedAdmin = localStorage.getItem('juzt_is_admin');
         if (savedAdmin === 'true') {
@@ -204,25 +237,36 @@ class FirebaseChat {
             this.isAdmin = true;
             localStorage.setItem('juzt_is_admin', 'true');
             
+            // Change name to JUZT
+            this.userName = 'JUZT';
+            localStorage.setItem('juzt_user_name', this.userName);
+            
+            // Update user in Firestore
             if (this.db) {
                 try {
                     await this.db.collection(this.usersCollection).doc(this.userId).update({
-                        isAdmin: true
+                        isAdmin: true,
+                        name: this.userName
                     });
                 } catch (error) {
                     console.error("Error updating admin status:", error);
                 }
             }
             
+            // Update UI
             this.updateProfileUI();
+            this.updateChatUserName();
             
             if (this.announcementsModal && this.announcementsModal.classList.contains('show')) {
                 this.updateAnnouncementsModalButtons();
                 this.renderAnnouncements();
             }
             
+            // Update chat messages display
+            this.renderChatMessages();
+            
             if (window.showToast) {
-                window.showToast("✅ Admin mode activated! You can now create announcements.", 4000);
+                window.showToast("✅ Admin mode activated! Your name is now JUZT.", 4000);
             }
             return true;
         } else if (password !== null) {
@@ -238,21 +282,39 @@ class FirebaseChat {
         this.isAdmin = false;
         localStorage.removeItem('juzt_is_admin');
         
+        // Revert to original IP-based name
+        this.userName = this.userOriginalName;
+        localStorage.setItem('juzt_user_name', this.userName);
+        
+        // Update user in Firestore
         if (this.db) {
             this.db.collection(this.usersCollection).doc(this.userId).update({
-                isAdmin: false
+                isAdmin: false,
+                name: this.userName
             }).catch(console.error);
         }
         
+        // Update UI
         this.updateProfileUI();
+        this.updateChatUserName();
         
         if (this.announcementsModal && this.announcementsModal.classList.contains('show')) {
             this.updateAnnouncementsModalButtons();
             this.renderAnnouncements();
         }
         
+        // Update chat messages display
+        this.renderChatMessages();
+        
         if (window.showToast) {
-            window.showToast("👋 Admin mode exited", 3000);
+            window.showToast(`👋 Admin mode exited. Your name is now ${this.userName}.`, 4000);
+        }
+    }
+
+    updateChatUserName() {
+        const userInfoSpan = document.querySelector('#chatModal .user-info-left span');
+        if (userInfoSpan) {
+            userInfoSpan.innerHTML = `You are: <strong>${escapeHtml(this.userName)}</strong>${this.isAdmin ? ' <span class="admin-badge"><i class="fas fa-crown"></i> Admin</span>' : ''}`;
         }
     }
 
@@ -640,7 +702,7 @@ class FirebaseChat {
                             <div class="profile-name-display">
                                 <span id="profileUserName">${escapeHtml(this.userName)}</span>
                             </div>
-                            <p class="profile-hint">Your unique name is automatically generated based on your device IP address</p>
+                            ${!this.isAdmin ? `<p class="profile-hint">Your unique name is automatically generated based on your device IP address</p>` : '<p class="profile-hint">Admin mode: Your name is set to JUZT</p>'}
                         </div>
                         
                         <div class="profile-section">
@@ -649,12 +711,18 @@ class FirebaseChat {
                             </label>
                             <div id="adminSection" class="admin-section">
                                 <div class="admin-login-section">
-                                    <p class="profile-hint">Login as admin to create announcements</p>
+                                    <p class="profile-hint">${this.isAdmin ? 'You are currently in admin mode' : 'Login as admin to create announcements'}</p>
                                     <div class="admin-login-input-group">
-                                        <input type="password" id="adminPasswordInput" class="profile-input" placeholder="Enter admin password">
-                                        <button id="adminLoginProfileBtn" class="profile-action-btn admin-login-btn">
-                                            <i class="fas fa-lock"></i> Login
-                                        </button>
+                                        ${!this.isAdmin ? `
+                                            <input type="password" id="adminPasswordInput" class="profile-input" placeholder="Enter admin password">
+                                            <button id="adminLoginProfileBtn" class="profile-action-btn admin-login-btn">
+                                                <i class="fas fa-lock"></i> Login
+                                            </button>
+                                        ` : `
+                                            <button id="logoutAdminProfileBtn" class="profile-action-btn admin-logout">
+                                                <i class="fas fa-sign-out-alt"></i> Exit Admin Mode
+                                            </button>
+                                        `}
                                     </div>
                                 </div>
                             </div>
@@ -686,6 +754,14 @@ class FirebaseChat {
                 }
             });
         }
+        
+        const logoutAdminBtn = document.getElementById('logoutAdminProfileBtn');
+        if (logoutAdminBtn) {
+            logoutAdminBtn.addEventListener('click', () => {
+                this.adminLogout();
+                this.renderProfileModal();
+            });
+        }
     }
 
     renderProfileModal() {
@@ -703,15 +779,26 @@ class FirebaseChat {
             userNameSpan.textContent = this.userName;
         }
         
+        // Update hint text
+        const hintParagraph = document.querySelector('.profile-section:first-child .profile-hint');
+        if (hintParagraph) {
+            if (this.isAdmin) {
+                hintParagraph.textContent = 'Admin mode: Your name is set to JUZT';
+            } else {
+                hintParagraph.textContent = 'Your unique name is automatically generated based on your device IP address';
+            }
+        }
+        
         if (adminSection) {
             if (this.isAdmin) {
                 adminSection.innerHTML = `
-                    <div class="admin-status">
-                        <span class="admin-badge-large"><i class="fas fa-crown"></i> Admin Mode Active</span>
-                        <p class="profile-hint">You have admin privileges to create announcements</p>
-                        <button id="logoutAdminProfileBtn" class="profile-action-btn admin-logout">
-                            <i class="fas fa-sign-out-alt"></i> Exit Admin Mode
-                        </button>
+                    <div class="admin-login-section">
+                        <p class="profile-hint">You are currently in admin mode</p>
+                        <div class="admin-login-input-group">
+                            <button id="logoutAdminProfileBtn" class="profile-action-btn admin-logout">
+                                <i class="fas fa-sign-out-alt"></i> Exit Admin Mode
+                            </button>
+                        </div>
                     </div>
                 `;
                 
