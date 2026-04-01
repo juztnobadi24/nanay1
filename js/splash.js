@@ -11,7 +11,6 @@ class SplashScreen {
         this.timeoutId = null;
     }
 
-    
     create() {
         // Check if splash already exists
         if (document.getElementById('splashScreen')) {
