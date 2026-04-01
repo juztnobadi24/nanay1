@@ -1,5 +1,5 @@
 // ======================== VERSION MANAGEMENT ========================
-const APP_VERSION = '2.0.0'; // Update this version number with each release
+const APP_VERSION = '7.0.0'; // Update this version number with each release
 const STORAGE_VERSION_KEY = 'juzt_app_version';
 
 // Check and handle version updates
