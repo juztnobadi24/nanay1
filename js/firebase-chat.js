@@ -1294,3 +1294,5 @@ function initFirebaseChat() {
 window.FirebaseChat = FirebaseChat;
 window.initFirebaseChat = initFirebaseChat;
 
+
+
