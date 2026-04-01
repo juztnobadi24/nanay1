@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_VERSION = 'juzt-iptv-v7';
+const CACHE_VERSION = 'juzt-iptv-v8';
 const CACHE_NAME = CACHE_VERSION;
 
 // Function to strip version parameters for caching
