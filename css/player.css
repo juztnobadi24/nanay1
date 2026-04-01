@@ -20,6 +20,12 @@
     margin-bottom: 1.5rem;
 }
 
+/* Light mode video container background */
+[data-theme="light"] .video-container {
+    background: #f1f5f9;
+    box-shadow: var(--shadow-md);
+}
+
 #videoPlayer {
     width: 100%;
     height: 100%;
@@ -28,6 +34,11 @@
     position: relative;
     z-index: 1;
     display: block;
+}
+
+/* Light mode video player background */
+[data-theme="light"] #videoPlayer {
+    background: #e2e8f0;
 }
 
 .error-message {
@@ -43,6 +54,12 @@
 
 .error-message.show {
     display: block;
+}
+
+/* Light mode error message */
+[data-theme="light"] .error-message {
+    background: rgba(239, 68, 68, 0.05);
+    color: #dc2626;
 }
 
 /* Fullscreen Toggle Button */
@@ -84,6 +101,18 @@
     transform: scale(0.98);
 }
 
+/* Light mode fullscreen button */
+[data-theme="light"] .fullscreen-toggle-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .fullscreen-toggle-btn:hover {
+    background: white;
+    color: var(--accent);
+}
+
 /* Fullscreen Styles */
 .video-container:fullscreen,
 .video-container:-webkit-full-screen,
@@ -111,6 +140,13 @@
     width: 100% !important;
     height: 100% !important;
     object-fit: contain !important;
+}
+
+/* Light mode fullscreen video container */
+[data-theme="light"] .video-container:fullscreen,
+[data-theme="light"] .video-container:-webkit-full-screen,
+[data-theme="light"] .video-container:-moz-full-screen {
+    background: #000 !important;
 }
 
 /* Radio Logo Styles */
@@ -150,9 +186,32 @@
     animation: pulseShadow 2s infinite;
 }
 
+/* Light mode radio logo content */
+[data-theme="light"] .radio-logo-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+
 @keyframes pulseShadow {
     0% {
         box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 20px rgba(249, 115, 22, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
+    }
+}
+
+/* Light mode pulse animation */
+[data-theme="light"] .radio-logo-content {
+    animation: pulseShadowLight 2s infinite;
+}
+
+@keyframes pulseShadowLight {
+    0% {
+        box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.3);
     }
     70% {
         box-shadow: 0 0 0 20px rgba(249, 115, 22, 0);
@@ -167,6 +226,12 @@
     transform: scale(1.02);
     background: linear-gradient(135deg, var(--accent), var(--accent-dark));
     box-shadow: 0 12px 24px rgba(249, 115, 22, 0.3);
+}
+
+/* Light mode radio logo hover */
+[data-theme="light"] .radio-logo-wrapper:hover .radio-logo-content {
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    border-color: transparent;
 }
 
 .radio-logo {
@@ -196,15 +261,27 @@
     padding: 8px 20px;
     border-radius: 40px;
     backdrop-filter: blur(8px);
-    letter-spacing: 0.5px;
     z-index: 3;
     transition: all var(--transition-normal);
+}
+
+/* Light mode station name */
+[data-theme="light"] .station-name {
+    text-shadow: none;
+    background: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(8px);
+    color: var(--text-primary);
 }
 
 .radio-logo-wrapper:hover .station-name {
     transform: translateY(-2px);
     background: rgba(249, 115, 22, 0.2);
     backdrop-filter: blur(12px);
+}
+
+/* Light mode station name hover */
+[data-theme="light"] .radio-logo-wrapper:hover .station-name {
+    background: rgba(249, 115, 22, 0.15);
 }
 
 @keyframes fadeInScale {
@@ -231,6 +308,11 @@
     background: linear-gradient(135deg, #1a1f2e 0%, #0f1222 100%);
     overflow: hidden;
     z-index: 15;
+}
+
+/* Light mode slideshow container */
+[data-theme="light"] .slideshow-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 .slideshow-wrapper {
@@ -280,11 +362,22 @@
     pointer-events: none;
 }
 
+/* Light mode slideshow caption */
+[data-theme="light"] .slideshow-caption {
+    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+}
+
 .slideshow-caption h3 {
     font-size: 1.5rem;
     margin-bottom: 8px;
     font-weight: 600;
     text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Light mode slideshow caption text */
+[data-theme="light"] .slideshow-caption h3,
+[data-theme="light"] .slideshow-caption p {
+    color: white;
 }
 
 .slideshow-caption p {
@@ -314,6 +407,14 @@
     font-size: 0.9rem;
 }
 
+/* Light mode navigation buttons */
+[data-theme="light"] .slideshow-prev,
+[data-theme="light"] .slideshow-next {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: rgba(0, 0, 0, 0.6);
+}
+
 .slideshow-prev {
     left: 15px;
 }
@@ -328,6 +429,13 @@
     border-color: rgba(249, 115, 22, 0.4);
     color: white;
     transform: translateY(-50%) scale(1.05);
+}
+
+/* Light mode navigation buttons hover */
+[data-theme="light"] .slideshow-prev:hover,
+[data-theme="light"] .slideshow-next:hover {
+    background: rgba(249, 115, 22, 0.7);
+    color: white;
 }
 
 /* Dots - Horizontal on Bottom Left */
@@ -350,6 +458,11 @@
     transition: all 0.2s ease;
 }
 
+/* Light mode dots */
+[data-theme="light"] .slideshow-dot {
+    background: rgba(0, 0, 0, 0.3);
+}
+
 .slideshow-dot.active {
     background: var(--accent);
     width: 24px;
@@ -361,80 +474,7 @@
     transform: scale(1.2);
 }
 
-/* Light theme specific adjustments */
-[data-theme="light"] .fullscreen-toggle-btn {
-    background: rgba(255, 255, 255, 0.9);
-    border-color: var(--border-color);
-    color: var(--text-primary);
-}
-
-[data-theme="light"] .fullscreen-toggle-btn:hover {
-    background: white;
-}
-
-[data-theme="light"] .radio-logo-content {
-    background: var(--bg-card);
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--border-color);
-    animation: pulseShadowLight 2s infinite;
-}
-
-@keyframes pulseShadowLight {
-    0% {
-        box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.3);
-    }
-    70% {
-        box-shadow: 0 0 0 20px rgba(249, 115, 22, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(249, 115, 22, 0);
-    }
-}
-
-[data-theme="light"] .radio-logo-wrapper:hover .radio-logo-content {
-    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-    border-color: transparent;
-}
-
-[data-theme="light"] .station-name {
-    background: rgba(0, 0, 0, 0.05);
-    backdrop-filter: blur(8px);
-    color: var(--text-primary);
-}
-
-[data-theme="light"] .radio-logo-wrapper:hover .station-name {
-    background: rgba(249, 115, 22, 0.15);
-}
-
-[data-theme="light"] .slideshow-container {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-}
-
-[data-theme="light"] .slideshow-caption {
-    background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-}
-
-[data-theme="light"] .slideshow-caption h3 {
-    color: white;
-}
-
-[data-theme="light"] .slideshow-prev,
-[data-theme="light"] .slideshow-next {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: rgba(255, 255, 255, 0.3);
-    color: rgba(0, 0, 0, 0.6);
-}
-
-[data-theme="light"] .slideshow-prev:hover,
-[data-theme="light"] .slideshow-next:hover {
-    background: rgba(249, 115, 22, 0.7);
-    color: white;
-}
-
-[data-theme="light"] .slideshow-dot {
-    background: rgba(0, 0, 0, 0.3);
-}
-
+/* Light mode active dot */
 [data-theme="light"] .slideshow-dot.active {
     background: var(--accent);
 }
