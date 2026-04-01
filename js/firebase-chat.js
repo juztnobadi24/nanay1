@@ -1,928 +1,588 @@
-// ======================== FIREBASE CHAT & NOTIFICATIONS ========================
-// Using Firestore with device-based user identification
+// ======================== FIREBASE CHAT & ANNOUNCEMENTS ========================
 
 class FirebaseChat {
     constructor() {
         this.db = null;
-        this.currentUser = null;
         this.chatModal = null;
-        this.notificationsModal = null;
-        this.messagesCollection = null;
-        this.notificationsCollection = null;
-        this.usersCollection = null;
-        this.globalNotificationsCollection = null;
+        this.announcementsModal = null;
+        this.profileModal = null;
+        this.currentChannel = null;
         this.messageListener = null;
-        this.notificationListener = null;
-        this.globalNotificationListener = null;
-        this.notifications = [];
-        this.isInitialized = false;
-        this.initPromise = null;
-        
-        // User identification
+        this.announcementListener = null;
         this.userId = null;
         this.userName = null;
         this.userIP = null;
-        this.deviceId = null;
         this.isAdmin = false;
-        
-        // Persistence keys
-        this.READ_NOTIFICATIONS_KEY = 'juzt_read_notifications';
-        this.LAST_MESSAGE_VIEW_KEY = 'juzt_last_message_view';
-        
-        // Admin fixed name
-        this.ADMIN_NAME = "Juzt (Admin)";
-        this.ADMIN_ID = "admin_juzt";
-        this.ADMIN_SECRET = "Juzt";
-        
-        this.init();
+        this.adminPassword = 'JUZT_ADMIN_2026';
+        this.messagesCollection = 'chat_messages';
+        this.announcementsCollection = 'announcements';
+        this.usersCollection = 'users';
+        this.isInitialized = false;
+        this.firestoreReady = false;
     }
-    
+
     async init() {
-        if (this.initPromise) return this.initPromise;
+        console.log("FirebaseChat.init() called");
         
-        this.initPromise = new Promise(async (resolve) => {
-            console.log("Initializing Firebase Chat...");
-            
-            // Wait for Firebase to initialize
-            if (window.initFirebase) {
-                const firebaseReady = await window.initFirebase();
-                if (!firebaseReady) {
-                    console.error("Firebase failed to initialize");
-                    this.mockMode = true;
-                    this.userName = "Guest";
-                    this.userId = "guest";
-                    this.isInitialized = false;
-                    resolve(false);
-                    return;
-                }
-            }
-            
-            // Wait a bit for Firestore to be set
-            await new Promise(r => setTimeout(r, 500));
-            
-            // Check if Firestore is available
-            if (window.firestore) {
-                this.db = window.firestore;
-                this.mockMode = false;
-                console.log("✅ Firestore is available");
-                
-                try {
-                    await this.setupCollections();
-                    await this.getUserIP();
-                    this.getOrCreateDeviceId();
-                    await this.identifyUser();
-                    await this.loadExistingNotifications();
-                    this.loadReadNotifications();
-                    this.loadLastMessageViewTime();
-                    this.setupListeners();
-                    this.isInitialized = true;
-                    console.log("✅ Firebase Chat initialized successfully");
-                    resolve(true);
-                } catch (error) {
-                    console.error("Error setting up chat:", error);
-                    this.mockMode = true;
-                    this.userName = "Guest";
-                    this.userId = "guest";
-                    this.isInitialized = false;
-                    resolve(false);
-                }
-            } else {
-                console.error("❌ Firestore not available");
-                this.mockMode = true;
-                this.userName = "Guest";
-                this.userId = "guest";
-                this.isInitialized = false;
-                resolve(false);
-            }
-        });
+        // Get unique user ID based on IP
+        await this.getUserIP();
+        this.userId = this.getUserId();
+        this.userName = this.getUserName();
+        this.checkAdminStatus();
         
-        return this.initPromise;
+        this.isInitialized = true;
+        
+        console.log("Firebase Chat initialized");
+        console.log("User:", this.userName, "IP:", this.userIP, "Admin:", this.isAdmin);
+        
+        // Initialize Firestore
+        await this.initFirestore();
+        
+        // Register user in users collection
+        await this.registerUser();
+        
+        return true;
     }
-    
-    loadLastMessageViewTime() {
-        const lastMessageView = localStorage.getItem(this.LAST_MESSAGE_VIEW_KEY);
-        if (lastMessageView) {
-            this.lastMessageViewTime = parseInt(lastMessageView);
-        } else {
-            this.lastMessageViewTime = Date.now();
-            localStorage.setItem(this.LAST_MESSAGE_VIEW_KEY, this.lastMessageViewTime.toString());
+
+    async initFirestore() {
+        // Wait for Firebase to be ready
+        let retries = 0;
+        const maxRetries = 30;
+        
+        while (!window.firestore && retries < maxRetries) {
+            console.log(`Waiting for Firestore... attempt ${retries + 1}/${maxRetries}`);
+            await new Promise(resolve => setTimeout(resolve, 500));
+            retries++;
         }
-    }
-    
-    saveLastMessageViewTime() {
-        this.lastMessageViewTime = Date.now();
-        localStorage.setItem(this.LAST_MESSAGE_VIEW_KEY, this.lastMessageViewTime.toString());
-    }
-    
-    loadReadNotifications() {
-        const readNotifications = localStorage.getItem(this.READ_NOTIFICATIONS_KEY);
-        if (readNotifications) {
-            this.readNotificationsSet = new Set(JSON.parse(readNotifications));
-        } else {
-            this.readNotificationsSet = new Set();
+
+        if (!window.firestore) {
+            console.error("Firestore not available");
+            if (window.showToast) {
+                window.showToast("Database not connected. Please refresh the page.", 5000);
+            }
+            this.firestoreReady = false;
+            return false;
         }
-        console.log("Loaded read notifications count:", this.readNotificationsSet.size);
+
+        this.db = window.firestore;
+        this.firestoreReady = true;
+        console.log("✅ Firestore connected");
+        
+        // Start listeners
+        this.startMessageListener();
+        this.startAnnouncementListener();
+        
+        return true;
     }
-    
-    saveReadNotification(notificationId) {
-        this.readNotificationsSet.add(notificationId);
-        localStorage.setItem(this.READ_NOTIFICATIONS_KEY, JSON.stringify([...this.readNotificationsSet]));
-    }
-    
-    isNotificationRead(notificationId) {
-        return this.readNotificationsSet.has(notificationId);
-    }
-    
-    async setupCollections() {
+
+    async registerUser() {
         if (!this.db) return;
         
         try {
-            this.messagesCollection = this.db.collection('chat_messages');
-            this.notificationsCollection = this.db.collection('notifications');
-            this.usersCollection = this.db.collection('users');
-            this.globalNotificationsCollection = this.db.collection('global_notifications');
-            console.log("✅ Firestore collections references created");
+            const userRef = this.db.collection(this.usersCollection).doc(this.userId);
+            const userDoc = await userRef.get();
             
-            const testQuery = await this.messagesCollection.limit(1).get();
-            console.log("✅ Firestore connection test successful!");
-            
-        } catch (error) {
-            console.error("❌ Error setting up Firestore collections:", error);
-            throw error;
-        }
-    }
-    
-    async loadExistingNotifications() {
-        if (!this.mockMode && this.notificationsCollection && this.userId) {
-            try {
-                console.log("📥 Loading existing notifications for user:", this.userName);
-                
-                const userNotifications = await this.notificationsCollection
-                    .where('userId', '==', this.userId)
-                    .get();
-                
-                if (userNotifications.empty) {
-                    console.log("No existing notifications found for user, checking global notifications...");
-                    
-                    const globalNotifications = await this.globalNotificationsCollection
-                        .orderBy('timestamp', 'desc')
-                        .limit(100)
-                        .get();
-                    
-                    if (!globalNotifications.empty) {
-                        console.log(`📥 Found ${globalNotifications.size} global notifications to load for new user`);
-                        
-                        const batch = this.db.batch();
-                        const newNotifications = [];
-                        
-                        globalNotifications.forEach(doc => {
-                            const globalNotif = doc.data();
-                            const userNotification = {
-                                title: globalNotif.title,
-                                message: globalNotif.message,
-                                type: globalNotif.type,
-                                userId: this.userId,
-                                userName: this.userName,
-                                isAdminNotification: true,
-                                timestamp: globalNotif.timestamp,
-                                timestampMs: globalNotif.timestampMs,
-                                read: false,
-                                notificationId: globalNotif.notificationId,
-                                isGlobal: true
-                            };
-                            
-                            const newDocRef = this.notificationsCollection.doc();
-                            batch.set(newDocRef, userNotification);
-                            newNotifications.push({...userNotification, id: newDocRef.id});
-                        });
-                        
-                        await batch.commit();
-                        console.log(`✅ Loaded ${newNotifications.length} notifications for new user`);
-                        
-                        newNotifications.forEach(notif => {
-                            this.notifications.push(notif);
-                        });
-                        this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
-                    }
-                } else {
-                    console.log(`✅ User already has ${userNotifications.size} notifications`);
-                    userNotifications.forEach(doc => {
-                        const notif = doc.data();
-                        notif.id = doc.id;
-                        this.notifications.push(notif);
-                    });
-                    this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
-                }
-            } catch (error) {
-                console.error("Error loading existing notifications:", error);
-                if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                    console.warn("⚠️ Firestore index required. Loading notifications without ordering...");
-                    await this.loadNotificationsWithoutOrdering();
-                }
-            }
-        }
-    }
-    
-    async loadNotificationsWithoutOrdering() {
-        try {
-            const snapshot = await this.notificationsCollection
-                .where('userId', '==', this.userId)
-                .get();
-            
-            snapshot.forEach(doc => {
-                const notif = doc.data();
-                notif.id = doc.id;
-                if (!this.notifications.some(n => n.id === notif.id)) {
-                    this.notifications.push(notif);
-                }
-            });
-            this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
-            console.log(`✅ Loaded ${this.notifications.length} notifications without index`);
-        } catch (error) {
-            console.error("Error loading notifications without ordering:", error);
-        }
-    }
-    
-    async getUserIP() {
-        try {
-            const response = await fetch('https://api.ipify.org?format=json');
-            const data = await response.json();
-            this.userIP = data.ip;
-            console.log("User IP:", this.userIP);
-        } catch (error) {
-            console.error("Error getting IP:", error);
-            this.userIP = 'unknown_' + Math.random().toString(36).substr(2, 6);
-        }
-    }
-    
-    getOrCreateDeviceId() {
-        let deviceId = localStorage.getItem('device_id');
-        
-        if (!deviceId) {
-            const userAgent = navigator.userAgent;
-            const language = navigator.language;
-            const platform = navigator.platform;
-            const screenResolution = `${screen.width}x${screen.height}`;
-            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            
-            const fingerprint = `${userAgent}|${language}|${platform}|${screenResolution}|${timezone}|${Date.now()}|${Math.random()}`;
-            
-            let hash = 0;
-            for (let i = 0; i < fingerprint.length; i++) {
-                const char = fingerprint.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash = hash & hash;
-            }
-            
-            deviceId = Math.abs(hash).toString(36) + '_' + Date.now().toString(36);
-            localStorage.setItem('device_id', deviceId);
-            console.log("Generated new device ID:", deviceId);
-        } else {
-            console.log("Using existing device ID:", deviceId);
-        }
-        
-        this.deviceId = deviceId;
-        return deviceId;
-    }
-    
-    checkUrlForAdmin() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const adminKey = urlParams.get('admin');
-        
-        if (adminKey === this.ADMIN_SECRET) {
-            console.log("✅ Admin access granted via URL parameter");
-            return true;
-        }
-        
-        const savedAdminSession = localStorage.getItem('admin_session');
-        if (savedAdminSession === 'true') {
-            console.log("✅ Admin access granted via saved session");
-            return true;
-        }
-        
-        return false;
-    }
-    
-    saveAdminSession() {
-        localStorage.setItem('admin_session', 'true');
-        const expiry = Date.now() + (24 * 60 * 60 * 1000);
-        localStorage.setItem('admin_session_expiry', expiry);
-    }
-    
-    clearAdminSession() {
-        localStorage.removeItem('admin_session');
-        localStorage.removeItem('admin_session_expiry');
-        localStorage.removeItem('isAdmin');
-    }
-    
-    checkAdminSessionExpiry() {
-        const expiry = localStorage.getItem('admin_session_expiry');
-        if (expiry && Date.now() > parseInt(expiry)) {
-            this.clearAdminSession();
-            return false;
-        }
-        return true;
-    }
-    
-    async identifyUser() {
-        const isAdminFromUrl = this.checkUrlForAdmin();
-        
-        if (isAdminFromUrl) {
-            this.saveAdminSession();
-            this.isAdmin = true;
-            this.userId = this.ADMIN_ID;
-            this.userName = this.ADMIN_NAME;
-            
-            localStorage.setItem('chat_userId', this.userId);
-            localStorage.setItem('chat_userName', this.userName);
-            localStorage.setItem('isAdmin', 'true');
-            
-            console.log("👑 Admin user identified:", this.userName);
-            return;
-        }
-        
-        const hasValidAdminSession = localStorage.getItem('admin_session') === 'true' && this.checkAdminSessionExpiry();
-        
-        if (hasValidAdminSession) {
-            this.isAdmin = true;
-            this.userId = this.ADMIN_ID;
-            this.userName = this.ADMIN_NAME;
-            
-            localStorage.setItem('chat_userId', this.userId);
-            localStorage.setItem('chat_userName', this.userName);
-            localStorage.setItem('isAdmin', 'true');
-            
-            console.log("👑 Admin user identified from session:", this.userName);
-            return;
-        }
-        
-        if (!this.userIP || !this.deviceId) return;
-        
-        const uniqueDeviceId = `${this.userIP}_${this.deviceId}`;
-        
-        if (!this.mockMode && this.usersCollection) {
-            try {
-                const userQuery = await this.usersCollection
-                    .where('uniqueDeviceId', '==', uniqueDeviceId)
-                    .limit(1)
-                    .get();
-                
-                if (!userQuery.empty) {
-                    const userDoc = userQuery.docs[0];
-                    this.userId = userDoc.id;
-                    this.userName = userDoc.data().name;
-                    console.log("👤 Existing user found:", this.userName, "Device ID:", this.deviceId);
-                    
-                    await this.usersCollection.doc(this.userId).update({
-                        lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-                        deviceId: this.deviceId,
-                        lastSeenIP: this.userIP
-                    });
-                } else {
-                    this.userName = this.generateRandomName();
-                    this.userId = uniqueDeviceId.replace(/[.]/g, '_');
-                    
-                    await this.usersCollection.doc(this.userId).set({
-                        ip: this.userIP,
-                        deviceId: this.deviceId,
-                        uniqueDeviceId: uniqueDeviceId,
-                        name: this.userName,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastSeen: firebase.firestore.FieldValue.serverTimestamp(),
-                        lastSeenIP: this.userIP
-                    });
-                    console.log("🆕 New user created:", this.userName, "Device ID:", this.deviceId);
-                }
-            } catch (error) {
-                console.error("Error identifying user:", error);
-                this.userName = this.generateRandomName();
-                this.userId = `user_${this.deviceId}`;
-            }
-        } else {
-            this.userName = this.generateRandomName();
-            this.userId = `user_${this.deviceId}`;
-        }
-        
-        localStorage.setItem('chat_userId', this.userId);
-        localStorage.setItem('chat_userName', this.userName);
-        localStorage.setItem('isAdmin', 'false');
-        localStorage.setItem('device_id', this.deviceId);
-        
-        console.log("👤 Regular user identified:", {
-            id: this.userId,
-            name: this.userName,
-            ip: this.userIP,
-            deviceId: this.deviceId,
-            uniqueId: uniqueDeviceId
-        });
-    }
-    
-    generateRandomName() {
-        const adjectives = [
-            'Happy', 'Smart', 'Bright', 'Swift', 'Brave', 'Calm', 'Wise', 'Bold',
-            'Kind', 'Cool', 'Fast', 'Nice', 'Pure', 'True', 'Real', 'Epic',
-            'Lucky', 'Wild', 'Mighty', 'Noble', 'Silly', 'Funny', 'Crazy', 'Clever',
-            'Jolly', 'Keen', 'Lively', 'Merry', 'Quiet', 'Radiant', 'Silent', 'Tidy',
-            'Vivid', 'Witty', 'Zealous', 'Able', 'Cute', 'Dear', 'Fair', 'Good'
-        ];
-        const nouns = [
-            'Viewer', 'Watcher', 'Fan', 'User', 'Guest', 'Friend', 'Buddy', 'Pal',
-            'Star', 'Hero', 'Champ', 'Pro', 'Ace', 'Lord', 'King', 'Queen',
-            'Panda', 'Tiger', 'Eagle', 'Wolf', 'Fox', 'Bear', 'Lion', 'Hawk',
-            'Owl', 'Hawk', 'Falcon', 'Phoenix', 'Dragon', 'Unicorn', 'Wizard', 'Knight',
-            'Ranger', 'Hunter', 'Scout', 'Voyager', 'Traveler', 'Dreamer', 'Seeker'
-        ];
-        
-        const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
-        const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
-        const randomNum = Math.floor(Math.random() * 100);
-        
-        return `${randomAdj}${randomNoun}${randomNum}`;
-    }
-    
-    setupListeners() {
-        if (this.messagesCollection) {
-            try {
-                this.messageListener = this.messagesCollection
-                    .orderBy('timestamp', 'desc')
-                    .limit(100)
-                    .onSnapshot((snapshot) => {
-                        snapshot.docChanges().forEach((change) => {
-                            if (change.type === 'added') {
-                                const message = change.doc.data();
-                                message.id = change.doc.id;
-                                console.log("📨 New message received:", message.text);
-                                this.onNewMessage(message);
-                            }
-                        });
-                    });
-                console.log("✅ Message listener attached");
-            } catch (error) {
-                console.error("❌ Error attaching message listener:", error);
-            }
-        }
-        
-        if (this.notificationsCollection) {
-            try {
-                this.notificationListener = this.notificationsCollection
-                    .where('userId', '==', this.userId)
-                    .onSnapshot((snapshot) => {
-                        snapshot.docChanges().forEach((change) => {
-                            if (change.type === 'added') {
-                                const notification = change.doc.data();
-                                notification.id = change.doc.id;
-                                const isRead = this.isNotificationRead(notification.id);
-                                if (!isRead && !notification.read) {
-                                    console.log("🔔 New announcement received:", notification.title);
-                                    this.onNewNotification(notification);
-                                }
-                            } else if (change.type === 'modified') {
-                                const notification = change.doc.data();
-                                notification.id = change.doc.id;
-                                const index = this.notifications.findIndex(n => n.id === notification.id);
-                                if (index !== -1) {
-                                    this.notifications[index].read = notification.read;
-                                }
-                            }
-                        });
-                    });
-                console.log("✅ Announcement listener attached");
-            } catch (error) {
-                console.error("❌ Error attaching notification listener:", error);
-                if (error.code === 'failed-precondition' && error.message.includes('index')) {
-                    console.warn("⚠️ Firestore index required. Please create the index.");
-                    this.loadNotificationsWithoutListener();
-                }
-            }
-        }
-        
-        if (this.globalNotificationsCollection && !this.isAdmin) {
-            try {
-                this.globalNotificationListener = this.globalNotificationsCollection
-                    .orderBy('timestamp', 'desc')
-                    .limit(100)
-                    .onSnapshot((snapshot) => {
-                        snapshot.docChanges().forEach(async (change) => {
-                            if (change.type === 'added') {
-                                const globalNotification = change.doc.data();
-                                const alreadyReceived = this.notifications.some(
-                                    n => n.notificationId === globalNotification.notificationId
-                                );
-                                
-                                if (!alreadyReceived && globalNotification.notificationId) {
-                                    console.log("🌍 New global announcement received, creating personal copy...");
-                                    await this.createNotificationForUser(globalNotification);
-                                }
-                            }
-                        });
-                    });
-                console.log("✅ Global announcement listener attached");
-            } catch (error) {
-                console.error("❌ Error attaching global announcement listener:", error);
-            }
-        }
-        
-        this.updateUserLastSeen();
-    }
-    
-    async loadNotificationsWithoutListener() {
-        try {
-            console.log("📥 Loading announcements without real-time listener...");
-            const snapshot = await this.notificationsCollection
-                .where('userId', '==', this.userId)
-                .get();
-            
-            snapshot.forEach(doc => {
-                const notif = doc.data();
-                notif.id = doc.id;
-                if (!this.notifications.some(n => n.id === notif.id)) {
-                    this.notifications.push(notif);
-                }
-            });
-            this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
-            console.log(`✅ Loaded ${this.notifications.length} announcements`);
-        } catch (error) {
-            console.error("Error loading announcements:", error);
-        }
-    }
-    
-    async createNotificationForUser(globalNotification) {
-        if (!this.notificationsCollection) return;
-        
-        const userNotification = {
-            title: globalNotification.title,
-            message: globalNotification.message,
-            type: globalNotification.type,
-            userId: this.userId,
-            userName: this.userName,
-            isAdminNotification: true,
-            timestamp: globalNotification.timestamp,
-            timestampMs: globalNotification.timestampMs,
-            read: false,
-            notificationId: globalNotification.notificationId,
-            isGlobal: true
-        };
-        
-        try {
-            const docRef = await this.notificationsCollection.add(userNotification);
-            console.log("📢 Global announcement received and saved for user:", this.userName);
-            
-            userNotification.id = docRef.id;
-            this.onNewNotification(userNotification);
-        } catch (error) {
-            console.error("Error saving global announcement for user:", error);
-        }
-    }
-    
-    async updateUserLastSeen() {
-        if (!this.mockMode && this.usersCollection && this.userId && !this.isAdmin) {
-            try {
-                await this.usersCollection.doc(this.userId).update({
+            if (!userDoc.exists) {
+                await userRef.set({
+                    userId: this.userId,
+                    name: this.userName,
+                    ip: this.userIP,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    isAdmin: this.isAdmin
+                });
+                console.log("✅ User registered in Firestore");
+            } else {
+                await userRef.update({
                     lastSeen: firebase.firestore.FieldValue.serverTimestamp()
                 });
-            } catch (error) {
-                // Silently fail
+                console.log("✅ User updated in Firestore");
             }
+        } catch (error) {
+            console.error("Error registering user:", error);
         }
-        
-        setTimeout(() => this.updateUserLastSeen(), 30000);
     }
-    
-    onNewMessage(message) {
-        const event = new CustomEvent('newChatMessage', { 
-            detail: {
-                ...message,
-                isAdmin: message.userId === this.ADMIN_ID
-            }
-        });
-        window.dispatchEvent(event);
-        
-        console.log("New message from:", message.userName);
-    }
-    
-    onNewNotification(notification) {
-        const exists = this.notifications.some(n => n.id === notification.id);
-        if (!exists) {
-            this.notifications.unshift(notification);
-            this.notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
+
+    async getUserIP() {
+        try {
+            const services = [
+                'https://api.ipify.org?format=json',
+                'https://api.my-ip.io/ip.json',
+                'https://ipapi.co/json/'
+            ];
             
-            if (!this.isNotificationRead(notification.id)) {
-                console.log("New announcement:", notification.title);
-                const event = new CustomEvent('newNotification', { detail: notification });
-                window.dispatchEvent(event);
+            for (const service of services) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000);
+                    const response = await fetch(service, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    const data = await response.json();
+                    this.userIP = data.ip || data.ip_address;
+                    if (this.userIP) {
+                        console.log("IP detected:", this.userIP);
+                        break;
+                    }
+                } catch (e) {
+                    console.log("IP service failed:", service);
+                }
             }
+            
+            if (!this.userIP) {
+                let storedIP = localStorage.getItem('juzt_unique_id');
+                if (!storedIP) {
+                    storedIP = 'device_' + Math.random().toString(36).substr(2, 10) + '_' + Date.now();
+                    localStorage.setItem('juzt_unique_id', storedIP);
+                }
+                this.userIP = storedIP;
+                console.log("Using fallback unique ID:", this.userIP);
+            }
+        } catch (error) {
+            console.error("Error getting IP:", error);
+            this.userIP = 'device_' + Math.random().toString(36).substr(2, 10);
         }
     }
-    
-    async sendMessage(messageText) {
-        if (!messageText.trim()) return false;
-        
-        if (!this.isInitialized) {
-            console.log("⏳ Waiting for chat initialization...");
-            await this.initPromise;
+
+    getUserId() {
+        let id = localStorage.getItem('juzt_user_id');
+        if (!id) {
+            const ipHash = this.userIP ? this.hashCode(this.userIP) : Math.random().toString(36).substr(2, 9);
+            id = 'user_' + ipHash + '_' + Date.now();
+            localStorage.setItem('juzt_user_id', id);
         }
-        
-        if (!this.isInitialized || this.mockMode) {
-            console.log("❌ Chat not ready - message not sent");
-            return false;
+        return id;
+    }
+
+    hashCode(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
         }
-        
-        console.log("📤 Sending message:", messageText);
-        
-        const message = {
-            text: messageText.trim(),
-            userId: this.userId,
-            userName: this.userName,
-            isAdmin: this.isAdmin,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            timestampMs: Date.now(),
-            ip: this.userIP,
-            deviceId: this.deviceId
-        };
-        
-        if (this.messagesCollection) {
-            try {
-                const docRef = await this.messagesCollection.add(message);
-                console.log("✅ Message sent to Firestore! ID:", docRef.id);
-                return true;
-            } catch (error) {
-                console.error("❌ Error sending message:", error);
-                return false;
+        return Math.abs(hash).toString(36);
+    }
+
+    getUserName() {
+        let name = localStorage.getItem('juzt_user_name');
+        if (!name) {
+            if (this.userIP && !this.userIP.startsWith('device_')) {
+                const ipParts = this.userIP.split('.');
+                const lastOctet = ipParts[ipParts.length - 1];
+                const firstOctet = ipParts[0] || '0';
+                
+                const prefixes = ['Viewer', 'Watcher', 'Listener', 'Guest', 'User', 'Visitor', 'Fan'];
+                const suffixes = ['Blue', 'Red', 'Green', 'Gold', 'Silver', 'Star', 'Moon', 'Sun', 'Sky', 'Ocean'];
+                
+                const prefixIndex = parseInt(firstOctet) % prefixes.length;
+                const suffixIndex = parseInt(lastOctet) % suffixes.length;
+                
+                name = prefixes[prefixIndex] + suffixes[suffixIndex] + '_' + lastOctet;
+            } else {
+                const adjectives = ['Happy', 'Cool', 'Smart', 'Fast', 'Kind', 'Brave', 'Calm', 'Wise'];
+                const nouns = ['Viewer', 'Fan', 'Watcher', 'Listener', 'Explorer', 'Traveler'];
+                const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+                const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+                const uniqueNum = Math.floor(Math.random() * 10000);
+                name = randomAdj + randomNoun + uniqueNum;
             }
+            localStorage.setItem('juzt_user_name', name);
+        }
+        return name;
+    }
+
+    checkAdminStatus() {
+        const savedAdmin = localStorage.getItem('juzt_is_admin');
+        if (savedAdmin === 'true') {
+            this.isAdmin = true;
         } else {
-            console.log("❌ Messages collection not available");
-            return false;
+            this.isAdmin = false;
         }
     }
-    
-    async sendAdminNotification(title, message, type = 'info', targetAll = true) {
-        if (!this.isAdmin) {
-            console.log("Only admin can send announcements");
-            return false;
-        }
-        
-        targetAll = true;
-        
-        const notification = {
-            title: title,
-            message: message,
-            type: type,
-            userId: 'admin',
-            userName: this.ADMIN_NAME,
-            isAdminNotification: true,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            timestampMs: Date.now(),
-            read: false,
-            targetAll: targetAll,
-            notificationId: Date.now()
-        };
-        
-        if (!this.mockMode && this.globalNotificationsCollection) {
-            try {
-                await this.globalNotificationsCollection.add(notification);
-                console.log("📢 Admin announcement saved to global collection");
-                
-                const adminPersonalNotif = {
-                    ...notification,
-                    userId: this.ADMIN_ID,
-                    userName: this.ADMIN_NAME
-                };
-                const docRef = await this.notificationsCollection.add(adminPersonalNotif);
-                adminPersonalNotif.id = docRef.id;
-                this.onNewNotification(adminPersonalNotif);
-                
-                return true;
-            } catch (error) {
-                console.error("Error sending admin announcement:", error);
-                return false;
-            }
-        } else {
-            console.log("Mock mode - announcement not sent");
-            return false;
-        }
-    }
-    
-    async getAllNotifications() {
-        if (!this.isAdmin) return [];
-        
-        if (!this.mockMode && this.notificationsCollection) {
-            try {
-                const snapshot = await this.notificationsCollection.get();
-                
-                const notifications = [];
-                snapshot.forEach(doc => {
-                    notifications.push({
-                        id: doc.id,
-                        ...doc.data()
+
+    async adminLogin(password) {
+        if (password === this.adminPassword) {
+            this.isAdmin = true;
+            localStorage.setItem('juzt_is_admin', 'true');
+            
+            if (this.db) {
+                try {
+                    await this.db.collection(this.usersCollection).doc(this.userId).update({
+                        isAdmin: true
                     });
-                });
-                notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
-                return notifications;
-            } catch (error) {
-                console.error("Error getting all announcements:", error);
-                return [];
+                } catch (error) {
+                    console.error("Error updating admin status:", error);
+                }
             }
-        }
-        return [];
-    }
-    
-    async deleteNotification(notificationId) {
-        if (!this.isAdmin) return false;
-        
-        if (!this.mockMode && this.notificationsCollection) {
-            try {
-                await this.notificationsCollection.doc(notificationId).delete();
-                console.log("Announcement deleted");
-                return true;
-            } catch (error) {
-                console.error("Error deleting announcement:", error);
-                return false;
+            
+            this.updateProfileUI();
+            
+            if (this.announcementsModal && this.announcementsModal.classList.contains('show')) {
+                this.updateAnnouncementsModalButtons();
+                this.renderAnnouncements();
             }
+            
+            if (window.showToast) {
+                window.showToast("✅ Admin mode activated! You can now create announcements.", 4000);
+            }
+            return true;
+        } else if (password !== null) {
+            if (window.showToast) {
+                window.showToast("❌ Incorrect password", 3000);
+            }
+            return false;
         }
         return false;
     }
-    
-    async clearNotifications() {
-        if (!this.isAdmin) return false;
+
+    adminLogout() {
+        this.isAdmin = false;
+        localStorage.removeItem('juzt_is_admin');
         
-        if (!this.mockMode && this.notificationsCollection) {
-            try {
-                const snapshot = await this.notificationsCollection.get();
-                const batch = this.db.batch();
-                snapshot.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-                await batch.commit();
-                console.log("All announcements cleared");
-                
-                this.notifications = [];
-                
-                return true;
-            } catch (error) {
-                console.error("Error clearing announcements:", error);
-                return false;
-            }
-        }
-        return false;
-    }
-    
-    async markNotificationAsRead(notificationId) {
-        this.saveReadNotification(notificationId);
-        
-        if (!this.mockMode && this.notificationsCollection) {
-            try {
-                await this.notificationsCollection.doc(notificationId).update({ read: true });
-            } catch (error) {
-                console.error("Error marking announcement as read:", error);
-            }
+        if (this.db) {
+            this.db.collection(this.usersCollection).doc(this.userId).update({
+                isAdmin: false
+            }).catch(console.error);
         }
         
-        const index = this.notifications.findIndex(n => n.id === notificationId);
-        if (index !== -1) {
-            this.notifications[index].read = true;
+        this.updateProfileUI();
+        
+        if (this.announcementsModal && this.announcementsModal.classList.contains('show')) {
+            this.updateAnnouncementsModalButtons();
+            this.renderAnnouncements();
+        }
+        
+        if (window.showToast) {
+            window.showToast("👋 Admin mode exited", 3000);
         }
     }
-    
-    markAllMessagesAsRead() {
-        this.saveLastMessageViewTime();
-        console.log("All messages marked as read.");
+
+    updateProfileUI() {
+        const profileModal = document.getElementById('profileModal');
+        if (profileModal && profileModal.classList.contains('show')) {
+            this.renderProfileModal();
+        }
     }
-    
-    markAllNotificationsAsRead() {
-        let markedCount = 0;
+
+    updateAnnouncementsModalButtons() {
+        const headerRight = document.querySelector('.announcements-header-right');
+        if (!headerRight) return;
         
-        this.notifications.forEach(notification => {
-            if (!this.isNotificationRead(notification.id)) {
-                this.saveReadNotification(notification.id);
-                notification.read = true;
-                markedCount++;
+        if (this.isAdmin) {
+            headerRight.innerHTML = `
+                <button id="composeAnnouncementBtn" class="compose-announcement-btn">
+                    <i class="fas fa-plus"></i> New
+                </button>
+                <button id="clearAnnouncementsBtn" class="clear-announcements-btn">
+                    <i class="fas fa-trash-alt"></i> Clear All
+                </button>
+                <button class="modal-close">&times;</button>
+            `;
+            
+            const composeBtn = document.getElementById('composeAnnouncementBtn');
+            const clearBtn = document.getElementById('clearAnnouncementsBtn');
+            const closeBtn = headerRight.querySelector('.modal-close');
+            
+            if (composeBtn) {
+                composeBtn.addEventListener('click', () => this.showComposeAnnouncement());
             }
-        });
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => this.confirmClearAnnouncements());
+            }
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => this.closeAnnouncements());
+            }
+        } else {
+            headerRight.innerHTML = `<button class="modal-close">&times;</button>`;
+            const closeBtn = headerRight.querySelector('.modal-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => this.closeAnnouncements());
+            }
+        }
+    }
+
+    startMessageListener() {
+        if (this.messageListener || !this.db) return;
         
-        if (!this.mockMode && this.notificationsCollection) {
-            const unreadNotifications = this.notifications.filter(n => !this.isNotificationRead(n.id));
-            unreadNotifications.forEach(async (notification) => {
-                if (notification.id) {
-                    try {
-                        await this.notificationsCollection.doc(notification.id).update({ read: true });
-                    } catch (error) {
-                        console.error("Error marking notification as read:", error);
+        const messagesRef = this.db.collection(this.messagesCollection)
+            .orderBy('timestamp', 'desc')
+            .limit(50);
+        
+        this.messageListener = messagesRef.onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'added') {
+                    const message = change.doc.data();
+                    message.id = change.doc.id;
+                    
+                    if (this.chatModal && this.chatModal.classList.contains('show')) {
+                        this.renderChatMessages();
                     }
                 }
             });
-        }
+        }, (error) => {
+            console.error("Message listener error:", error);
+        });
+    }
+
+    startAnnouncementListener() {
+        if (this.announcementListener || !this.db) return;
         
-        if (markedCount > 0) {
-            console.log(`Marked ${markedCount} announcements as read.`);
-        } else {
-            console.log("No unread announcements to mark as read.");
+        const announcementsRef = this.db.collection(this.announcementsCollection)
+            .orderBy('timestamp', 'desc')
+            .limit(50);
+        
+        this.announcementListener = announcementsRef.onSnapshot((snapshot) => {
+            console.log("📢 Announcement snapshot received, size:", snapshot.size);
+            
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === 'added') {
+                    const announcement = change.doc.data();
+                    announcement.id = change.doc.id;
+                    console.log("📢 New announcement added:", announcement.title);
+                    
+                    if (this.announcementsModal && this.announcementsModal.classList.contains('show')) {
+                        this.renderAnnouncements();
+                    }
+                } else if (change.type === 'removed') {
+                    console.log("📢 Announcement removed:", change.doc.id);
+                    if (this.announcementsModal && this.announcementsModal.classList.contains('show')) {
+                        this.renderAnnouncements();
+                    }
+                }
+            });
+        }, (error) => {
+            console.error("Announcement listener error:", error);
+        });
+    }
+
+    async sendMessage(text) {
+        if (!text.trim() || !this.db) return false;
+        
+        try {
+            const message = {
+                userId: this.userId,
+                userName: this.userName,
+                text: text.trim(),
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                isAdmin: this.isAdmin
+            };
+            
+            await this.db.collection(this.messagesCollection).add(message);
+            console.log("💬 Message sent successfully");
+            
+            return true;
+        } catch (error) {
+            console.error("Error sending message:", error);
+            if (window.showToast) {
+                window.showToast("Failed to send message", 3000);
+            }
+            return false;
         }
     }
-    
-    async getMessages(callback) {
-        if (!this.isInitialized) {
-            console.log("⏳ Waiting for initialization...");
-            await this.initPromise;
+
+    async sendAnnouncement(title, message) {
+        console.log("📢 sendAnnouncement called");
+        console.log("Admin status:", this.isAdmin);
+        
+        if (!this.isAdmin) {
+            console.error("❌ Not admin - cannot send announcement");
+            if (window.showToast) {
+                window.showToast("Admin access required to create announcements", 3000);
+            }
+            return false;
         }
         
-        if (!this.isInitialized || this.mockMode || !this.messagesCollection) {
-            console.log("❌ Cannot fetch messages - chat not ready");
-            callback([]);
-            return;
+        if (!title.trim() || !message.trim()) {
+            console.error("❌ Title or message empty");
+            if (window.showToast) {
+                window.showToast("Please fill in both title and message", 3000);
+            }
+            return false;
+        }
+        
+        if (!this.db) {
+            console.error("❌ Firestore not available");
+            if (window.showToast) {
+                window.showToast("Database not connected. Please refresh the page.", 3000);
+            }
+            return false;
         }
         
         try {
-            console.log("📥 Fetching messages from Firestore...");
-            const snapshot = await this.messagesCollection
+            const announcementData = {
+                userId: this.userId,
+                userName: this.userName,
+                title: title.trim(),
+                message: message.trim(),
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                isAdmin: true,
+                createdAt: new Date().toISOString()
+            };
+            
+            console.log("📢 Saving announcement to Firestore:", announcementData);
+            
+            const docRef = await this.db.collection(this.announcementsCollection).add(announcementData);
+            console.log("✅ Announcement saved with ID:", docRef.id);
+            
+            if (window.showToast) {
+                window.showToast("✅ Announcement sent successfully!", 3000);
+            }
+            
+            setTimeout(() => {
+                this.renderAnnouncements();
+            }, 500);
+            
+            return true;
+        } catch (error) {
+            console.error("❌ Error sending announcement:", error);
+            if (window.showToast) {
+                window.showToast("Failed to send announcement: " + error.message, 5000);
+            }
+            return false;
+        }
+    }
+
+    async deleteAnnouncement(announcementId) {
+        if (!this.isAdmin || !this.db) return false;
+        
+        try {
+            await this.db.collection(this.announcementsCollection).doc(announcementId).delete();
+            console.log("📢 Announcement deleted:", announcementId);
+            if (window.showToast) {
+                window.showToast("Announcement deleted", 3000);
+            }
+            return true;
+        } catch (error) {
+            console.error("Error deleting announcement:", error);
+            return false;
+        }
+    }
+
+    async clearAllAnnouncements() {
+        if (!this.isAdmin || !this.db) return false;
+        
+        try {
+            const snapshot = await this.db.collection(this.announcementsCollection).get();
+            console.log("Clearing", snapshot.size, "announcements");
+            
+            const batch = this.db.batch();
+            snapshot.docs.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+            
+            if (window.showToast) {
+                window.showToast("All announcements cleared", 3000);
+            }
+            return true;
+        } catch (error) {
+            console.error("Error clearing announcements:", error);
+            return false;
+        }
+    }
+
+    async getMessages() {
+        if (!this.db) return [];
+        
+        try {
+            const snapshot = await this.db.collection(this.messagesCollection)
                 .orderBy('timestamp', 'desc')
-                .limit(100)
+                .limit(50)
                 .get();
             
             const messages = [];
             snapshot.forEach(doc => {
+                messages.push({ id: doc.id, ...doc.data() });
+            });
+            
+            return messages.reverse();
+        } catch (error) {
+            console.error("Error getting messages:", error);
+            return [];
+        }
+    }
+
+    async getAnnouncements() {
+        if (!this.db) {
+            console.log("No database connection");
+            return [];
+        }
+        
+        try {
+            console.log("Fetching announcements from Firestore...");
+            
+            const snapshot = await this.db.collection(this.announcementsCollection)
+                .orderBy('timestamp', 'desc')
+                .limit(50)
+                .get();
+            
+            console.log("Announcements snapshot size:", snapshot.size);
+            
+            const announcements = [];
+            snapshot.forEach(doc => {
                 const data = doc.data();
-                messages.push({
+                announcements.push({
                     id: doc.id,
                     ...data
                 });
             });
             
-            const sortedMessages = messages.reverse();
-            console.log(`✅ Fetched ${sortedMessages.length} messages`);
-            callback(sortedMessages);
+            console.log("Announcements loaded:", announcements.length);
+            return announcements;
         } catch (error) {
-            console.error("❌ Error getting messages:", error);
-            callback([]);
+            console.error("Error getting announcements:", error);
+            return [];
         }
     }
-    
-    getNotifications() {
-        return this.notifications;
-    }
-    
-    getUserInfo() {
-        return {
-            id: this.userId || "guest",
-            name: this.userName || "Guest",
-            ip: this.userIP,
-            deviceId: this.deviceId,
-            isAdmin: this.isAdmin || false
-        };
-    }
-    
-    logoutAdmin() {
-        if (this.isAdmin) {
-            this.clearAdminSession();
-            window.location.href = window.location.pathname;
-        }
-    }
-    
-    destroy() {
-        if (this.messageListener) {
-            this.messageListener();
-        }
-        if (this.notificationListener) {
-            this.notificationListener();
-        }
-        if (this.globalNotificationListener) {
-            this.globalNotificationListener();
-        }
-    }
-}
 
-// Chat UI Component
-class ChatUI {
-    constructor(chatService) {
-        this.chatService = chatService;
-        this.modal = null;
-        this.isOpen = false;
-        this.messages = [];
-    }
-    
-    createModal() {
-        const existingModal = document.getElementById('chatModal');
-        if (existingModal) {
-            existingModal.remove();
+    openChat() {
+        if (!this.chatModal) {
+            this.createChatModal();
         }
         
-        const userInfo = this.chatService.getUserInfo();
+        this.chatModal.classList.add('show');
+        this.renderChatMessages();
+        this.scrollChatToBottom();
         
+        setTimeout(() => {
+            const input = this.chatModal.querySelector('.chat-input');
+            if (input) input.focus();
+        }, 100);
+    }
+
+    openAnnouncements() {
+        if (!this.announcementsModal) {
+            this.createAnnouncementsModal();
+        }
+        
+        this.announcementsModal.classList.add('show');
+        this.renderAnnouncements();
+    }
+
+    openProfile() {
+        console.log("Opening profile modal");
+        
+        if (!this.profileModal) {
+            this.createProfileModal();
+        }
+        
+        this.renderProfileModal();
+        this.profileModal.classList.add('show');
+    }
+
+    createChatModal() {
         const modalHTML = `
             <div id="chatModal" class="modal chat-modal">
-                <div class="modal-content" style="padding: 0;">
+                <div class="modal-content">
                     <div class="chat-container">
                         <div class="chat-header">
-                            <h3><i class="fas fa-comments"></i> JUZT Community Chat</h3>
+                            <h3><i class="fas fa-comments"></i> Live Chat</h3>
                             <button class="chat-close">&times;</button>
                         </div>
                         <div class="chat-user-info">
                             <div class="user-info-left">
-                                <i class="fas fa-user-circle"></i>
-                                <span>You are: <strong>${escapeHtml(userInfo.name)}</strong></span>
-                            </div>
-                            <div class="user-info-right">
-                                ${userInfo.isAdmin ? '<span class="admin-badge"><i class="fas fa-crown"></i> Admin</span>' : ''}
-                                ${userInfo.isAdmin ? '<button class="logout-admin-btn" id="logoutAdminBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>' : ''}
+                                <i class="fas fa-user"></i>
+                                <span>You are: <strong>${escapeHtml(this.userName)}</strong></span>
+                                ${this.isAdmin ? '<span class="admin-badge"><i class="fas fa-crown"></i> Admin</span>' : ''}
                             </div>
                         </div>
                         <div class="chat-messages" id="chatMessages">
@@ -940,223 +600,62 @@ class ChatUI {
         `;
         
         document.body.insertAdjacentHTML('beforeend', modalHTML);
-        this.modal = document.getElementById('chatModal');
-        this.attachEvents();
-        this.loadMessages();
-    }
-    
-    attachEvents() {
-        if (!this.modal) return;
+        this.chatModal = document.getElementById('chatModal');
         
-        const closeBtn = this.modal.querySelector('.chat-close');
+        const closeBtn = this.chatModal.querySelector('.chat-close');
+        closeBtn.addEventListener('click', () => this.closeChat());
+        
+        this.chatModal.addEventListener('click', (e) => {
+            if (e.target === this.chatModal) this.closeChat();
+        });
+        
         const sendBtn = document.getElementById('chatSendBtn');
         const chatInput = document.getElementById('chatInput');
-        const logoutBtn = document.getElementById('logoutAdminBtn');
         
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.close());
-        }
-        
-        if (sendBtn) {
-            sendBtn.addEventListener('click', () => this.sendMessage());
-        }
-        
-        if (chatInput) {
-            chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') this.sendMessage();
-            });
-        }
-        
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
-                this.chatService.logoutAdmin();
-            });
-        }
-        
-        this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) this.close();
-        });
-        
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isOpen) this.close();
-        });
-        
-        window.addEventListener('newChatMessage', (event) => {
-            this.addMessage(event.detail);
+        sendBtn.addEventListener('click', () => this.sendChatMessage());
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.sendChatMessage();
         });
     }
-    
-    async loadMessages() {
-        if (!this.chatService) return;
-        
-        this.chatService.getMessages((messages) => {
-            this.messages = messages;
-            this.renderMessages();
-        });
-    }
-    
-    renderMessages() {
-        const messagesContainer = document.getElementById('chatMessages');
-        if (!messagesContainer) return;
-        
-        if (this.messages.length === 0) {
-            messagesContainer.innerHTML = '<div class="chat-status">No messages yet. Be the first to say something!</div>';
-            return;
-        }
-        
-        let html = '';
-        this.messages.forEach(message => {
-            const isOwn = message.userId === this.chatService.userId;
-            const isAdminMsg = message.isAdmin || message.userId === this.chatService.ADMIN_ID;
-            const avatar = message.userName ? message.userName.charAt(0).toUpperCase() : '?';
-            const time = this.formatTime(message.timestampMs || message.timestamp);
-            
-            html += `
-                <div class="chat-message ${isOwn ? 'own' : ''} ${isAdminMsg ? 'admin' : ''}">
-                    <div class="message-avatar" style="${isAdminMsg ? 'background: linear-gradient(135deg, #f97316, #ea580c);' : ''}">
-                        ${isAdminMsg ? '<i class="fas fa-crown" style="font-size: 0.7rem;"></i>' : escapeHtml(avatar)}
-                    </div>
-                    <div class="message-bubble">
-                        <div class="message-sender">
-                            ${escapeHtml(message.userName || 'Anonymous')}
-                            ${isAdminMsg ? '<span class="admin-tag"><i class="fas fa-check-circle"></i> Admin</span>' : ''}
-                        </div>
-                        <div class="message-text">${escapeHtml(message.text)}</div>
-                        <div class="message-time">${time}</div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        messagesContainer.innerHTML = html;
-        this.scrollToBottom();
-    }
-    
-    addMessage(message) {
-        this.messages.push(message);
-        if (this.messages.length > 100) {
-            this.messages = this.messages.slice(-100);
-        }
-        this.renderMessages();
-    }
-    
-    async sendMessage() {
-        const input = document.getElementById('chatInput');
-        if (!input) return;
-        
-        const message = input.value.trim();
-        if (!message) return;
-        
-        const sent = await this.chatService.sendMessage(message);
-        if (sent) {
-            input.value = '';
-            input.focus();
-        }
-    }
-    
-    scrollToBottom() {
-        const messagesContainer = document.getElementById('chatMessages');
-        if (messagesContainer) {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-    }
-    
-    formatTime(timestamp) {
-        if (!timestamp) return 'Just now';
-        
-        let date;
-        if (typeof timestamp === 'object' && timestamp.toDate) {
-            date = timestamp.toDate();
-        } else if (typeof timestamp === 'string') {
-            date = new Date(timestamp);
-        } else if (typeof timestamp === 'number') {
-            date = new Date(timestamp);
-        } else {
-            return 'Just now';
-        }
-        
-        const now = new Date();
-        const diff = now - date;
-        
-        if (isNaN(diff)) return 'Just now';
-        if (diff < 60000) return 'Just now';
-        if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
-        if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-        
-        return date.toLocaleDateString();
-    }
-    
-    open() {
-        if (!this.modal) {
-            this.createModal();
-        }
-        if (this.modal) {
-            this.modal.classList.add('show');
-            this.isOpen = true;
-            document.body.style.overflow = 'hidden';
-            setTimeout(() => this.scrollToBottom(), 100);
-        }
-    }
-    
-    close() {
-        if (this.modal) {
-            this.modal.classList.remove('show');
-            this.isOpen = false;
-            document.body.style.overflow = '';
-        }
-    }
-}
 
-// Announcements UI Component
-class NotificationsUI {
-    constructor(chatService) {
-        this.chatService = chatService;
-        this.modal = null;
-        this.isOpen = false;
-        this.isAdminMode = false;
-        this.composeModal = null;
-        this.notifications = [];
-    }
-    
-    createModal() {
-        const existingModal = document.getElementById('notificationsModal');
-        if (existingModal) {
-            existingModal.remove();
-        }
-        
-        const userInfo = this.chatService.getUserInfo();
-        this.isAdminMode = userInfo.isAdmin;
-        
+    createProfileModal() {
         const modalHTML = `
-            <div id="notificationsModal" class="modal announcements-modal">
+            <div id="profileModal" class="modal profile-modal">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3><i class="fas fa-bullhorn"></i> Announcements</h3>
+                        <h3><i class="fas fa-user-circle"></i> My Profile</h3>
                         <button class="modal-close">&times;</button>
                     </div>
-                    <div class="modal-body" style="padding: 0;">
-                        <div class="announcements-container">
-                            <div class="announcements-header">
-                                <div class="announcements-header-left">
-                                    <h4><i class="fas fa-newspaper"></i> Latest Announcements</h4>
-                                </div>
-                                <div class="announcements-header-right">
-                                    ${this.isAdminMode ? `
-                                        <button class="compose-announcement-btn" id="composeAnnouncementBtn">
-                                            <i class="fas fa-plus"></i> New Announcement
-                                        </button>
-                                    ` : ''}
-                                    ${this.isAdminMode ? `
-                                        <button class="clear-announcements-btn" id="clearAnnouncementsBtn">
-                                            <i class="fas fa-trash-alt"></i> Clear All
-                                        </button>
-                                    ` : ''}
-                                </div>
+                    <div class="modal-body">
+                        <div class="profile-avatar">
+                            <div class="avatar-large" id="profileAvatar">
+                                ${escapeHtml(this.userName.charAt(0).toUpperCase())}
                             </div>
-                            <div class="announcements-list" id="announcementsList">
-                                <div class="announcements-empty">
-                                    <i class="fas fa-bullhorn"></i>
-                                    <p>No announcements yet</p>
+                        </div>
+                        
+                        <div class="profile-section">
+                            <label class="profile-label">
+                                <i class="fas fa-user"></i> Display Name
+                            </label>
+                            <div class="profile-name-display">
+                                <span id="profileUserName">${escapeHtml(this.userName)}</span>
+                            </div>
+                            <p class="profile-hint">Your unique name is automatically generated based on your device IP address</p>
+                        </div>
+                        
+                        <div class="profile-section">
+                            <label class="profile-label">
+                                <i class="fas fa-crown"></i> Admin Access
+                            </label>
+                            <div id="adminSection" class="admin-section">
+                                <div class="admin-login-section">
+                                    <p class="profile-hint">Login as admin to create announcements</p>
+                                    <div class="admin-login-input-group">
+                                        <input type="password" id="adminPasswordInput" class="profile-input" placeholder="Enter admin password">
+                                        <button id="adminLoginProfileBtn" class="profile-action-btn admin-login-btn">
+                                            <i class="fas fa-lock"></i> Login
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1166,78 +665,202 @@ class NotificationsUI {
         `;
         
         document.body.insertAdjacentHTML('beforeend', modalHTML);
-        this.modal = document.getElementById('notificationsModal');
-        this.attachEvents();
-        this.renderNotifications();
-    }
-    
-    attachEvents() {
-        if (!this.modal) return;
+        this.profileModal = document.getElementById('profileModal');
         
-        const closeBtn = this.modal.querySelector('.modal-close');
-        const clearBtn = document.getElementById('clearAnnouncementsBtn');
-        const composeBtn = document.getElementById('composeAnnouncementBtn');
+        const closeBtn = this.profileModal.querySelector('.modal-close');
+        closeBtn.addEventListener('click', () => this.closeProfile());
         
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.close());
-        }
+        this.profileModal.addEventListener('click', (e) => {
+            if (e.target === this.profileModal) this.closeProfile();
+        });
         
-        if (clearBtn && this.isAdminMode) {
-            clearBtn.addEventListener('click', () => {
-                if (confirm('Delete all announcements? This action cannot be undone.')) {
-                    this.chatService.clearNotifications();
-                    this.renderNotifications();
+        const adminLoginBtn = document.getElementById('adminLoginProfileBtn');
+        if (adminLoginBtn) {
+            adminLoginBtn.addEventListener('click', () => {
+                const passwordInput = document.getElementById('adminPasswordInput');
+                const password = passwordInput ? passwordInput.value : prompt("Enter admin password:");
+                if (password) {
+                    this.adminLogin(password).then(() => {
+                        this.renderProfileModal();
+                    });
                 }
             });
         }
+    }
+
+    renderProfileModal() {
+        if (!this.profileModal) return;
         
-        if (composeBtn && this.isAdminMode) {
-            composeBtn.addEventListener('click', () => this.openComposeModal());
+        const avatarDiv = document.getElementById('profileAvatar');
+        const userNameSpan = document.getElementById('profileUserName');
+        const adminSection = document.getElementById('adminSection');
+        
+        if (avatarDiv) {
+            avatarDiv.textContent = this.userName.charAt(0).toUpperCase();
         }
         
-        this.modal.addEventListener('click', (e) => {
-            if (e.target === this.modal) this.close();
-        });
+        if (userNameSpan) {
+            userNameSpan.textContent = this.userName;
+        }
         
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isOpen) this.close();
-        });
-        
-        window.addEventListener('newNotification', () => {
-            if (this.isOpen) this.renderNotifications();
-        });
-        
-        window.addEventListener('notificationsCleared', () => {
-            this.renderNotifications();
-        });
-    }
-    
-    openComposeModal() {
-        const existingCompose = document.getElementById('composeAnnouncementModal');
-        if (existingCompose) existingCompose.remove();
-        
-        const composeHTML = `
-            <div id="composeAnnouncementModal" class="modal compose-announcement-modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3><i class="fas fa-bullhorn"></i> Create Announcement</h3>
-                        <button class="modal-close compose-close">&times;</button>
+        if (adminSection) {
+            if (this.isAdmin) {
+                adminSection.innerHTML = `
+                    <div class="admin-status">
+                        <span class="admin-badge-large"><i class="fas fa-crown"></i> Admin Mode Active</span>
+                        <p class="profile-hint">You have admin privileges to create announcements</p>
+                        <button id="logoutAdminProfileBtn" class="profile-action-btn admin-logout">
+                            <i class="fas fa-sign-out-alt"></i> Exit Admin Mode
+                        </button>
                     </div>
-                    <div class="modal-body">
-                        <div class="compose-form">
-                            <div class="form-group">
-                                <label><i class="fas fa-tag"></i> Title</label>
-                                <input type="text" id="announcementTitle" class="form-input" placeholder="Enter announcement title...">
+                `;
+                
+                const logoutAdminBtn = document.getElementById('logoutAdminProfileBtn');
+                if (logoutAdminBtn) {
+                    logoutAdminBtn.addEventListener('click', () => {
+                        this.adminLogout();
+                        this.renderProfileModal();
+                    });
+                }
+            } else {
+                adminSection.innerHTML = `
+                    <div class="admin-login-section">
+                        <p class="profile-hint">Login as admin to create announcements</p>
+                        <div class="admin-login-input-group">
+                            <input type="password" id="adminPasswordInput" class="profile-input" placeholder="Enter admin password">
+                            <button id="adminLoginProfileBtn" class="profile-action-btn admin-login-btn">
+                                <i class="fas fa-lock"></i> Login
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                const adminLoginBtn = document.getElementById('adminLoginProfileBtn');
+                if (adminLoginBtn) {
+                    adminLoginBtn.addEventListener('click', () => {
+                        const passwordInput = document.getElementById('adminPasswordInput');
+                        const password = passwordInput ? passwordInput.value : prompt("Enter admin password:");
+                        if (password) {
+                            this.adminLogin(password).then(() => {
+                                this.renderProfileModal();
+                            });
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    async sendChatMessage() {
+        const input = document.getElementById('chatInput');
+        const text = input.value.trim();
+        
+        if (!text) return;
+        
+        input.disabled = true;
+        
+        const success = await this.sendMessage(text);
+        
+        if (success) {
+            input.value = '';
+            this.scrollChatToBottom();
+        }
+        
+        input.disabled = false;
+        input.focus();
+    }
+
+    async renderChatMessages() {
+        const messagesContainer = document.getElementById('chatMessages');
+        if (!messagesContainer) return;
+        
+        messagesContainer.innerHTML = `
+            <div class="chat-status">
+                <i class="fas fa-spinner fa-pulse"></i> Loading messages...
+            </div>
+        `;
+        
+        const messages = await this.getMessages();
+        
+        if (messages.length === 0) {
+            messagesContainer.innerHTML = `
+                <div class="chat-status">
+                    <i class="fas fa-comment-dots"></i> No messages yet. Be the first to chat!
+                </div>
+            `;
+            return;
+        }
+        
+        let html = '';
+        messages.forEach(msg => {
+            const isOwn = msg.userId === this.userId;
+            const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+            const initial = msg.userName.charAt(0).toUpperCase();
+            
+            html += `
+                <div class="chat-message ${isOwn ? 'own' : ''} ${msg.isAdmin ? 'admin' : ''}">
+                    <div class="message-avatar">
+                        ${msg.isAdmin ? '<i class="fas fa-crown"></i>' : initial}
+                    </div>
+                    <div class="message-bubble">
+                        <div class="message-sender">
+                            ${escapeHtml(msg.userName)}
+                            ${msg.isAdmin ? '<span class="admin-tag"><i class="fas fa-crown"></i> Admin</span>' : ''}
+                        </div>
+                        <div class="message-text">${escapeHtml(msg.text)}</div>
+                        <div class="message-time">${time}</div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        messagesContainer.innerHTML = html;
+        this.scrollChatToBottom();
+    }
+
+    scrollChatToBottom() {
+        const messagesContainer = document.getElementById('chatMessages');
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }
+
+    closeChat() {
+        if (this.chatModal) {
+            this.chatModal.classList.remove('show');
+        }
+    }
+
+    closeProfile() {
+        if (this.profileModal) {
+            this.profileModal.classList.remove('show');
+        }
+    }
+
+    createAnnouncementsModal() {
+        const modalHTML = `
+            <div id="announcementsModal" class="modal announcements-modal">
+                <div class="modal-content">
+                    <div class="announcements-container">
+                        <div class="announcements-header">
+                            <div class="announcements-header-left">
+                                <h4><i class="fas fa-bullhorn"></i> Announcements</h4>
                             </div>
-                            <div class="form-group">
-                                <label><i class="fas fa-envelope"></i> Message</label>
-                                <textarea id="announcementMessage" class="form-textarea" rows="4" placeholder="Enter announcement message..."></textarea>
+                            <div class="announcements-header-right">
+                                ${this.isAdmin ? `
+                                    <button id="composeAnnouncementBtn" class="compose-announcement-btn">
+                                        <i class="fas fa-plus"></i> New
+                                    </button>
+                                    <button id="clearAnnouncementsBtn" class="clear-announcements-btn">
+                                        <i class="fas fa-trash-alt"></i> Clear All
+                                    </button>
+                                ` : ''}
+                                <button class="modal-close">&times;</button>
                             </div>
-                            <div class="compose-actions">
-                                <button class="btn-cancel" id="cancelComposeBtn">Cancel</button>
-                                <button class="btn-send" id="sendAnnouncementBtn">
-                                    <i class="fas fa-paper-plane"></i> Post Announcement
-                                </button>
+                        </div>
+                        <div class="announcements-list" id="announcementsList">
+                            <div class="announcements-empty">
+                                <i class="fas fa-spinner fa-pulse"></i> Loading announcements...
                             </div>
                         </div>
                     </div>
@@ -1245,137 +868,75 @@ class NotificationsUI {
             </div>
         `;
         
-        document.body.insertAdjacentHTML('beforeend', composeHTML);
-        this.composeModal = document.getElementById('composeAnnouncementModal');
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        this.announcementsModal = document.getElementById('announcementsModal');
         
-        const closeCompose = this.composeModal.querySelector('.compose-close');
-        const cancelBtn = document.getElementById('cancelComposeBtn');
-        const sendBtn = document.getElementById('sendAnnouncementBtn');
+        const closeBtn = this.announcementsModal.querySelector('.modal-close');
+        closeBtn.addEventListener('click', () => this.closeAnnouncements());
         
-        if (closeCompose) {
-            closeCompose.addEventListener('click', () => this.closeComposeModal());
-        }
-        
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => this.closeComposeModal());
-        }
-        
-        if (sendBtn) {
-            sendBtn.addEventListener('click', () => this.sendAnnouncement());
-        }
-        
-        this.composeModal.addEventListener('click', (e) => {
-            if (e.target === this.composeModal) this.closeComposeModal();
+        this.announcementsModal.addEventListener('click', (e) => {
+            if (e.target === this.announcementsModal) this.closeAnnouncements();
         });
         
-        this.composeModal.classList.add('show');
-        document.body.style.overflow = 'hidden';
-    }
-    
-    closeComposeModal() {
-        if (this.composeModal) {
-            this.composeModal.classList.remove('show');
-            setTimeout(() => {
-                if (this.composeModal) this.composeModal.remove();
-                this.composeModal = null;
-                document.body.style.overflow = '';
-            }, 300);
-        }
-    }
-    
-    async sendAnnouncement() {
-        const title = document.getElementById('announcementTitle')?.value.trim();
-        const message = document.getElementById('announcementMessage')?.value.trim();
-        
-        if (!title) {
-            alert('Please enter a title');
-            return;
-        }
-        
-        if (!message) {
-            alert('Please enter a message');
-            return;
-        }
-        
-        const sendBtn = document.getElementById('sendAnnouncementBtn');
-        const originalText = sendBtn.innerHTML;
-        sendBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Posting...';
-        sendBtn.disabled = true;
-        
-        try {
-            const sent = await this.chatService.sendAdminNotification(title, message, 'info', true);
+        if (this.isAdmin) {
+            const composeBtn = document.getElementById('composeAnnouncementBtn');
+            const clearBtn = document.getElementById('clearAnnouncementsBtn');
             
-            if (sent) {
-                alert('✅ Announcement posted successfully!');
-                this.closeComposeModal();
-                setTimeout(() => this.renderNotifications(), 1000);
-            } else {
-                alert('❌ Failed to post announcement. Please try again.');
+            if (composeBtn) {
+                composeBtn.addEventListener('click', () => this.showComposeAnnouncement());
             }
-        } catch (error) {
-            console.error("Error sending announcement:", error);
-            alert('Error posting announcement: ' + error.message);
-        } finally {
-            sendBtn.innerHTML = originalText;
-            sendBtn.disabled = false;
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => this.confirmClearAnnouncements());
+            }
         }
     }
-    
-    async renderNotifications() {
+
+    async renderAnnouncements() {
         const listContainer = document.getElementById('announcementsList');
         if (!listContainer) return;
         
-        let notifications;
-        if (this.isAdminMode) {
-            notifications = await this.chatService.getAllNotifications();
-            const uniqueNotifications = new Map();
-            notifications.forEach(notif => {
-                const key = `${notif.timestampMs}_${notif.title}`;
-                if (!uniqueNotifications.has(key)) {
-                    uniqueNotifications.set(key, notif);
-                }
-            });
-            notifications = Array.from(uniqueNotifications.values());
-            notifications.sort((a, b) => (b.timestampMs || 0) - (a.timestampMs || 0));
-        } else {
-            notifications = this.chatService.getNotifications();
-        }
+        listContainer.innerHTML = `
+            <div class="announcements-empty">
+                <i class="fas fa-spinner fa-pulse"></i>
+                <p>Loading announcements...</p>
+            </div>
+        `;
         
-        this.notifications = notifications;
+        const announcements = await this.getAnnouncements();
         
-        if (!notifications || notifications.length === 0) {
+        if (announcements.length === 0) {
             listContainer.innerHTML = `
                 <div class="announcements-empty">
                     <i class="fas fa-bullhorn"></i>
                     <p>No announcements yet</p>
+                    ${this.isAdmin ? '<p style="font-size: 0.75rem; margin-top: 8px;">Click "New" to create your first announcement!</p>' : ''}
                 </div>
             `;
             return;
         }
         
         let html = '';
-        notifications.forEach(notification => {
-            const time = this.formatTime(notification.timestampMs || notification.timestamp);
-            const isAdminNotif = notification.isAdminNotification || notification.userId === 'admin';
-            const isRead = this.chatService.isNotificationRead(notification.id) || notification.read;
+        announcements.forEach(ann => {
+            const time = ann.timestamp ? new Date(ann.timestamp.toDate()).toLocaleString() : 'Just now';
             
             html += `
-                <div class="announcement-item ${!isRead ? 'unread' : ''}" data-id="${notification.id}">
+                <div class="announcement-item" data-id="${ann.id}">
                     <div class="announcement-icon">
-                        <i class="fas ${isAdminNotif ? 'fa-crown' : 'fa-bullhorn'}"></i>
+                        <i class="fas fa-bullhorn"></i>
                     </div>
                     <div class="announcement-content">
                         <div class="announcement-title-row">
-                            <span class="announcement-title">${escapeHtml(notification.title)}</span>
-                            ${isAdminNotif ? '<span class="announcement-badge"><i class="fas fa-check-circle"></i> Official</span>' : ''}
+                            <div class="announcement-title">${escapeHtml(ann.title)}</div>
                         </div>
-                        <div class="announcement-message">${escapeHtml(notification.message)}</div>
+                        <div class="announcement-message">${escapeHtml(ann.message)}</div>
                         <div class="announcement-date">
                             <i class="far fa-clock"></i> ${time}
+                            <span>by ${escapeHtml(ann.userName)}</span>
+                            ${ann.isAdmin ? '<i class="fas fa-crown" style="color: var(--accent);"></i>' : ''}
                         </div>
                     </div>
-                    ${this.isAdminMode ? `
-                        <button class="announcement-delete" data-id="${notification.id}" title="Delete">
+                    ${this.isAdmin ? `
+                        <button class="announcement-delete" data-id="${ann.id}">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     ` : ''}
@@ -1385,180 +946,126 @@ class NotificationsUI {
         
         listContainer.innerHTML = html;
         
-        if (!this.isAdminMode) {
-            listContainer.querySelectorAll('.announcement-item').forEach(item => {
-                const id = item.dataset.id;
-                if (id && item.classList.contains('unread')) {
-                    item.addEventListener('click', (e) => {
-                        if (e.target.closest('.announcement-delete')) return;
-                        this.chatService.markNotificationAsRead(id);
-                        item.classList.remove('unread');
-                        this.renderNotifications();
-                    });
-                }
-            });
-        }
-        
-        if (this.isAdminMode) {
-            listContainer.querySelectorAll('.announcement-delete').forEach(btn => {
+        if (this.isAdmin) {
+            document.querySelectorAll('.announcement-delete').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     const id = btn.dataset.id;
-                    if (id && confirm('Delete this announcement?')) {
-                        await this.chatService.deleteNotification(id);
-                        this.renderNotifications();
+                    if (confirm('Delete this announcement?')) {
+                        await this.deleteAnnouncement(id);
+                        this.renderAnnouncements();
                     }
                 });
             });
         }
     }
-    
-    formatTime(timestamp) {
-        if (!timestamp) return 'Just now';
-        
-        let date;
-        if (typeof timestamp === 'object' && timestamp.toDate) {
-            date = timestamp.toDate();
-        } else if (typeof timestamp === 'string') {
-            date = new Date(timestamp);
-        } else if (typeof timestamp === 'number') {
-            date = new Date(timestamp);
-        } else {
-            return 'Just now';
-        }
-        
-        const now = new Date();
-        const diff = now - date;
-        
-        if (isNaN(diff)) return 'Just now';
-        if (diff < 60000) return 'Just now';
-        if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
-        if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-        if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`;
-        
-        return date.toLocaleDateString();
-    }
-    
-    open() {
-        if (!this.modal) {
-            this.createModal();
-        }
-        if (this.modal) {
-            this.modal.classList.add('show');
-            this.isOpen = true;
-            document.body.style.overflow = 'hidden';
-            this.renderNotifications();
-        }
-    }
-    
-    close() {
-        if (this.modal) {
-            this.modal.classList.remove('show');
-            this.isOpen = false;
-            document.body.style.overflow = '';
-        }
-    }
-}
 
-// Initialize Firebase Chat - SIMPLE VERSION WITHOUT CLONING
-window.firebaseChat = null;
-window.chatUI = null;
-window.notificationsUI = null;
-
-async function initFirebaseChat() {
-    try {
-        console.log("Starting Firebase Chat initialization...");
-        window.firebaseChat = new FirebaseChat();
+    showComposeAnnouncement() {
+        if (!this.isAdmin) return;
         
-        await window.firebaseChat.initPromise;
+        const modalHTML = `
+            <div id="composeAnnouncementModal" class="modal compose-announcement-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3><i class="fas fa-bullhorn"></i> New Announcement</h3>
+                        <button class="modal-close">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="composeForm" class="compose-form">
+                            <div class="form-group">
+                                <label><i class="fas fa-heading"></i> Title</label>
+                                <input type="text" id="announcementTitle" class="form-input" placeholder="Enter title..." maxlength="100">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-comment"></i> Message</label>
+                                <textarea id="announcementMessage" class="form-textarea" placeholder="Enter announcement message..." maxlength="500" rows="4"></textarea>
+                            </div>
+                            <div class="compose-actions">
+                                <button type="button" id="cancelComposeBtn" class="btn-cancel">Cancel</button>
+                                <button type="submit" id="sendAnnouncementBtn" class="btn-send">
+                                    <i class="fas fa-paper-plane"></i> Send
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
         
-        // Create UI instances
-        window.chatUI = new ChatUI(window.firebaseChat);
-        window.notificationsUI = new NotificationsUI(window.firebaseChat);
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        const composeModal = document.getElementById('composeAnnouncementModal');
         
-        // Simple direct event listener attachment
-        function attachEventListeners() {
-            const messageBtn = document.getElementById('messageBtn');
-            const notificationBtn = document.getElementById('notificationBtn');
-            
-            let attached = false;
-            
-            if (messageBtn && !messageBtn._chatListenerAttached) {
-                messageBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log("Opening chat modal...");
-                    if (window.chatUI) {
-                        window.chatUI.open();
-                    } else {
-                        console.error("Chat UI not available");
-                    }
-                });
-                messageBtn._chatListenerAttached = true;
-                console.log("✅ Chat button listener attached");
-                attached = true;
-            } else if (!messageBtn) {
-                console.log("Message button not found yet, waiting...");
-            }
-            
-            if (notificationBtn && !notificationBtn._notifListenerAttached) {
-                notificationBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    console.log("Opening announcements modal...");
-                    if (window.notificationsUI) {
-                        window.notificationsUI.open();
-                    } else {
-                        console.error("Notifications UI not available");
-                    }
-                });
-                notificationBtn._notifListenerAttached = true;
-                console.log("✅ Notification button listener attached");
-                attached = true;
-            } else if (!notificationBtn) {
-                console.log("Notification button not found yet, waiting...");
-            }
-            
-            return attached;
-        }
+        const closeModal = () => {
+            composeModal.classList.remove('show');
+            setTimeout(() => composeModal.remove(), 300);
+        };
         
-        // Try to attach immediately
-        if (!attachEventListeners()) {
-            // If buttons not found, use MutationObserver to wait for them
-            const observer = new MutationObserver((mutations, obs) => {
-                if (attachEventListeners()) {
-                    obs.disconnect();
-                    console.log("All buttons found and listeners attached");
+        composeModal.querySelector('.modal-close').addEventListener('click', closeModal);
+        composeModal.addEventListener('click', (e) => {
+            if (e.target === composeModal) closeModal();
+        });
+        
+        document.getElementById('cancelComposeBtn').addEventListener('click', closeModal);
+        
+        const form = document.getElementById('composeForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('announcementTitle').value.trim();
+            const message = document.getElementById('announcementMessage').value.trim();
+            
+            if (!title || !message) {
+                if (window.showToast) {
+                    window.showToast("Please fill in both title and message", 3000);
                 }
-            });
+                return;
+            }
             
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
+            const sendBtn = document.getElementById('sendAnnouncementBtn');
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Sending...';
             
-            // Timeout after 10 seconds
-            setTimeout(() => {
-                observer.disconnect();
-                console.log("Stopped waiting for buttons after 10 seconds");
-            }, 10000);
+            const success = await this.sendAnnouncement(title, message);
+            
+            if (success) {
+                closeModal();
+                this.renderAnnouncements();
+            }
+            
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+        });
+        
+        composeModal.classList.add('show');
+    }
+
+    async confirmClearAnnouncements() {
+        if (!this.isAdmin) return;
+        
+        if (confirm('⚠️ Clear ALL announcements? This cannot be undone.')) {
+            await this.clearAllAnnouncements();
+            this.renderAnnouncements();
         }
-        
-        console.log("✅ Firebase Chat UI initialized");
-        
-        const userInfo = window.firebaseChat.getUserInfo();
-        if (userInfo.isAdmin) {
-            console.log("%c👑 Admin Mode Active", "color: #f97316; font-size: 14px; font-weight: bold;");
-            console.log("%cYou are logged in as: Juzt (Admin)", "color: #f97316;");
-            console.log("%cTo post announcements, click the bell icon and press 'New Announcement'", "color: #9aa2bf;");
-        } else {
-            console.log("%c👤 Logged in as: " + userInfo.name, "color: #9aa2bf;");
-            console.log("%c🆔 Device ID: " + (userInfo.deviceId ? userInfo.deviceId : "unknown"), "color: #9aa2bf;");
+    }
+
+    closeAnnouncements() {
+        if (this.announcementsModal) {
+            this.announcementsModal.classList.remove('show');
         }
-        
-    } catch (error) {
-        console.error("❌ Error initializing Firebase Chat:", error);
     }
 }
 
+// Initialize Firebase Chat
+let firebaseChat = null;
+
+function initFirebaseChat() {
+    if (firebaseChat) return firebaseChat;
+    
+    firebaseChat = new FirebaseChat();
+    firebaseChat.init().catch(console.error);
+    
+    return firebaseChat;
+}
+
+window.FirebaseChat = FirebaseChat;
 window.initFirebaseChat = initFirebaseChat;
