@@ -46,15 +46,15 @@ function initializeFirebase() {
             console.log("✅ Analytics initialized");
         }
         
-        // Enable offline persistence for better performance
-        firestore.enablePersistence()
-            .then(() => console.log("✅ Firestore persistence enabled"))
+        // Test Firestore connection
+        const testRef = firestore.collection('test').doc('connection');
+        testRef.set({ timestamp: firebase.firestore.FieldValue.serverTimestamp() })
+            .then(() => {
+                console.log("✅ Firestore connection test successful");
+                testRef.delete().catch(e => console.log("Test cleanup:", e));
+            })
             .catch((err) => {
-                if (err.code === 'failed-precondition') {
-                    console.warn("⚠️ Firestore persistence failed: multiple tabs open");
-                } else if (err.code === 'unimplemented') {
-                    console.warn("⚠️ Firestore persistence not supported in this browser");
-                }
+                console.error("❌ Firestore connection test failed:", err);
             });
         
         // Set global variables
