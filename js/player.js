@@ -92,6 +92,11 @@ class PlayerComponent {
         // Define slideshow images with channel links
         this.slideshowImages = [
             {
+                image: "sdtv.jpg",
+                title: "Sdtv Network",
+                channelName: "Sdtv Network",
+            },
+             {
                 image: "https://image.tmdb.org/t/p/original/vDQb06miaaW7C2GUPeMNDmyqWec.jpg",
                 title: "The Prince of Egypt",
                 channelName: "The Prince of Egypt (1998)",
@@ -111,7 +116,7 @@ class PlayerComponent {
             {
                 image: "https://i0.wp.com/anitrendz.net/news/wp-content/uploads/2019/01/Aniplus_Asia_Winter_2019_Simulcast.png",
                 title: "AniPlus",
-                channelName: "AniPlus"
+                channelName: "AniPlus 2"
             },
             {
                 image: "https://library.sportingnews.com/styles/twitter_card_120x120/s3/2023-10/GFX-1143%20NBA%20TV%20schedule%20FTR.jpg?itok=B1xtr2Cl",
