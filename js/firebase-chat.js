@@ -20,6 +20,20 @@ class FirebaseChat {
         this.usersCollection = 'users';
         this.isInitialized = false;
         this.firestoreReady = false;
+        this.retryListenersTimeout = null;
+        this.isOnline = navigator.onLine;
+        
+        // Setup online/offline handlers
+        window.addEventListener('online', () => {
+            this.isOnline = true;
+            console.log("Online - reconnecting Firebase listeners");
+            this.reconnectListeners();
+        });
+        
+        window.addEventListener('offline', () => {
+            this.isOnline = false;
+            console.log("Offline - Firebase listeners paused");
+        });
     }
 
     async init() {
@@ -50,11 +64,33 @@ class FirebaseChat {
         console.log("Firebase Chat initialized");
         console.log("User:", this.userName, "Original:", this.userOriginalName, "Admin:", this.isAdmin);
         
-        // Initialize Firestore
-        await this.initFirestore();
+        // Initialize Firestore (non-blocking)
+        this.initFirestore().catch(err => {
+            console.warn("Firestore initialization warning:", err);
+        });
         
-        // Register user in users collection
-        await this.registerUser();
+        return true;
+    }
+
+    async waitForFirestore(timeout = 5000) {
+        const startTime = Date.now();
+        while (!window.firestore && (Date.now() - startTime) < timeout) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        if (!window.firestore) {
+            console.warn("Firestore not available after waiting");
+            return false;
+        }
+        
+        // Also wait for Firebase app to be ready
+        if (window.firebaseApp) {
+            try {
+                await window.firebaseApp.firestore().enableNetwork();
+            } catch(e) {
+                console.warn("Could not enable network:", e);
+            }
+        }
         
         return true;
     }
@@ -102,34 +138,81 @@ class FirebaseChat {
     }
 
     async initFirestore() {
-        // Wait for Firebase to be ready
+        // Wait for Firebase to be ready with shorter timeout
         let retries = 0;
-        const maxRetries = 30;
+        const maxRetries = 15;
         
         while (!window.firestore && retries < maxRetries) {
             console.log(`Waiting for Firestore... attempt ${retries + 1}/${maxRetries}`);
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 300));
             retries++;
         }
 
         if (!window.firestore) {
-            console.error("Firestore not available");
-            if (window.showToast) {
-                window.showToast("Database not connected. Please refresh the page.", 5000);
-            }
+            console.warn("Firestore not available - chat features will be limited");
             this.firestoreReady = false;
             return false;
         }
 
         this.db = window.firestore;
+        
+        // Enable network with retry
+        try {
+            if (window.firebaseApp) {
+                await window.firebaseApp.firestore().enableNetwork();
+            }
+        } catch (error) {
+            console.warn("Could not enable network:", error);
+        }
+        
         this.firestoreReady = true;
         console.log("✅ Firestore connected");
         
-        // Start listeners
-        this.startMessageListener();
-        this.startAnnouncementListener();
+        // Register user in Firestore (non-blocking)
+        this.registerUser().catch(console.warn);
+        
+        // Start listeners with delay to avoid overwhelming
+        setTimeout(() => {
+            if (this.isOnline) {
+                this.startMessageListener();
+                this.startAnnouncementListener();
+            }
+        }, 500);
         
         return true;
+    }
+
+    reconnectListeners() {
+        if (!this.firestoreReady) return;
+        
+        // Clear existing listeners
+        if (this.messageListener && typeof this.messageListener === 'function') {
+            try {
+                this.messageListener();
+            } catch(e) {}
+            this.messageListener = null;
+        }
+        
+        if (this.announcementListener && typeof this.announcementListener === 'function') {
+            try {
+                this.announcementListener();
+            } catch(e) {}
+            this.announcementListener = null;
+        }
+        
+        // Clear retry timeout
+        if (this.retryListenersTimeout) {
+            clearTimeout(this.retryListenersTimeout);
+            this.retryListenersTimeout = null;
+        }
+        
+        // Restart listeners
+        setTimeout(() => {
+            if (this.isOnline && this.firestoreReady) {
+                this.startMessageListener();
+                this.startAnnouncementListener();
+            }
+        }, 500);
     }
 
     async registerUser() {
@@ -159,7 +242,7 @@ class FirebaseChat {
                 console.log("✅ User updated in Firestore");
             }
         } catch (error) {
-            console.error("Error registering user:", error);
+            console.warn("Error registering user:", error);
         }
     }
 
@@ -291,7 +374,7 @@ class FirebaseChat {
             this.db.collection(this.usersCollection).doc(this.userId).update({
                 isAdmin: false,
                 name: this.userName
-            }).catch(console.error);
+            }).catch(console.warn);
         }
         
         // Update UI
@@ -365,6 +448,12 @@ class FirebaseChat {
     startMessageListener() {
         if (this.messageListener || !this.db) return;
         
+        // Only start listener if we're online
+        if (!this.isOnline) {
+            console.log("Offline - message listener will start when online");
+            return;
+        }
+        
         const messagesRef = this.db.collection(this.messagesCollection)
             .orderBy('timestamp', 'desc')
             .limit(50);
@@ -381,12 +470,26 @@ class FirebaseChat {
                 }
             });
         }, (error) => {
-            console.error("Message listener error:", error);
+            console.warn("Message listener error:", error.message);
+            this.messageListener = null;
+            // Retry after delay
+            this.retryListenersTimeout = setTimeout(() => {
+                if (this.isOnline) {
+                    this.startMessageListener();
+                }
+                this.retryListenersTimeout = null;
+            }, 10000);
         });
     }
 
     startAnnouncementListener() {
         if (this.announcementListener || !this.db) return;
+        
+        // Only start listener if we're online
+        if (!this.isOnline) {
+            console.log("Offline - announcement listener will start when online");
+            return;
+        }
         
         const announcementsRef = this.db.collection(this.announcementsCollection)
             .orderBy('timestamp', 'desc')
@@ -412,7 +515,15 @@ class FirebaseChat {
                 }
             });
         }, (error) => {
-            console.error("Announcement listener error:", error);
+            console.warn("Announcement listener error:", error.message);
+            this.announcementListener = null;
+            // Retry after delay
+            this.retryListenersTimeout = setTimeout(() => {
+                if (this.isOnline) {
+                    this.startAnnouncementListener();
+                }
+                this.retryListenersTimeout = null;
+            }, 10000);
         });
     }
 
@@ -433,8 +544,8 @@ class FirebaseChat {
             
             return true;
         } catch (error) {
-            console.error("Error sending message:", error);
-            if (window.showToast) {
+            console.warn("Error sending message:", error);
+            if (window.showToast && error.code !== 'unavailable') {
                 window.showToast("Failed to send message", 3000);
             }
             return false;
@@ -558,7 +669,7 @@ class FirebaseChat {
             
             return messages.reverse();
         } catch (error) {
-            console.error("Error getting messages:", error);
+            console.warn("Error getting messages:", error);
             return [];
         }
     }
@@ -591,7 +702,7 @@ class FirebaseChat {
             console.log("Announcements loaded:", announcements.length);
             return announcements;
         } catch (error) {
-            console.error("Error getting announcements:", error);
+            console.warn("Error getting announcements:", error);
             return [];
         }
     }
@@ -1140,6 +1251,32 @@ class FirebaseChat {
             this.announcementsModal.classList.remove('show');
         }
     }
+    
+    destroy() {
+        // Clean up listeners
+        if (this.messageListener && typeof this.messageListener === 'function') {
+            try {
+                this.messageListener();
+            } catch(e) {}
+            this.messageListener = null;
+        }
+        
+        if (this.announcementListener && typeof this.announcementListener === 'function') {
+            try {
+                this.announcementListener();
+            } catch(e) {}
+            this.announcementListener = null;
+        }
+        
+        if (this.retryListenersTimeout) {
+            clearTimeout(this.retryListenersTimeout);
+            this.retryListenersTimeout = null;
+        }
+        
+        // Remove event listeners
+        window.removeEventListener('online', this.reconnectListeners);
+        window.removeEventListener('offline', this.reconnectListeners);
+    }
 }
 
 // Initialize Firebase Chat
@@ -1149,7 +1286,7 @@ function initFirebaseChat() {
     if (firebaseChat) return firebaseChat;
     
     firebaseChat = new FirebaseChat();
-    firebaseChat.init().catch(console.error);
+    firebaseChat.init().catch(console.warn);
     
     return firebaseChat;
 }
