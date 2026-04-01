@@ -178,3 +178,8 @@ window.clearAppCache = clearAppCache;
 // Log PWA status on load
 console.log(`📱 PWA Display Mode: ${getPWADisplayMode()}`);
 console.log(`📱 Installed as PWA: ${isPWAInstalled()}`);
+
+
+
+
+
