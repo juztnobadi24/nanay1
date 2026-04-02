@@ -13,7 +13,6 @@
     align-items: center;
     animation: fadeIn 0.2s ease;
 }
-
 .modal.show {
     display: flex;
 }
