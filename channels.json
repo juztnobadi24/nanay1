@@ -1524,12 +1524,28 @@
   "streamUrl": "https://vidlink.pro/movie/569094",
   "isEmbed": true
 },
+  {
+  "name": "The Bible: In the Beginning... (1966)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/2BtesvzFQJYFS2sPVVbUdet0TTC.jpg",
+  "category": "Drama",
+  "streamUrl": "https://vidlink.pro/movie/2525",
+  "isEmbed": true
+},
 {
   "name": "The Parent Trap (1998)",
   "type": "Movies",
   "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/p4dGmi8u9W0HHyVXcgWPoiFfKTF.jpg",
   "category": "Comedy and Family",
   "streamUrl": "https://vidlink.pro/movie/9820",
+  "isEmbed": true
+},
+  {
+  "name": "The Passion of the Christ (2004)",
+  "type": "Movies",
+  "logo": "https://image.tmdb.org/t/p/w600_and_h900_face/v9f9MMrq2nGQrN7cHnQRmEq9lSE.jpg",
+  "category": "Drama",
+  "streamUrl": "https://vidlink.pro/movie/615",
   "isEmbed": true
 },
 {
