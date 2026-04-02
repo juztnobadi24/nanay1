@@ -7,7 +7,6 @@ function stripVersionParams(url) {
     return url.split('?')[0];
 }
 
-
 // List of files to cache - use relative paths
 const urlsToCache = [
   '/',
