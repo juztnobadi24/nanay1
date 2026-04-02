@@ -70,7 +70,7 @@ class SlideshowComponent {
             {
                 image: "https://i0.wp.com/anitrendz.net/news/wp-content/uploads/2019/01/Aniplus_Asia_Winter_2019_Simulcast.png",
                 title: "AniPlus",
-                channelName: "AniPlus 2",
+                channelName: "AniPlus",
                 channelType: "TV"
             },
             {
