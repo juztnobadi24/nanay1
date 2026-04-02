@@ -846,3 +846,5 @@ class PlayerComponent {
 }
 
 window.PlayerComponent = PlayerComponent;
+
+
