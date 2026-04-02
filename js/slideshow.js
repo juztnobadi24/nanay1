@@ -12,11 +12,12 @@ class SlideshowComponent {
         this.originalSlideIndex = 0;
         this.slideshowInterval = null;
         this.slideshowEnabled = true;
-        this.isSlideshowActive = false;
-        this.slideshowDuration = 5000;
+        this.isSlideshowActive = true;  // Start active by default
+        this.slideshowDuration = 5000;  // 5 seconds
         this.totalSlides = 0;
         this.slideshowInitialized = false;
         this.touchStartX = 0;
+        this.isPaused = false;
         
         // Bind methods
         this.nextSlide = this.nextSlide.bind(this);
@@ -98,8 +99,13 @@ class SlideshowComponent {
         this.attachEvents();
         this.slideshowInitialized = true;
         
-        // Start slideshow by default
-        this.startSlideshow();
+        // IMPORTANT: Start slideshow auto-play after a short delay
+        setTimeout(() => {
+            if (this.isSlideshowActive && this.slideshowEnabled) {
+                this.startSlideshow();
+                console.log("Slideshow auto-play started with", this.totalSlides, "slides, interval:", this.slideshowDuration, "ms");
+            }
+        }, 500);
         
         console.log("Slideshow component initialized with", this.totalSlides, "slides");
     }
@@ -167,7 +173,7 @@ class SlideshowComponent {
                      data-is-movies="${slide.isMoviesCollection || false}">
                     <img src="${slide.image}" alt="${slide.title}" class="slideshow-image" loading="lazy">
                     <div class="slideshow-caption">
-                        <h3>${escapeHtml(slide.title)}</h3>
+                        <h3>${this.escapeHtml(slide.title)}</h3>
                         <p>Click to play</p>
                     </div>
                 </div>
@@ -185,6 +191,16 @@ class SlideshowComponent {
         
         // Update active dot
         this.updateActiveDot(0);
+    }
+    
+    escapeHtml(str) {
+        if (!str) return "";
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === "&") return "&amp;";
+            if (m === "<") return "&lt;";
+            if (m === ">") return "&gt;";
+            return m;
+        });
     }
     
     // Attach event listeners
@@ -289,8 +305,10 @@ class SlideshowComponent {
         this.resumeSlideshow();
     }
     
-    // Update active slide position
+    // Update active slide position with animation
     updateActiveSlide(index) {
+        if (!this.slideshowSlides) return;
+        
         const position = -(index * 100);
         
         this.slideshowSlides.style.transition = 'transform 0.5s ease-in-out';
@@ -340,18 +358,29 @@ class SlideshowComponent {
     
     // Start slideshow auto-play
     startSlideshow() {
+        // Clear any existing interval
         if (this.slideshowInterval) {
             clearInterval(this.slideshowInterval);
+            this.slideshowInterval = null;
         }
         
-        if (!this.isSlideshowActive || !this.slideshowEnabled) return;
+        // Don't start if inactive or paused
+        if (!this.isSlideshowActive || !this.slideshowEnabled || this.isPaused) {
+            console.log("Slideshow not starting - active:", this.isSlideshowActive, "enabled:", this.slideshowEnabled, "paused:", this.isPaused);
+            return;
+        }
         
+        // Start new interval
         this.slideshowInterval = setInterval(() => {
-            if (this.isSlideshowActive && this.slideshowEnabled && 
+            // Only auto-slide if slideshow is visible and not paused
+            if (this.isSlideshowActive && this.slideshowEnabled && !this.isPaused && 
                 this.slideshowContainer && this.slideshowContainer.style.display !== 'none') {
+                console.log("Auto-sliding to next slide...");
                 this.nextSlide();
             }
         }, this.slideshowDuration);
+        
+        console.log("Slideshow auto-play started with interval:", this.slideshowDuration, "ms");
     }
     
     // Stop slideshow completely
@@ -362,6 +391,7 @@ class SlideshowComponent {
         }
         this.isSlideshowActive = false;
         this.slideshowEnabled = false;
+        console.log("Slideshow stopped");
     }
     
     // Pause slideshow (temporary)
@@ -370,38 +400,28 @@ class SlideshowComponent {
             clearInterval(this.slideshowInterval);
             this.slideshowInterval = null;
         }
+        this.isPaused = true;
+        console.log("Slideshow paused");
     }
     
     // Resume slideshow from paused state
     resumeSlideshow() {
-        if (!this.isSlideshowActive || !this.slideshowEnabled) return;
-        
-        if (this.slideshowInterval) {
-            clearInterval(this.slideshowInterval);
+        if (!this.isSlideshowActive || !this.slideshowEnabled) {
+            console.log("Cannot resume - slideshow not active");
+            return;
         }
         
-        this.slideshowInterval = setInterval(() => {
-            if (this.isSlideshowActive && this.slideshowEnabled && 
-                this.slideshowContainer && this.slideshowContainer.style.display !== 'none') {
-                this.nextSlide();
-            }
-        }, this.slideshowDuration);
+        this.isPaused = false;
+        this.startSlideshow();
+        console.log("Slideshow resumed");
     }
     
     // Reset slideshow timer after user interaction
     resetSlideshowTimer() {
-        if (!this.isSlideshowActive || !this.slideshowEnabled) return;
+        if (!this.isSlideshowActive || !this.slideshowEnabled || this.isPaused) return;
         
-        if (this.slideshowInterval) {
-            clearInterval(this.slideshowInterval);
-        }
-        
-        this.slideshowInterval = setInterval(() => {
-            if (this.isSlideshowActive && this.slideshowEnabled && 
-                this.slideshowContainer && this.slideshowContainer.style.display !== 'none') {
-                this.nextSlide();
-            }
-        }, this.slideshowDuration);
+        // Restart the timer
+        this.startSlideshow();
     }
     
     // Go to next slide
@@ -428,7 +448,9 @@ class SlideshowComponent {
             this.slideshowContainer.style.display = 'flex';
             this.isSlideshowActive = true;
             this.slideshowEnabled = true;
+            this.isPaused = false;
             this.startSlideshow();
+            console.log("Slideshow shown and auto-play started");
         }
         
         // Hide video player if it exists
@@ -450,6 +472,7 @@ class SlideshowComponent {
             this.slideshowContainer.style.display = 'none';
             this.isSlideshowActive = false;
             this.pauseSlideshow();
+            console.log("Slideshow hidden and paused");
         }
         
         // Show video player if it exists
@@ -467,7 +490,7 @@ class SlideshowComponent {
     // Set custom slideshow images
     setImages(images) {
         if (images && Array.isArray(images) && images.length > 0) {
-            const wasPlaying = this.isSlideshowActive && this.slideshowEnabled;
+            const wasActive = this.isSlideshowActive;
             this.slideshowImages = images;
             this.totalSlides = images.length;
             this.updateSlideshowContent();
@@ -479,15 +502,16 @@ class SlideshowComponent {
             this.originalSlideIndex = 0;
             this.updateActiveDot(0);
             
-            if (wasPlaying) {
+            if (wasActive) {
                 this.startSlideshow();
             }
+            console.log("Slideshow images updated, total:", this.totalSlides);
         }
     }
     
     // Add a single slide
     addSlide(image, title, channelName, channelType = 'TV') {
-        const wasPlaying = this.isSlideshowActive && this.slideshowEnabled;
+        const wasActive = this.isSlideshowActive;
         
         this.slideshowImages.push({
             image: image,
@@ -499,17 +523,19 @@ class SlideshowComponent {
         this.totalSlides = this.slideshowImages.length;
         this.updateSlideshowContent();
         
-        if (wasPlaying) {
+        if (wasActive) {
             this.startSlideshow();
         }
+        console.log("Slide added, total:", this.totalSlides);
     }
     
     // Set slideshow duration
     setDuration(durationMs) {
         this.slideshowDuration = durationMs;
-        if (this.isSlideshowActive) {
-            this.resetSlideshowTimer();
+        if (this.isSlideshowActive && !this.isPaused) {
+            this.startSlideshow();
         }
+        console.log("Slideshow duration set to:", durationMs, "ms");
     }
     
     // Destroy slideshow and clean up
