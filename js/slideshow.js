@@ -41,7 +41,7 @@ class SlideshowComponent {
         // Define default slideshow images with channel links
         this.slideshowImages = [
             {
-                image: "sdtv.jpg",
+                image: "https://tse1.mm.bing.net/th/id/OIP.e-3wZovoj-w5LBvOze-MkgHaHZ?pid=Api&P=0&h=220",
                 title: "Sdtv Network",
                 channelName: "Sdtv Network",
                 channelType: "TV"
