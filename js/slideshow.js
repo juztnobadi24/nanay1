@@ -35,6 +35,7 @@ class SlideshowComponent {
         this.handleMouseLeave = this.handleMouseLeave.bind(this);
     }
     
+    
     // Initialize slideshow with default images
     init(containerElement) {
         this.container = containerElement;
