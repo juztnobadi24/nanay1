@@ -1,4 +1,11 @@
 [
+ 
+ 
+ 
+ 
+ 
+ 
+ 
   {
     "name": "Abante Radyo",
     "type": "TV",
@@ -291,6 +298,13 @@
     "category": "News",
     "streamUrl": "https://fast-channels.sinclairstoryline.com/CHARGE/index_4.m3u8"
   },
+   {
+    "name": "Chrono TV",
+    "type": "TV",
+    "logo": "",
+    "category": "Sports",
+    "streamUrl": "https://streams2.sofast.tv/ptnr-yupptv/title-CHRONO-TV-ENG_yupptv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/d375ebca-9cd0-475e-ad4d-0cde6634de9c/manifest.m3u8"
+  },
   {
     "name": "Cinema One Global",
     "type": "TV",
@@ -333,6 +347,13 @@
     "drm": {
       "900c43f0e02742dd854148b7a75abbec": "da315cca7f2902b4de23199718ed7e90"
     }
+  },
+   {
+    "name": "Colour Blind",
+    "type": "TV",
+    "logo": "",
+    "category": "Entertainment",
+    "streamUrl": "https://streams2.sofast.tv/ptnr-yupptv/title-COLOUR-BLIND-ENG_yupptv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/7e58f6fd-62bc-49bc-9ec6-2766ed521743/manifest.m3u8"
   },
   {
     "name": "Crime 360",
@@ -450,6 +471,13 @@
     "drm": {
       "47c093e0c9fd4f80839a0337da3dd876": "603248b858276f533a13e17f2f48c711"
     }
+  },
+   {
+    "name": "Edgy TV",
+    "type": "TV",
+    "logo": "",
+    "category": "Entertainment",
+    "streamUrl": "https://streams2.sofast.tv/ptnr-yupptv/title-EDGY-TV-ENG_yupptv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/49f275ac-7129-4492-93c0-854b3c3138f0/manifest.m3u8"
   },
   {
     "name": "Electric Now",
@@ -728,6 +756,13 @@
     "category": "Kids",
     "streamUrl": "https://live20.bozztv.com/giatvplayout7/giatv-211468/tracks-v1a1/mono.ts.m3u8"
   },
+   {
+    "name": "HYPE TV",
+    "type": "TV",
+    "logo": "",
+    "category": "Movies",
+    "streamUrl": "https://hypetv_hd.vonnhost.workers.dev/mono.ts.m3u8"
+  },
   {
     "name": "iFilm",
     "type": "TV",
@@ -862,6 +897,13 @@
     "logo": "https://i.imgur.com/p16HNIM.png",
     "category": "Documentary",
     "streamUrl": "https://connection3-ent-nz.samsung.wurl.tv/playlist.m3u8"
+  },
+   {
+    "name": "Mama Benz TV",
+    "type": "TV",
+    "logo": "",
+    "category": "Entertainment",
+    "streamUrl": "https://streams2.sofast.tv/ptnr-yupptv/title-MAMA-BENZ-TV-ENG_yupptv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/65f99e10-8d57-460a-a6be-731d90cfe7b1/manifest.m3u8"
   },
   {
     "name": "Master Chef",
@@ -1067,6 +1109,13 @@
     "category": "Kids",
     "streamUrl": "https://playworksdigital-ninjakidztv-1-us.xumo.wurl.tv/playlist.m3u8"
   },
+   {
+    "name": "Nitro TV",
+    "type": "TV",
+    "logo": "",
+    "category": "Sports",
+    "streamUrl": "https://streams2.sofast.tv/ptnr-yupptv/title-NITRO-TV-ENG_yupptv/v1/master/611d79b11b77e2f571934fd80ca1413453772ac7/3265a84f-1238-4439-bb40-cc0b716719f7/manifest.m3u8"
+  },
   {
     "name": "ONE Championship",
     "type": "TV",
@@ -1147,6 +1196,13 @@
     "logo": "https://i.imgur.com/bizGo39.png",
     "category": "Movies",
     "streamUrl": "https://live20.bozztv.com/giatv/giatv-sinemanila/sinemanila/chunks.m3u8"
+  },
+    {
+    "name": "SINE PLUS",
+    "type": "TV",
+    "logo": "",
+    "category": "Movies",
+    "streamUrl": "https://sineplus_hd.vonnhost.workers.dev/mono.ts.m3u8"
   },
   {
     "name": "Station 1 Radio",
