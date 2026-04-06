@@ -1,5 +1,5 @@
 // ======================== PLAYER COMPONENT ========================
-// Fixed version with proper end-of-stream handling
+// Now with separated slideshow functionality
 
 class PlayerComponent {
     constructor() {
@@ -18,15 +18,8 @@ class PlayerComponent {
         this.currentChannel = null;
         this.isLoading = false;
         this.loadRetryCount = 0;
-        this.maxRetries = 3;
+        this.maxRetries = 2;
         this.loaderOverlay = null;
-        
-        // Playback stability
-        this.playbackKeepAlive = null;
-        this.lastPlaybackTime = 0;
-        this.stallCount = 0;
-        this.stallRecoveryTimeout = null;
-        this.recoveryTimeout = null;
         
         // Slideshow component
         this.slideshow = null;
@@ -62,9 +55,6 @@ class PlayerComponent {
             this.videoPlayer.removeAttribute("controls");
             this.videoPlayer.controls = false;
             this.videoPlayer.autoplay = true;
-            
-            // Add playback monitoring
-            this.setupPlaybackMonitoring();
         }
         
         // Initialize slideshow component
@@ -81,146 +71,6 @@ class PlayerComponent {
         };
     }
     
-    setupPlaybackMonitoring() {
-        if (!this.videoPlayer) return;
-        
-        // Monitor playback progress
-        this.videoPlayer.addEventListener('timeupdate', () => {
-            if (this.videoPlayer.currentTime !== this.lastPlaybackTime) {
-                this.lastPlaybackTime = this.videoPlayer.currentTime;
-                this.stallCount = 0;
-            }
-        });
-        
-        // CRITICAL: Handle video ending - reload channel
-        this.videoPlayer.addEventListener('ended', () => {
-            console.log("Video ended - reloading channel");
-            if (this.currentChannel && !this.isLoading) {
-                setTimeout(() => {
-                    this.playChannel(this.currentChannel);
-                }, 1000);
-            }
-        });
-        
-        // Monitor for waiting/stalling
-        this.videoPlayer.addEventListener('waiting', () => {
-            console.log("Video waiting/buffering...");
-            this.stallCount++;
-            
-            if (this.stallCount >= 2 && !this.isLoading) {
-                console.log("Detected stall, attempting recovery...");
-                this.attemptStallRecovery();
-            }
-        });
-        
-        this.videoPlayer.addEventListener('playing', () => {
-            console.log("Video playing");
-            this.stallCount = 0;
-        });
-        
-        // Handle errors
-        this.videoPlayer.addEventListener('error', (e) => {
-            console.error("Video player error:", e);
-            if (this.currentChannel && !this.isLoading) {
-                this.attemptChannelRecovery();
-            }
-        });
-        
-        // Handle stuck/buffering state
-        let stuckTimeout = null;
-        this.videoPlayer.addEventListener('loadstart', () => {
-            if (stuckTimeout) clearTimeout(stuckTimeout);
-            stuckTimeout = setTimeout(() => {
-                if (this.videoPlayer && this.videoPlayer.readyState < 2 && !this.isLoading) {
-                    console.log("Stream appears stuck, reloading...");
-                    this.attemptChannelRecovery();
-                }
-            }, 10000);
-        });
-    }
-    
-    attemptStallRecovery() {
-        if (this.stallRecoveryTimeout) {
-            clearTimeout(this.stallRecoveryTimeout);
-        }
-        
-        this.stallRecoveryTimeout = setTimeout(() => {
-            if (this.videoPlayer && this.videoPlayer.paused && !this.videoPlayer.ended) {
-                console.log("Attempting to resume stalled video...");
-                this.videoPlayer.play().catch(e => {
-                    console.log("Resume failed, reloading stream...", e);
-                    if (this.currentChannel) {
-                        this.reloadCurrentChannel();
-                    }
-                });
-            }
-            this.stallRecoveryTimeout = null;
-        }, 3000);
-    }
-    
-    async reloadCurrentChannel() {
-        if (this.currentChannel && !this.isLoading) {
-            console.log("Reloading current channel:", this.currentChannel.name);
-            await this.playChannel(this.currentChannel);
-        }
-    }
-    
-    attemptChannelRecovery() {
-        if (this.recoveryTimeout) {
-            clearTimeout(this.recoveryTimeout);
-        }
-        
-        this.recoveryTimeout = setTimeout(() => {
-            if (this.currentChannel && !this.isLoading) {
-                console.log("Attempting channel recovery...");
-                this.playChannel(this.currentChannel);
-            }
-            this.recoveryTimeout = null;
-        }, 3000);
-    }
-    
-    startPlaybackKeepAlive() {
-        if (this.playbackKeepAlive) {
-            clearInterval(this.playbackKeepAlive);
-        }
-        
-        // Check playback health every 20 seconds
-        this.playbackKeepAlive = setInterval(() => {
-            if (this.currentChannel && this.videoPlayer && !this.videoPlayer.paused && !this.isLoading) {
-                const currentTime = this.videoPlayer.currentTime;
-                // If no progress in last 20 seconds and we have a valid stream
-                if (currentTime === this.lastPlaybackTime && currentTime > 0) {
-                    console.log("Playback appears stalled, checking health...");
-                    if (!this.videoPlayer.paused) {
-                        // Try to resume by seeking slightly
-                        this.videoPlayer.currentTime = currentTime + 0.1;
-                        setTimeout(() => {
-                            if (this.videoPlayer.paused) {
-                                this.videoPlayer.play().catch(e => console.log("Resume failed:", e));
-                            }
-                        }, 100);
-                    }
-                }
-                this.lastPlaybackTime = currentTime;
-            }
-        }, 20000);
-    }
-    
-    stopPlaybackKeepAlive() {
-        if (this.playbackKeepAlive) {
-            clearInterval(this.playbackKeepAlive);
-            this.playbackKeepAlive = null;
-        }
-        if (this.stallRecoveryTimeout) {
-            clearTimeout(this.stallRecoveryTimeout);
-            this.stallRecoveryTimeout = null;
-        }
-        if (this.recoveryTimeout) {
-            clearTimeout(this.recoveryTimeout);
-            this.recoveryTimeout = null;
-        }
-    }
-    
     showRadioLogo(channel) {
         if (!this.radioLogoContainer) return;
         
@@ -234,6 +84,7 @@ class PlayerComponent {
             return;
         }
         
+        // Hide slideshow when radio is playing
         if (this.slideshow) {
             this.slideshow.hideSlideshow();
         }
@@ -460,10 +311,10 @@ class PlayerComponent {
     }
     
     async destroyPlayers() {
-        this.stopPlaybackKeepAlive();
         this.isLoading = false;
         this.hideLoader();
         
+        // Show slideshow when no channel is playing
         if (!this.currentChannel && this.slideshow) {
             this.slideshow.showSlideshow();
         }
@@ -521,24 +372,16 @@ class PlayerComponent {
                 drm: {
                     servers: {},
                     clearKeys: {},
-                    retryParameters: { maxAttempts: 5, timeout: 10000 }
+                    retryParameters: { maxAttempts: 3 }
                 },
                 streaming: {
                     rebufferingGoal: 2,
-                    bufferingGoal: 15,
-                    retryParameters: { maxAttempts: 5, timeout: 10000 },
-                    segmentPrefetchLimit: 2,
-                    safeSeekOffset: 2
-                },
-                manifest: {
-                    retryParameters: { maxAttempts: 5, timeout: 10000 }
+                    bufferingGoal: 10,
+                    retryParameters: { maxAttempts: 3 }
                 }
             });
             this.shakaPlayer.addEventListener("error", (event) => {
                 console.error("Shaka error", event.detail);
-                if (this.currentChannel && !this.isLoading) {
-                    this.attemptChannelRecovery();
-                }
             });
             this.isShakaInitialized = true;
             return this.shakaPlayer;
@@ -548,15 +391,6 @@ class PlayerComponent {
     
     showError(msg) {
         console.error(msg);
-        if (this.errorMessageDiv) {
-            this.errorMessageDiv.textContent = msg;
-            this.errorMessageDiv.classList.add("show");
-            setTimeout(() => {
-                if (this.errorMessageDiv) {
-                    this.errorMessageDiv.classList.remove("show");
-                }
-            }, 5000);
-        }
         this.hideLoader();
     }
     
@@ -596,6 +430,7 @@ class PlayerComponent {
     async loadEmbeddedContent(url, channel) {
         console.log("Loading embedded content:", channel.name);
         
+        // Hide slideshow when playing content
         if (this.slideshow) {
             this.slideshow.hideSlideshow();
         }
@@ -648,6 +483,7 @@ class PlayerComponent {
     async loadStream(url, drmConfig = null, headers = null, isRetry = false) {
         console.log("Loading stream:", url);
         
+        // Hide slideshow when loading stream
         if (this.slideshow) {
             this.slideshow.hideSlideshow();
         }
@@ -672,9 +508,9 @@ class PlayerComponent {
                 this.loadStream(url, drmConfig, headers, true);
             } else if (this.loadRetryCount >= this.maxRetries) {
                 this.hideLoader();
-                this.showError("Failed to load stream after multiple attempts");
+                console.error("Failed to load stream after multiple attempts");
             }
-        }, 20000);
+        }, 15000);
         
         try {
             if (isDash) {
@@ -713,7 +549,6 @@ class PlayerComponent {
                 clearTimeout(loadTimeout);
                 this.loadRetryCount = 0;
                 this.hideLoader();
-                this.startPlaybackKeepAlive();
                 return true;
             } 
             else if (isHls) {
@@ -723,23 +558,54 @@ class PlayerComponent {
                         let resolved = false;
                         let timeoutId = null;
                         
+                        // Fixed HLS configuration for live streams
                         this.hlsPlayer = new Hls({
                             enableWorker: true,
-                            lowLatencyMode: true,
+                            lowLatencyMode: false,  // More stable for live streams
                             autoStartLoad: true,
                             startPosition: -1,
-                            manifestLoadTimeOut: 20000,
-                            manifestLoadingTimeOut: 20000,
-                            levelLoadingTimeOut: 20000,
-                            fragLoadingTimeOut: 20000,
+                            // Increased timeouts for better stability
+                            manifestLoadTimeOut: 30000,
+                            manifestLoadingTimeOut: 30000,
+                            levelLoadingTimeOut: 30000,
+                            fragLoadingTimeOut: 30000,
+                            // Critical live stream settings
+                            liveSyncDurationCount: 3,  // Keep 3 fragments behind live edge
+                            liveMaxLatencyDurationCount: 10,
+                            liveDurationInfinity: true,  // Important for infinite live streams
+                            maxLiveSyncPlaybackRate: 1,
+                            liveBackBufferLength: 30,  // Keep 30 seconds of buffer
+                            backBufferLength: 30,
                             maxBufferLength: 30,
                             maxMaxBufferLength: 60,
-                            liveSyncDurationCount: 3,
-                            liveMaxLatencyDurationCount: 6,
-                            xhrSetup: (xhr, url) => {
-                                if (headers && headers["User-Agent"]) {
-                                    xhr.setRequestHeader("User-Agent", headers["User-Agent"]);
-                                }
+                            // Better playback behavior
+                            startFragPrefetch: true,
+                            testBandwidth: true,
+                            // Error recovery
+                            nudgeOffset: 0.05,
+                            nudgeMaxRetry: 3,
+                            maxFragLookUpTolerance: 0.2
+                        });
+                        
+                        // Add recovery handlers for live streams
+                        this.hlsPlayer.on(Hls.Events.BUFFER_FLUSHED, () => {
+                            // Ensure we stay at live edge after buffer flush
+                            if (this.hlsPlayer.liveSyncPosition && this.videoPlayer) {
+                                this.videoPlayer.currentTime = this.hlsPlayer.liveSyncPosition;
+                            }
+                        });
+                        
+                        this.hlsPlayer.on(Hls.Events.FRAG_BUFFERED, () => {
+                            // Resume playback if it got paused
+                            if (this.videoPlayer && this.videoPlayer.paused && !this.videoPlayer.ended) {
+                                this.videoPlayer.play().catch(e => console.log('Resume play:', e));
+                            }
+                        });
+                        
+                        this.hlsPlayer.on(Hls.Events.LEVEL_SWITCHED, () => {
+                            // Resume after level switch
+                            if (this.videoPlayer && this.videoPlayer.paused) {
+                                this.videoPlayer.play().catch(e => console.log('Resume after level switch:', e));
                             }
                         });
                         
@@ -753,14 +619,12 @@ class PlayerComponent {
                                         console.log("HLS playback started");
                                         this.loadRetryCount = 0;
                                         this.hideLoader();
-                                        this.startPlaybackKeepAlive();
                                         resolve(true);
                                     })
                                     .catch(e => {
                                         console.warn("Autoplay blocked:", e);
                                         this.loadRetryCount = 0;
                                         this.hideLoader();
-                                        this.startPlaybackKeepAlive();
                                         resolve(true);
                                     });
                             }
@@ -788,17 +652,10 @@ class PlayerComponent {
                                     this.hideLoader();
                                     reject(new Error(data.details || "HLS stream error"));
                                 }
-                            } else if (!data.fatal && data.type === 'networkError') {
-                                console.log("Non-fatal network error, continuing...");
                             }
                         });
                         
-                        this.hlsPlayer.on(Hls.Events.BUFFER_APPENDING, () => {
-                            if (this.stallCount > 0) {
-                                this.stallCount = 0;
-                            }
-                        });
-                        
+                        // Increased timeout for live manifest loading
                         timeoutId = setTimeout(() => {
                             if (!resolved) {
                                 resolved = true;
@@ -816,7 +673,7 @@ class PlayerComponent {
                                     reject(new Error("Stream load timeout"));
                                 }
                             }
-                        }, 15000);
+                        }, 20000); // Increased from 10000 to 20000
                         
                         this.hlsPlayer.loadSource(url);
                         this.hlsPlayer.attachMedia(this.videoPlayer);
@@ -828,7 +685,6 @@ class PlayerComponent {
                     clearTimeout(loadTimeout);
                     this.loadRetryCount = 0;
                     this.hideLoader();
-                    this.startPlaybackKeepAlive();
                     return true;
                 } else {
                     throw new Error("HLS not supported in this browser");
@@ -841,7 +697,6 @@ class PlayerComponent {
                 clearTimeout(loadTimeout);
                 this.loadRetryCount = 0;
                 this.hideLoader();
-                this.startPlaybackKeepAlive();
                 return true;
             }
         } catch (err) {
@@ -857,7 +712,7 @@ class PlayerComponent {
             }
             
             this.hideLoader();
-            this.showError(`Cannot play stream: ${err.message || "unknown error"}`);
+            console.error(`Cannot play stream: ${err.message || "unknown error"}`);
             return false;
         }
     }
@@ -868,6 +723,7 @@ class PlayerComponent {
             return false;
         }
         
+        // Hide slideshow when playing channel
         if (this.slideshow) {
             this.slideshow.hideSlideshow();
         }
@@ -922,7 +778,6 @@ class PlayerComponent {
         
         this.isLoading = true;
         this.loadRetryCount = 0;
-        this.stallCount = 0;
         
         this.showLoader("Loading channel...");
         
@@ -957,6 +812,7 @@ class PlayerComponent {
             } else {
                 console.error("Failed to play channel:", channel.name);
                 this.hideRadioLogo();
+                // Show slideshow on failure
                 if (this.slideshow) {
                     this.slideshow.showSlideshow();
                 }
@@ -967,6 +823,7 @@ class PlayerComponent {
             console.error("Error in playChannel:", error);
             this.hideRadioLogo();
             this.hideLoader();
+            // Show slideshow on error
             if (this.slideshow) {
                 this.slideshow.showSlideshow();
             }
@@ -979,6 +836,9 @@ class PlayerComponent {
     }
     
     updateModeUI(mode) {
+        // Mode toggling should NOT restart slideshow
+        // Slideshow state is managed separately
+        
         if (this.videoContainer) {
             if (mode === "tv") {
                 this.videoContainer.style.background = "#000";
@@ -988,6 +848,7 @@ class PlayerComponent {
         }
     }
     
+    // Slideshow control methods for external access
     showSlideshow() {
         if (this.slideshow) {
             this.slideshow.showSlideshow();
@@ -1013,16 +874,9 @@ class PlayerComponent {
     }
     
     destroy() {
-        this.stopPlaybackKeepAlive();
         if (this.slideshow) {
             this.slideshow.destroy();
             this.slideshow = null;
-        }
-        if (this.recoveryTimeout) {
-            clearTimeout(this.recoveryTimeout);
-        }
-        if (this.stallRecoveryTimeout) {
-            clearTimeout(this.stallRecoveryTimeout);
         }
     }
 }
