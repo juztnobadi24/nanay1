@@ -618,3 +618,99 @@ input:checked + .toggle-slider:before {
         justify-content: center;
     }
 }
+/* ======================== ADD THESE MISSING MODAL STYLES ======================== */
+
+/* Make sure modals are visible */
+.modal.show {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 10000 !important;
+}
+
+/* Chat Modal specific */
+.chat-modal {
+    z-index: 10001 !important;
+}
+
+.chat-modal .modal-content {
+    max-width: 550px;
+    width: 90%;
+    max-height: 80vh;
+    margin: auto;
+}
+
+/* Announcements Modal */
+.announcements-modal {
+    z-index: 10001 !important;
+}
+
+.announcements-modal .modal-content {
+    max-width: 550px;
+    width: 90%;
+    max-height: 80vh;
+    margin: auto;
+}
+
+/* Profile Modal */
+.profile-modal {
+    z-index: 10001 !important;
+}
+
+.profile-modal .modal-content {
+    max-width: 450px;
+    width: 90%;
+    margin: auto;
+}
+
+/* Compose Announcement Modal */
+.compose-announcement-modal {
+    z-index: 10002 !important;
+}
+
+.compose-announcement-modal .modal-content {
+    max-width: 500px;
+    width: 90%;
+    margin: auto;
+}
+
+/* Modal backdrop */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+/* Ensure modal content is visible */
+.modal-content {
+    background: var(--bg-secondary);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.25s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Light theme modal */
+[data-theme="light"] .modal-content {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+}
+
+/* Fix for iOS z-index issues */
+@supports (-webkit-touch-callout: none) {
+    .modal.show {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+    }
+}
