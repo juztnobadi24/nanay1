@@ -1,17 +1,18 @@
-// sw.js
-const CACHE_VERSION = 'juzt-iptv-v10';
+// sw.js - CORRECTED VERSION
+const CACHE_VERSION = 'juzt-iptv-v11';
 const CACHE_NAME = CACHE_VERSION;
 
-// Function to strip version parameters for caching
-function stripVersionParams(url) {
-    return url.split('?')[0];
-}
-
-// List of files to cache - use relative paths
+// Only cache static assets - NO external requests
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/juztlogoicon.webp',
+  '/juztlogosplash.webp'
+];
+
+// CSS files
+const cssFiles = [
   '/css/main.css',
   '/css/header.css',
   '/css/sidebar.css',
@@ -20,7 +21,11 @@ const urlsToCache = [
   '/css/firebase-chat.css',
   '/css/loader.css',
   '/css/splash.css',
-  '/css/toggle.css',
+  '/css/toggle.css'
+];
+
+// JS files
+const jsFiles = [
   '/js/app.js',
   '/js/header.js',
   '/js/sidebar.js',
@@ -32,114 +37,80 @@ const urlsToCache = [
   '/js/firebase-config.js',
   '/js/firebase-chat.js',
   '/js/splash.js',
-  '/juztlogoicon.webp',
-  '/juztlogosplash.webp'
+  '/js/slideshow.js'
 ];
 
-// Install event - cache core assets
+// Combine all static assets
+const staticAssets = [...urlsToCache, ...cssFiles, ...jsFiles];
+
+// Install event - cache only static assets
 self.addEventListener('install', event => {
-  console.log('Service Worker installing...', CACHE_VERSION);
+  console.log('Service Worker installing v11...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Opened cache', CACHE_NAME);
-        // Add each URL individually to handle failures
+        console.log('Caching static assets');
+        // Cache each file individually to handle failures
         return Promise.allSettled(
-          urlsToCache.map(url => 
+          staticAssets.map(url => 
             cache.add(url).catch(err => console.warn(`Failed to cache ${url}:`, err))
           )
         );
       })
-      .then(() => {
-        return self.skipWaiting();
-      })
+      .then(() => self.skipWaiting())
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean old caches
 self.addEventListener('activate', event => {
-  console.log('Service Worker activating...', CACHE_VERSION);
+  console.log('Service Worker activating v11...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME && (cacheName.startsWith('juzt-iptv-') || cacheName.startsWith('juzt-iptv'))) {
+          if (cacheName !== CACHE_NAME && cacheName.startsWith('juzt-iptv-')) {
             console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => {
-      return self.clients.claim();
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
-// Fetch event - network first for critical assets, cache first for others
+// Fetch event - NETWORK FIRST for everything, no offline fallback for streams
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
-  const cleanUrl = stripVersionParams(event.request.url);
   
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
+  // CRITICAL: NEVER intercept external requests (streams, APIs, images)
+  // Let the browser handle them directly
+  if (url.origin !== location.origin) {
+    // For external requests, just pass through - don't try to cache
     return;
   }
   
-  // Skip Firebase and external APIs to prevent errors
-  if (url.hostname.includes('googleapis.com') || 
-      url.hostname.includes('gstatic.com') ||
-      url.hostname.includes('firebase') ||
-      url.hostname.includes('amagi.tv') ||
-      url.hostname.includes('m3u8') ||
-      url.hostname.includes('mpd') ||
-      url.hostname.includes('cdn.jsdelivr.net')) {
-    return;
-  }
-  
-  // For HTML pages - network first
-  if (url.pathname === '/' || url.pathname === '/index.html') {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          if (response && response.status === 200) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(cleanUrl, responseToCache);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          return caches.match(cleanUrl).then(response => {
-            if (response) {
-              return response;
-            }
-            // Fallback offline page
-            return new Response('Offline - content not available', { status: 503 });
+  // For same-origin requests, try network first, fallback to cache
+  event.respondWith(
+    fetch(event.request)
+      .then(response => {
+        // Only cache successful GET responses for static assets
+        if (response && response.status === 200 && event.request.method === 'GET') {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
           });
-        })
-    );
-  } 
-  // For CSS/JS assets - cache first with network fallback
-  else if (urlsToCache.some(cachedUrl => cleanUrl.endsWith(cachedUrl) || cleanUrl.includes(cachedUrl))) {
-    event.respondWith(
-      caches.match(cleanUrl)
-        .then(response => {
-          if (response) {
-            return response;
+        }
+        return response;
+      })
+      .catch(() => {
+        // Only fallback to cache for HTML and static assets
+        return caches.match(event.request).then(cachedResponse => {
+          if (cachedResponse) {
+            return cachedResponse;
           }
-          return fetch(event.request).then(response => {
-            if (!response || response.status !== 200) {
-              return response;
-            }
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(cleanUrl, responseToCache);
-            });
-            return response;
-          });
-        })
-    );
-  }
+          // For anything else, return a simple offline response
+          return new Response('Offline - content not available', { status: 503 });
+        });
+      })
+  );
 });
-
