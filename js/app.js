@@ -1,5 +1,5 @@
 // ======================== VERSION MANAGEMENT ========================
-const APP_VERSION = '10.0.3'; // Update this version number with each release
+const APP_VERSION = '11.0.0'; // Update this version number with each release
 const STORAGE_VERSION_KEY = 'juzt_app_version';
 
 // Check and handle version updates
@@ -46,6 +46,153 @@ let playerComponent;
 let fullscreenManager;
 let gestureControls;
 let firebaseChatInstance;
+
+// Network status tracking
+let isOnline = navigator.onLine;
+let networkCheckInterval = null;
+
+// ======================== NETWORK STATUS MANAGER ========================
+function initNetworkMonitoring() {
+    // Update online status
+    function updateOnlineStatus() {
+        const wasOnline = isOnline;
+        isOnline = navigator.onLine;
+        
+        if (wasOnline !== isOnline) {
+            console.log(`Network status changed: ${wasOnline ? 'online' : 'offline'} -> ${isOnline ? 'online' : 'offline'}`);
+            
+            if (isOnline) {
+                // Came back online
+                if (window.showToast) {
+                    window.showToast('Connection restored! 🎉', 3000);
+                }
+                
+                // Reload channels when coming back online
+                if (window.channelsData) {
+                    loadChannelsFromJson().then(() => {
+                        if (sidebarComponent) {
+                            sidebarComponent.updateCategoriesDropdown();
+                            sidebarComponent.renderChannelList();
+                        }
+                    });
+                }
+                
+                // Retry playing current channel if needed
+                if (playerComponent && playerComponent.currentChannel) {
+                    setTimeout(() => {
+                        if (playerComponent.videoPlayer && playerComponent.videoPlayer.paused) {
+                            playerComponent.playChannel(playerComponent.currentChannel);
+                        }
+                    }, 1000);
+                }
+                
+                // Reconnect Firebase listeners
+                if (firebaseChatInstance && firebaseChatInstance.reconnectListeners) {
+                    firebaseChatInstance.reconnectListeners();
+                }
+            } else {
+                // Went offline
+                if (window.showToast) {
+                    window.showToast('You are offline. Check your internet connection.', 5000);
+                }
+            }
+        }
+    }
+    
+    // Listen for online/offline events
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    
+    // Periodically check network status (every 10 seconds)
+    networkCheckInterval = setInterval(() => {
+        // Test network with a lightweight request
+        fetch('https://www.google.com/favicon.ico', { mode: 'no-cors', cache: 'no-store' })
+            .then(() => {
+                if (!navigator.onLine) {
+                    // Browser thinks offline but we can reach Google
+                    console.log('Network check: actually online');
+                    updateOnlineStatus();
+                }
+            })
+            .catch(() => {
+                if (navigator.onLine) {
+                    // Browser thinks online but can't reach Google
+                    console.log('Network check: actually offline');
+                    updateOnlineStatus();
+                }
+            });
+    }, 10000);
+    
+    // Initial status
+    updateOnlineStatus();
+}
+
+// ======================== SERVICE WORKER REGISTRATION ========================
+async function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        try {
+            // First, unregister any conflicting service workers
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (const registration of registrations) {
+                if (registration.active && registration.active.scriptURL.includes('sw.js')) {
+                    console.log('Found existing service worker, checking if update needed...');
+                    // Only unregister if it's an old version
+                    if (registration.active.scriptURL.includes('v10')) {
+                        console.log('Unregistering old service worker');
+                        await registration.unregister();
+                    }
+                }
+            }
+            
+            // Check if sw.js exists before registering
+            const swResponse = await fetch('/sw.js', { method: 'HEAD', cache: 'no-store' });
+            if (!swResponse.ok) {
+                console.log('Service worker not found, skipping registration');
+                return false;
+            }
+            
+            // Register new service worker
+            const registration = await navigator.serviceWorker.register(`/sw.js?v=${APP_VERSION}`);
+            console.log('Service Worker registered with scope:', registration.scope);
+            
+            // Listen for controller changes
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                console.log('Service Worker controller changed');
+                // Don't auto-reload, let the user decide
+                if (window.showToast) {
+                    window.showToast('App update available! Refresh to apply.', 5000);
+                }
+            });
+            
+            // Check for updates periodically
+            setInterval(() => {
+                if (navigator.onLine) {
+                    registration.update().catch(e => console.log('Update check:', e));
+                }
+            }, 3600000); // Check every hour
+            
+            registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                console.log('Service Worker update found!');
+                newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        console.log('New Service Worker available');
+                        if (window.showToast) {
+                            window.showToast('Update available! Refresh to get latest version.', 5000);
+                        }
+                    }
+                });
+            });
+            
+            return true;
+        } catch (error) {
+            console.warn('Service Worker registration failed:', error);
+            return false;
+        }
+    }
+    console.log('Service Worker not supported');
+    return false;
+}
 
 // ======================== PWA INSTALLER CLASS ========================
 class PWAInstaller {
@@ -127,94 +274,16 @@ class PWAInstaller {
     }
 }
 
-// Add/modify these sections in app.js
-
-// ======================== SERVICE WORKER REGISTRATION ========================
-async function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        try {
-            // Check if sw.js exists before registering
-            const swResponse = await fetch('/sw.js', { method: 'HEAD' });
-            if (!swResponse.ok) {
-                console.log('Service worker not found, skipping registration');
-                return false;
-            }
-            
-            const registration = await navigator.serviceWorker.register(`/sw.js?v=${APP_VERSION}`);
-            console.log('Service Worker registered with scope:', registration.scope);
-            
-            // Check for updates periodically
-            setInterval(() => {
-                if (navigator.onLine) {
-                    registration.update().catch(e => console.log('Update check:', e));
-                }
-            }, 3600000); // Check every hour
-            
-            registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing;
-                console.log('Service Worker update found!');
-                newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        console.log('New Service Worker available, refresh to update');
-                        if (window.showToast) {
-                            window.showToast('Update available! Refresh to get latest version.', 5000);
-                        }
-                    }
-                });
-            });
-            
-            return true;
-        } catch (error) {
-            console.warn('Service Worker registration failed:', error);
-            return false;
-        }
-    }
-    console.log('Service Worker not supported');
-    return false;
-}
-
-// ======================== INITIALIZE FIREBASE FEATURES ========================
-async function initFirebaseFeatures() {
-    // Wait for Firebase to be ready with timeout
-    let retries = 0;
-    const maxRetries = 20;
-    let ready = false;
-    
-    while (!window.firestore && retries < maxRetries && !ready) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        retries++;
-        if (window.firestore) ready = true;
-    }
-    
-    if (window.firestore) {
-        try {
-            firebaseChatInstance = initFirebaseChat();
-            console.log("Firebase Chat initialized successfully");
-            
-            // Request notification permission after user interaction
-            const requestNotificationPermission = () => {
-                if ('Notification' in window && Notification.permission === 'default') {
-                    Notification.requestPermission();
-                }
-            };
-            
-            // Request after first user interaction
-            document.addEventListener('click', requestNotificationPermission, { once: true });
-            document.addEventListener('touchstart', requestNotificationPermission, { once: true });
-        } catch (error) {
-            console.warn("Failed to initialize Firebase Chat:", error);
-            firebaseChatInstance = null;
-        }
-    } else {
-        console.warn("Firestore not available after waiting, chat features disabled");
-        firebaseChatInstance = null;
-    }
-}
 // Load channels from JSON
 async function loadChannelsFromJson() {
     try {
         // Add version parameter to bypass cache
-        const response = await fetch(`./channels.json?v=${APP_VERSION}`);
+        const response = await fetch(`./channels.json?v=${APP_VERSION}`, {
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache'
+            }
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const jsonData = await response.json();
         window.channelsData = jsonData.map((ch, index) => ({ 
@@ -253,6 +322,7 @@ async function loadChannelsFromJson() {
             window.channelsData = [...window.channelsData, ...moviesSamples];
         }
         
+        console.log(`Loaded ${window.channelsData.length} channels from JSON`);
         return true;
     } catch (err) {
         console.warn("fetch failed, using fallback sample", err);
@@ -266,7 +336,9 @@ async function loadChannelsFromJson() {
             { "name": "Classic Movies", "type": "Movies", "category": "Movies", "streamUrl": "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", id: 7 }
         ];
         window.channelsData = fallbackSample;
-        showError("Loaded sample channels. Please ensure channels.json is in the same folder.");
+        if (window.showToast) {
+            window.showToast("Loaded sample channels. Check internet connection.", 5000);
+        }
         return true;
     }
 }
@@ -326,6 +398,14 @@ async function onChannelSelect(channel) {
     
     console.log("Selected channel:", channel.name, "Type:", channel.type);
     
+    // Check if online before attempting to play
+    if (!navigator.onLine) {
+        if (window.showToast) {
+            window.showToast("No internet connection. Please check your network.", 4000);
+        }
+        return;
+    }
+    
     // Prevent rapid switching
     if (window.isSwitchingChannel) {
         console.log("Already switching channel, waiting...");
@@ -363,11 +443,15 @@ async function onChannelSelect(channel) {
             console.log("Channel playing successfully:", channel.name);
         } else {
             console.error("Failed to play channel:", channel.name);
-            showError(`Failed to play ${channel.name}. Check stream URL.`);
+            if (window.showToast) {
+                window.showToast(`Failed to play ${channel.name}. Check stream URL.`, 4000);
+            }
         }
     } catch (error) {
         console.error("Error playing channel:", error);
-        showError(`Error playing ${channel.name}: ${error.message}`);
+        if (window.showToast) {
+            window.showToast(`Error playing ${channel.name}: ${error.message}`, 4000);
+        }
     } finally {
         window.channelSwitchTimeout = setTimeout(() => {
             window.isSwitchingChannel = false;
@@ -417,40 +501,6 @@ async function initFirebaseFeatures() {
     }
 }
 
-// Check for network connectivity and handle offline mode
-function setupNetworkHandlers() {
-    window.addEventListener('online', () => {
-        console.log('App is online');
-        if (window.showToast) {
-            window.showToast('Connection restored! 🎉');
-        }
-        
-        // Reload channels when coming back online
-        if (window.channelsData) {
-            loadChannelsFromJson().then(() => {
-                if (sidebarComponent) {
-                    sidebarComponent.updateCategoriesDropdown();
-                    sidebarComponent.renderChannelList();
-                }
-            });
-        }
-        
-        // Retry playing current channel if needed
-        if (playerComponent && playerComponent.currentChannel) {
-            setTimeout(() => {
-                playerComponent.playChannel(playerComponent.currentChannel);
-            }, 1000);
-        }
-    });
-    
-    window.addEventListener('offline', () => {
-        console.log('App is offline');
-        if (window.showToast) {
-            window.showToast('You are offline. Check your internet connection.', 5000);
-        }
-    });
-}
-
 // Initialize application
 async function initApp() {
     // Check version first
@@ -460,6 +510,9 @@ async function initApp() {
     }
     
     console.log("Initializing JUZT IPTV App...");
+    
+    // Initialize network monitoring
+    initNetworkMonitoring();
     
     // Create components
     headerComponent = new HeaderComponent();
@@ -484,7 +537,10 @@ async function initApp() {
     await loadChannelsFromJson();
     
     if (window.channelsData.length === 0) {
-        showError("No channels loaded. Check data source.");
+        console.error("No channels loaded.");
+        if (window.showToast) {
+            window.showToast("Failed to load channels. Check internet connection.", 5000);
+        }
         return;
     }
     
@@ -508,8 +564,10 @@ async function initApp() {
     // Start in TV mode
     onModeChange("tv");
     
-    // Register Service Worker for PWA
-    await registerServiceWorker();
+    // Register Service Worker for PWA (don't let it block app startup)
+    registerServiceWorker().catch(err => {
+        console.warn("Service worker registration skipped:", err);
+    });
     
     // Initialize PWA Installer
     window.pwaInstaller = new PWAInstaller();
@@ -517,18 +575,29 @@ async function initApp() {
     // Initialize Firebase features (chat and announcements)
     await initFirebaseFeatures();
     
-    // Setup network handlers
-    setupNetworkHandlers();
-    
     // Listen for orientation changes
     window.addEventListener('orientationchange', () => {
-        console.log("Orientation changed - manual fullscreen only");
+        console.log("Orientation changed");
     });
     
     // Listen for video play events
     if (playerComponent && playerComponent.videoPlayer) {
         playerComponent.videoPlayer.addEventListener('play', () => {
             console.log("Video playing");
+        });
+        
+        playerComponent.videoPlayer.addEventListener('error', (e) => {
+            console.error("Video player error:", e);
+            if (!navigator.onLine && window.showToast) {
+                window.showToast("Network error. Check your internet connection.", 4000);
+            }
+        });
+        
+        playerComponent.videoPlayer.addEventListener('stalled', () => {
+            console.log("Video stalled - possible network issue");
+            if (!navigator.onLine && window.showToast) {
+                window.showToast("Buffering... Check your connection.", 3000);
+            }
         });
     }
     
@@ -539,6 +608,7 @@ async function initApp() {
     console.log(`🎵 Radio Stations: ${window.channelsData.filter(ch => ch.type === "Radio").length}`);
     console.log(`🎬 Movies: ${window.channelsData.filter(ch => ch.type === "Movies").length}`);
     console.log(`📱 App Version: ${APP_VERSION}`);
+    console.log(`🌐 Network Status: ${navigator.onLine ? 'Online' : 'Offline'}`);
     
     const pwaStatus = window.pwaInstaller.getInstallStatus();
     console.log(`📱 PWA Status: ${pwaStatus.isInstalled ? 'Installed' : 'Not Installed'}, Can Install: ${pwaStatus.canInstall}`);
@@ -573,9 +643,13 @@ document.addEventListener('visibilitychange', () => {
         if (window.navigator && window.navigator.serviceWorker) {
             window.navigator.serviceWorker.getRegistration().then(registration => {
                 if (registration) {
-                    registration.update();
+                    registration.update().catch(e => console.log('Update check:', e));
                 }
             });
+        }
+        // Check network status when returning
+        if (!navigator.onLine && window.showToast) {
+            window.showToast("You are offline. Check your internet connection.", 4000);
         }
     }
 });
@@ -594,6 +668,10 @@ window.addEventListener('beforeunload', () => {
         clearTimeout(window.channelSwitchTimeout);
     }
     
+    if (networkCheckInterval) {
+        clearInterval(networkCheckInterval);
+    }
+    
     // Clean up Firebase if needed
     if (firebaseChatInstance && firebaseChatInstance.destroy) {
         firebaseChatInstance.destroy();
@@ -603,7 +681,9 @@ window.addEventListener('beforeunload', () => {
 // Start application
 initApp().catch(err => {
     console.error("Init error:", err);
-    showError("Failed to initialize app: " + err.message);
+    if (window.showToast) {
+        window.showToast("Failed to initialize app: " + err.message, 5000);
+    }
 });
 
 // ======================== CACHE CLEAR UTILITY ========================
@@ -648,6 +728,16 @@ window.forceRefresh = function() {
     window.location.reload(true);
 };
 
+// ======================== NETWORK STATUS UTILITY ========================
+window.getNetworkStatus = function() {
+    return {
+        online: navigator.onLine,
+        effectiveType: navigator.connection ? navigator.connection.effectiveType : 'unknown',
+        downlink: navigator.connection ? navigator.connection.downlink : 'unknown',
+        rtt: navigator.connection ? navigator.connection.rtt : 'unknown'
+    };
+};
+
 // ======================== EXPORT FIREBASE CHAT INSTANCE ========================
 window.getFirebaseChat = function() {
     return firebaseChatInstance;
@@ -657,3 +747,4 @@ window.getFirebaseChat = function() {
 console.log(`%cJUZT IPTV v${APP_VERSION}`, 'color: #f97316; font-size: 14px; font-weight: bold;');
 console.log('%c🔥 Firebase Chat & Announcements ready', 'color: #9aa2bf; font-size: 12px;');
 console.log('%c💬 Admin password: JUZT_ADMIN_2026', 'color: #9aa2bf; font-size: 12px;');
+console.log('%c🌐 Network monitoring active', 'color: #9aa2bf; font-size: 12px;');
