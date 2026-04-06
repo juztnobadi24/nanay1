@@ -570,3 +570,4 @@ class SlideshowComponent {
 
 // Export for global use
 window.SlideshowComponent = SlideshowComponent;
+
