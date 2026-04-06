@@ -22,22 +22,65 @@ class FirebaseChat {
         this.firestoreReady = false;
         this.retryListenersTimeout = null;
         this.isOnline = navigator.onLine;
+        this.reconnectAttempts = 0;
+        this.maxReconnectAttempts = 10;
+        this.initPromise = null;
         
         // Setup online/offline handlers
-        window.addEventListener('online', () => {
-            this.isOnline = true;
+        this.handleOnline = () => {
             console.log("Online - reconnecting Firebase listeners");
+            this.isOnline = true;
+            this.reconnectAttempts = 0;
             this.reconnectListeners();
-        });
+        };
         
-        window.addEventListener('offline', () => {
-            this.isOnline = false;
+        this.handleOffline = () => {
             console.log("Offline - Firebase listeners paused");
-        });
+            this.isOnline = false;
+        };
+        
+        window.addEventListener('online', this.handleOnline);
+        window.addEventListener('offline', this.handleOffline);
     }
 
     async init() {
-        console.log("FirebaseChat.init() called");
+        // Prevent multiple initializations
+        if (this.initPromise) {
+            return this.initPromise;
+        }
+        
+        this.initPromise = this._init();
+        return this.initPromise;
+    }
+    
+    async _init() {
+        console.log("FirebaseChat._init() started");
+        
+        // Wait for Firebase to be ready first
+        if (typeof window.initFirebase === 'function') {
+            console.log("Waiting for Firebase initialization...");
+            const firebaseReady = await window.initFirebase();
+            if (!firebaseReady) {
+                console.error("Firebase failed to initialize");
+                this.firestoreReady = false;
+                return false;
+            }
+        }
+        
+        // Get Firestore instance
+        if (typeof window.getFirestore === 'function') {
+            this.db = await window.getFirestore();
+        } else {
+            this.db = window.firestore;
+        }
+        
+        if (!this.db) {
+            console.error("Firestore not available");
+            this.firestoreReady = false;
+            return false;
+        }
+        
+        console.log("✅ Firestore obtained, proceeding with chat init");
         
         // Get unique user ID based on IP
         await this.getUserIP();
@@ -60,36 +103,18 @@ class FirebaseChat {
         localStorage.setItem('juzt_user_name', this.userName);
         
         this.isInitialized = true;
+        this.firestoreReady = true;
         
-        console.log("Firebase Chat initialized");
+        console.log("Firebase Chat initialized successfully");
         console.log("User:", this.userName, "Original:", this.userOriginalName, "Admin:", this.isAdmin);
         
-        // Initialize Firestore (non-blocking)
-        this.initFirestore().catch(err => {
-            console.warn("Firestore initialization warning:", err);
-        });
+        // Register user in Firestore (non-blocking)
+        this.registerUser().catch(console.warn);
         
-        return true;
-    }
-
-    async waitForFirestore(timeout = 5000) {
-        const startTime = Date.now();
-        while (!window.firestore && (Date.now() - startTime) < timeout) {
-            await new Promise(resolve => setTimeout(resolve, 200));
-        }
-        
-        if (!window.firestore) {
-            console.warn("Firestore not available after waiting");
-            return false;
-        }
-        
-        // Also wait for Firebase app to be ready
-        if (window.firebaseApp) {
-            try {
-                await window.firebaseApp.firestore().enableNetwork();
-            } catch(e) {
-                console.warn("Could not enable network:", e);
-            }
+        // Start listeners
+        if (this.isOnline) {
+            this.startMessageListener();
+            this.startAnnouncementListener();
         }
         
         return true;
@@ -135,84 +160,6 @@ class FirebaseChat {
         }
         
         return name;
-    }
-
-    async initFirestore() {
-        // Wait for Firebase to be ready with shorter timeout
-        let retries = 0;
-        const maxRetries = 15;
-        
-        while (!window.firestore && retries < maxRetries) {
-            console.log(`Waiting for Firestore... attempt ${retries + 1}/${maxRetries}`);
-            await new Promise(resolve => setTimeout(resolve, 300));
-            retries++;
-        }
-
-        if (!window.firestore) {
-            console.warn("Firestore not available - chat features will be limited");
-            this.firestoreReady = false;
-            return false;
-        }
-
-        this.db = window.firestore;
-        
-        // Enable network with retry
-        try {
-            if (window.firebaseApp) {
-                await window.firebaseApp.firestore().enableNetwork();
-            }
-        } catch (error) {
-            console.warn("Could not enable network:", error);
-        }
-        
-        this.firestoreReady = true;
-        console.log("✅ Firestore connected");
-        
-        // Register user in Firestore (non-blocking)
-        this.registerUser().catch(console.warn);
-        
-        // Start listeners with delay to avoid overwhelming
-        setTimeout(() => {
-            if (this.isOnline) {
-                this.startMessageListener();
-                this.startAnnouncementListener();
-            }
-        }, 500);
-        
-        return true;
-    }
-
-    reconnectListeners() {
-        if (!this.firestoreReady) return;
-        
-        // Clear existing listeners
-        if (this.messageListener && typeof this.messageListener === 'function') {
-            try {
-                this.messageListener();
-            } catch(e) {}
-            this.messageListener = null;
-        }
-        
-        if (this.announcementListener && typeof this.announcementListener === 'function') {
-            try {
-                this.announcementListener();
-            } catch(e) {}
-            this.announcementListener = null;
-        }
-        
-        // Clear retry timeout
-        if (this.retryListenersTimeout) {
-            clearTimeout(this.retryListenersTimeout);
-            this.retryListenersTimeout = null;
-        }
-        
-        // Restart listeners
-        setTimeout(() => {
-            if (this.isOnline && this.firestoreReady) {
-                this.startMessageListener();
-                this.startAnnouncementListener();
-            }
-        }, 500);
     }
 
     async registerUser() {
@@ -446,7 +393,10 @@ class FirebaseChat {
     }
 
     startMessageListener() {
-        if (this.messageListener || !this.db) return;
+        if (this.messageListener || !this.db) {
+            console.log("Message listener already exists or no db");
+            return;
+        }
         
         // Only start listener if we're online
         if (!this.isOnline) {
@@ -454,11 +404,14 @@ class FirebaseChat {
             return;
         }
         
+        console.log("Starting message listener...");
+        
         const messagesRef = this.db.collection(this.messagesCollection)
             .orderBy('timestamp', 'desc')
             .limit(50);
         
         this.messageListener = messagesRef.onSnapshot((snapshot) => {
+            console.log("Message snapshot received, size:", snapshot.size);
             snapshot.docChanges().forEach((change) => {
                 if (change.type === 'added') {
                     const message = change.doc.data();
@@ -472,24 +425,43 @@ class FirebaseChat {
         }, (error) => {
             console.warn("Message listener error:", error.message);
             this.messageListener = null;
-            // Retry after delay
-            this.retryListenersTimeout = setTimeout(() => {
-                if (this.isOnline) {
-                    this.startMessageListener();
-                }
-                this.retryListenersTimeout = null;
-            }, 10000);
+            this.scheduleListenerRetry();
         });
+    }
+    
+    scheduleListenerRetry() {
+        if (this.retryListenersTimeout) {
+            clearTimeout(this.retryListenersTimeout);
+        }
+        
+        this.reconnectAttempts++;
+        const delay = Math.min(10000, 1000 * Math.pow(2, Math.min(this.reconnectAttempts, 5)));
+        
+        console.log(`Scheduling listener retry in ${delay}ms (attempt ${this.reconnectAttempts})`);
+        
+        this.retryListenersTimeout = setTimeout(() => {
+            if (this.isOnline && this.db) {
+                this.reconnectAttempts = 0;
+                this.startMessageListener();
+                this.startAnnouncementListener();
+            }
+            this.retryListenersTimeout = null;
+        }, delay);
     }
 
     startAnnouncementListener() {
-        if (this.announcementListener || !this.db) return;
+        if (this.announcementListener || !this.db) {
+            console.log("Announcement listener already exists or no db");
+            return;
+        }
         
         // Only start listener if we're online
         if (!this.isOnline) {
             console.log("Offline - announcement listener will start when online");
             return;
         }
+        
+        console.log("Starting announcement listener...");
         
         const announcementsRef = this.db.collection(this.announcementsCollection)
             .orderBy('timestamp', 'desc')
@@ -517,13 +489,7 @@ class FirebaseChat {
         }, (error) => {
             console.warn("Announcement listener error:", error.message);
             this.announcementListener = null;
-            // Retry after delay
-            this.retryListenersTimeout = setTimeout(() => {
-                if (this.isOnline) {
-                    this.startAnnouncementListener();
-                }
-                this.retryListenersTimeout = null;
-            }, 10000);
+            this.scheduleListenerRetry();
         });
     }
 
@@ -1274,19 +1240,19 @@ class FirebaseChat {
         }
         
         // Remove event listeners
-        window.removeEventListener('online', this.reconnectListeners);
-        window.removeEventListener('offline', this.reconnectListeners);
+        window.removeEventListener('online', this.handleOnline);
+        window.removeEventListener('offline', this.handleOffline);
     }
 }
 
 // Initialize Firebase Chat
 let firebaseChat = null;
 
-function initFirebaseChat() {
+async function initFirebaseChat() {
     if (firebaseChat) return firebaseChat;
     
     firebaseChat = new FirebaseChat();
-    firebaseChat.init().catch(console.warn);
+    await firebaseChat.init();
     
     return firebaseChat;
 }
