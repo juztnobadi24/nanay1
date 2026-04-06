@@ -1,5 +1,5 @@
 // ======================== PLAYER COMPONENT ========================
-// Now with separated slideshow functionality and improved playback stability
+// Fixed version with proper end-of-stream handling
 
 class PlayerComponent {
     constructor() {
@@ -26,6 +26,7 @@ class PlayerComponent {
         this.lastPlaybackTime = 0;
         this.stallCount = 0;
         this.stallRecoveryTimeout = null;
+        this.recoveryTimeout = null;
         
         // Slideshow component
         this.slideshow = null;
@@ -62,7 +63,7 @@ class PlayerComponent {
             this.videoPlayer.controls = false;
             this.videoPlayer.autoplay = true;
             
-            // Add playback stall detection
+            // Add playback monitoring
             this.setupPlaybackMonitoring();
         }
         
@@ -83,15 +84,25 @@ class PlayerComponent {
     setupPlaybackMonitoring() {
         if (!this.videoPlayer) return;
         
-        // Monitor playback progress to detect stalls
+        // Monitor playback progress
         this.videoPlayer.addEventListener('timeupdate', () => {
             if (this.videoPlayer.currentTime !== this.lastPlaybackTime) {
                 this.lastPlaybackTime = this.videoPlayer.currentTime;
-                this.stallCount = 0; // Reset stall count on progress
+                this.stallCount = 0;
             }
         });
         
-        // Monitor for waiting/stalling events
+        // CRITICAL: Handle video ending - reload channel
+        this.videoPlayer.addEventListener('ended', () => {
+            console.log("Video ended - reloading channel");
+            if (this.currentChannel && !this.isLoading) {
+                setTimeout(() => {
+                    this.playChannel(this.currentChannel);
+                }, 1000);
+            }
+        });
+        
+        // Monitor for waiting/stalling
         this.videoPlayer.addEventListener('waiting', () => {
             console.log("Video waiting/buffering...");
             this.stallCount++;
@@ -107,11 +118,24 @@ class PlayerComponent {
             this.stallCount = 0;
         });
         
+        // Handle errors
         this.videoPlayer.addEventListener('error', (e) => {
             console.error("Video player error:", e);
             if (this.currentChannel && !this.isLoading) {
                 this.attemptChannelRecovery();
             }
+        });
+        
+        // Handle stuck/buffering state
+        let stuckTimeout = null;
+        this.videoPlayer.addEventListener('loadstart', () => {
+            if (stuckTimeout) clearTimeout(stuckTimeout);
+            stuckTimeout = setTimeout(() => {
+                if (this.videoPlayer && this.videoPlayer.readyState < 2 && !this.isLoading) {
+                    console.log("Stream appears stuck, reloading...");
+                    this.attemptChannelRecovery();
+                }
+            }, 10000);
         });
     }
     
@@ -152,7 +176,7 @@ class PlayerComponent {
                 this.playChannel(this.currentChannel);
             }
             this.recoveryTimeout = null;
-        }, 5000);
+        }, 3000);
     }
     
     startPlaybackKeepAlive() {
@@ -160,11 +184,11 @@ class PlayerComponent {
             clearInterval(this.playbackKeepAlive);
         }
         
-        // Check playback health every 30 seconds
+        // Check playback health every 20 seconds
         this.playbackKeepAlive = setInterval(() => {
             if (this.currentChannel && this.videoPlayer && !this.videoPlayer.paused && !this.isLoading) {
                 const currentTime = this.videoPlayer.currentTime;
-                // If no progress in last 30 seconds and we have a valid stream
+                // If no progress in last 20 seconds and we have a valid stream
                 if (currentTime === this.lastPlaybackTime && currentTime > 0) {
                     console.log("Playback appears stalled, checking health...");
                     if (!this.videoPlayer.paused) {
@@ -179,7 +203,7 @@ class PlayerComponent {
                 }
                 this.lastPlaybackTime = currentTime;
             }
-        }, 30000);
+        }, 20000);
     }
     
     stopPlaybackKeepAlive() {
@@ -210,7 +234,6 @@ class PlayerComponent {
             return;
         }
         
-        // Hide slideshow when radio is playing
         if (this.slideshow) {
             this.slideshow.hideSlideshow();
         }
@@ -441,7 +464,6 @@ class PlayerComponent {
         this.isLoading = false;
         this.hideLoader();
         
-        // Show slideshow when no channel is playing
         if (!this.currentChannel && this.slideshow) {
             this.slideshow.showSlideshow();
         }
@@ -574,7 +596,6 @@ class PlayerComponent {
     async loadEmbeddedContent(url, channel) {
         console.log("Loading embedded content:", channel.name);
         
-        // Hide slideshow when playing content
         if (this.slideshow) {
             this.slideshow.hideSlideshow();
         }
@@ -627,7 +648,6 @@ class PlayerComponent {
     async loadStream(url, drmConfig = null, headers = null, isRetry = false) {
         console.log("Loading stream:", url);
         
-        // Hide slideshow when loading stream
         if (this.slideshow) {
             this.slideshow.hideSlideshow();
         }
@@ -773,7 +793,6 @@ class PlayerComponent {
                             }
                         });
                         
-                        // Add buffer monitoring for HLS
                         this.hlsPlayer.on(Hls.Events.BUFFER_APPENDING, () => {
                             if (this.stallCount > 0) {
                                 this.stallCount = 0;
@@ -849,7 +868,6 @@ class PlayerComponent {
             return false;
         }
         
-        // Hide slideshow when playing channel
         if (this.slideshow) {
             this.slideshow.hideSlideshow();
         }
@@ -939,7 +957,6 @@ class PlayerComponent {
             } else {
                 console.error("Failed to play channel:", channel.name);
                 this.hideRadioLogo();
-                // Show slideshow on failure
                 if (this.slideshow) {
                     this.slideshow.showSlideshow();
                 }
@@ -950,7 +967,6 @@ class PlayerComponent {
             console.error("Error in playChannel:", error);
             this.hideRadioLogo();
             this.hideLoader();
-            // Show slideshow on error
             if (this.slideshow) {
                 this.slideshow.showSlideshow();
             }
@@ -963,9 +979,6 @@ class PlayerComponent {
     }
     
     updateModeUI(mode) {
-        // Mode toggling should NOT restart slideshow
-        // Slideshow state is managed separately
-        
         if (this.videoContainer) {
             if (mode === "tv") {
                 this.videoContainer.style.background = "#000";
@@ -975,7 +988,6 @@ class PlayerComponent {
         }
     }
     
-    // Slideshow control methods for external access
     showSlideshow() {
         if (this.slideshow) {
             this.slideshow.showSlideshow();
