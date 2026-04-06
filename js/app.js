@@ -1,5 +1,5 @@
 // ======================== VERSION MANAGEMENT ========================
-const APP_VERSION = '10.0.2'; // Updated version
+const APP_VERSION = '10.0.3'; // Update this version number with each release
 const STORAGE_VERSION_KEY = 'juzt_app_version';
 
 // Check and handle version updates
@@ -127,6 +127,8 @@ class PWAInstaller {
     }
 }
 
+// Add/modify these sections in app.js
+
 // ======================== SERVICE WORKER REGISTRATION ========================
 async function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
@@ -173,50 +175,41 @@ async function registerServiceWorker() {
 
 // ======================== INITIALIZE FIREBASE FEATURES ========================
 async function initFirebaseFeatures() {
-    console.log("Initializing Firebase features...");
+    // Wait for Firebase to be ready with timeout
+    let retries = 0;
+    const maxRetries = 20;
+    let ready = false;
     
-    try {
-        // Wait for Firebase config to be ready
-        let retries = 0;
-        const maxRetries = 20;
-        
-        while (!window.initFirebase && retries < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            retries++;
-        }
-        
-        if (window.initFirebase) {
-            const firebaseReady = await window.initFirebase();
-            if (firebaseReady) {
-                console.log("Firebase ready, initializing chat...");
-                
-                if (typeof initFirebaseChat === 'function') {
-                    firebaseChatInstance = await initFirebaseChat();
-                    console.log("✅ Firebase Chat initialized successfully");
-                    
-                    // Request notification permission after user interaction
-                    const requestNotificationPermission = () => {
-                        if ('Notification' in window && Notification.permission === 'default') {
-                            Notification.requestPermission();
-                        }
-                    };
-                    
-                    document.addEventListener('click', requestNotificationPermission, { once: true });
-                    document.addEventListener('touchstart', requestNotificationPermission, { once: true });
-                } else {
-                    console.warn("initFirebaseChat function not found");
+    while (!window.firestore && retries < maxRetries && !ready) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        retries++;
+        if (window.firestore) ready = true;
+    }
+    
+    if (window.firestore) {
+        try {
+            firebaseChatInstance = initFirebaseChat();
+            console.log("Firebase Chat initialized successfully");
+            
+            // Request notification permission after user interaction
+            const requestNotificationPermission = () => {
+                if ('Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission();
                 }
-            } else {
-                console.warn("Firebase initialization failed");
-            }
-        } else {
-            console.warn("Firebase config not loaded after waiting");
+            };
+            
+            // Request after first user interaction
+            document.addEventListener('click', requestNotificationPermission, { once: true });
+            document.addEventListener('touchstart', requestNotificationPermission, { once: true });
+        } catch (error) {
+            console.warn("Failed to initialize Firebase Chat:", error);
+            firebaseChatInstance = null;
         }
-    } catch (error) {
-        console.error("Failed to initialize Firebase features:", error);
+    } else {
+        console.warn("Firestore not available after waiting, chat features disabled");
+        firebaseChatInstance = null;
     }
 }
-
 // Load channels from JSON
 async function loadChannelsFromJson() {
     try {
@@ -260,7 +253,6 @@ async function loadChannelsFromJson() {
             window.channelsData = [...window.channelsData, ...moviesSamples];
         }
         
-        console.log(`✅ Loaded ${window.channelsData.length} channels`);
         return true;
     } catch (err) {
         console.warn("fetch failed, using fallback sample", err);
@@ -384,6 +376,47 @@ async function onChannelSelect(channel) {
     }
 }
 
+// Initialize Firebase Chat
+async function initFirebaseFeatures() {
+    // Wait for Firebase to be ready
+    if (typeof initFirebaseChat === 'function') {
+        try {
+            // Wait for Firebase SDK to be ready
+            let retries = 0;
+            const maxRetries = 10;
+            
+            while (!window.firestore && retries < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                retries++;
+            }
+            
+            if (window.firestore) {
+                firebaseChatInstance = initFirebaseChat();
+                console.log("Firebase Chat initialized successfully");
+                
+                // Request notification permission after user interaction
+                const requestNotificationPermission = () => {
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        Notification.requestPermission();
+                    }
+                };
+                
+                // Request after first user interaction
+                document.addEventListener('click', requestNotificationPermission, { once: true });
+                document.addEventListener('touchstart', requestNotificationPermission, { once: true });
+            } else {
+                console.warn("Firestore not available, chat features disabled");
+            }
+        } catch (error) {
+            console.error("Failed to initialize Firebase Chat:", error);
+        }
+    } else {
+        console.log("Firebase chat module not loaded yet, will retry...");
+        // Retry after a delay
+        setTimeout(() => initFirebaseFeatures(), 2000);
+    }
+}
+
 // Check for network connectivity and handle offline mode
 function setupNetworkHandlers() {
     window.addEventListener('online', () => {
@@ -414,28 +447,6 @@ function setupNetworkHandlers() {
         console.log('App is offline');
         if (window.showToast) {
             window.showToast('You are offline. Check your internet connection.', 5000);
-        }
-    });
-}
-
-// Handle page visibility changes
-function setupVisibilityHandler() {
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            console.log("App hidden - background state");
-        } else {
-            console.log("App visible - refreshing UI");
-            if (sidebarComponent) {
-                sidebarComponent.renderChannelList();
-            }
-            // Check for updates when returning to page
-            if (window.navigator && window.navigator.serviceWorker) {
-                window.navigator.serviceWorker.getRegistration().then(registration => {
-                    if (registration) {
-                        registration.update();
-                    }
-                });
-            }
         }
     });
 }
@@ -509,9 +520,6 @@ async function initApp() {
     // Setup network handlers
     setupNetworkHandlers();
     
-    // Setup visibility handler
-    setupVisibilityHandler();
-    
     // Listen for orientation changes
     window.addEventListener('orientationchange', () => {
         console.log("Orientation changed - manual fullscreen only");
@@ -552,6 +560,26 @@ async function initApp() {
     }
 }
 
+// Handle page visibility changes
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        console.log("App hidden - background state");
+    } else {
+        console.log("App visible - refreshing UI");
+        if (sidebarComponent) {
+            sidebarComponent.renderChannelList();
+        }
+        // Check for updates when returning to page
+        if (window.navigator && window.navigator.serviceWorker) {
+            window.navigator.serviceWorker.getRegistration().then(registration => {
+                if (registration) {
+                    registration.update();
+                }
+            });
+        }
+    }
+});
+
 // Handle before unload
 window.addEventListener('beforeunload', () => {
     if (gestureControls && gestureControls.destroy) {
@@ -569,11 +597,6 @@ window.addEventListener('beforeunload', () => {
     // Clean up Firebase if needed
     if (firebaseChatInstance && firebaseChatInstance.destroy) {
         firebaseChatInstance.destroy();
-    }
-    
-    // Clean up player
-    if (playerComponent && playerComponent.destroy) {
-        playerComponent.destroy();
     }
 });
 
