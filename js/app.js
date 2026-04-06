@@ -1,6 +1,247 @@
 // ======================== VERSION MANAGEMENT ========================
-const APP_VERSION = '11.0.0'; // Update this version number with each release
+const APP_VERSION = '10.0.6'; // Update this version number with each release
 const STORAGE_VERSION_KEY = 'juzt_app_version';
+
+// Show notification on every load
+function showVisitNotification() {
+    setTimeout(() => {
+        // Create notification container
+        const notificationDiv = document.createElement('div');
+        notificationDiv.className = 'visit-notification';
+        notificationDiv.innerHTML = `
+            <div class="notification-content">
+                <div class="notification-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="notification-text">
+                    <h3>JUZT IPTV</h3>
+                    <p>Your TV. Simplified.</p>
+                    <div class="notification-stats" id="notificationStats">
+                        <span><i class="fas fa-spinner fa-pulse"></i> Loading channels...</span>
+                    </div>
+                </div>
+                <button class="notification-close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        // Add styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .visit-notification {
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                max-width: 320px;
+                width: calc(100% - 40px);
+                background: var(--bg-secondary);
+                border-radius: 16px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                z-index: 10000;
+                animation: slideInRight 0.3s ease;
+                border-left: 4px solid var(--accent);
+                backdrop-filter: blur(10px);
+            }
+            
+            .notification-content {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 16px;
+            }
+            
+            .notification-icon {
+                width: 40px;
+                height: 40px;
+                background: rgba(249, 115, 22, 0.15);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+            
+            .notification-icon i {
+                color: var(--accent);
+                font-size: 1.2rem;
+            }
+            
+            .notification-text {
+                flex: 1;
+            }
+            
+            .notification-text h3 {
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: var(--accent);
+                margin: 0 0 4px 0;
+            }
+            
+            .notification-text p {
+                font-size: 0.75rem;
+                color: var(--text-secondary);
+                margin: 0 0 6px 0;
+            }
+            
+            .notification-stats {
+                font-size: 0.7rem;
+                color: var(--text-muted);
+            }
+            
+            .notification-stats span {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+            
+            .notification-close-btn {
+                background: transparent;
+                border: none;
+                color: var(--text-muted);
+                cursor: pointer;
+                padding: 4px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+                flex-shrink: 0;
+            }
+            
+            .notification-close-btn:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: var(--text-primary);
+            }
+            
+            @keyframes slideInRight {
+                from {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+            
+            @keyframes slideOutRight {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+            }
+            
+            .visit-notification.hide {
+                animation: slideOutRight 0.3s ease forwards;
+            }
+            
+            /* Mobile responsive */
+            @media (max-width: 640px) {
+                .visit-notification {
+                    top: 70px;
+                    right: 10px;
+                    left: 10px;
+                    max-width: none;
+                    width: auto;
+                }
+                
+                .notification-content {
+                    padding: 12px;
+                }
+                
+                .notification-icon {
+                    width: 36px;
+                    height: 36px;
+                }
+                
+                .notification-icon i {
+                    font-size: 1rem;
+                }
+                
+                .notification-text h3 {
+                    font-size: 0.85rem;
+                }
+                
+                .notification-text p {
+                    font-size: 0.7rem;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        document.body.appendChild(notificationDiv);
+        
+        // Update stats with actual channel counts
+        const updateStats = () => {
+            const statsContainer = document.getElementById('notificationStats');
+            if (statsContainer && window.channelsData && window.channelsData.length > 0) {
+                const tvCount = window.channelsData.filter(ch => ch.type === "TV").length;
+                const radioCount = window.channelsData.filter(ch => ch.type === "Radio").length;
+                const moviesCount = window.channelsData.filter(ch => ch.type === "Movies").length;
+                
+                statsContainer.innerHTML = `
+                    <span><i class="fas fa-tv"></i> ${tvCount} TV</span>
+                    <span><i class="fas fa-headphones"></i> ${radioCount} Radio</span>
+                    <span><i class="fas fa-film"></i> ${moviesCount} Movies</span>
+                `;
+            } else if (statsContainer) {
+                setTimeout(updateStats, 500);
+            }
+        };
+        
+        updateStats();
+        
+        // Auto-hide after 5 seconds
+        let autoHideTimeout = setTimeout(() => {
+            closeNotification();
+        }, 5000);
+        
+        // Close button functionality
+        const closeBtn = notificationDiv.querySelector('.notification-close-btn');
+        const closeNotification = () => {
+            clearTimeout(autoHideTimeout);
+            notificationDiv.classList.add('hide');
+            setTimeout(() => {
+                if (notificationDiv && notificationDiv.parentNode) {
+                    notificationDiv.remove();
+                }
+            }, 300);
+        };
+        
+        closeBtn.addEventListener('click', closeNotification);
+        
+        // Also close when clicking outside? No, only close button
+        // But allow clicking anywhere on notification to keep it? No, just close button
+        
+        // Pause auto-hide on hover
+        notificationDiv.addEventListener('mouseenter', () => {
+            clearTimeout(autoHideTimeout);
+        });
+        
+        notificationDiv.addEventListener('mouseleave', () => {
+            autoHideTimeout = setTimeout(() => {
+                closeNotification();
+            }, 3000);
+        });
+        
+        // For touch devices
+        notificationDiv.addEventListener('touchstart', () => {
+            clearTimeout(autoHideTimeout);
+        });
+        
+        notificationDiv.addEventListener('touchend', () => {
+            autoHideTimeout = setTimeout(() => {
+                closeNotification();
+            }, 3000);
+        });
+        
+    }, 800); // Show after page loads
+}
 
 // Check and handle version updates
 function checkAppVersion() {
@@ -12,11 +253,11 @@ function checkAppVersion() {
         // Store new version
         localStorage.setItem(STORAGE_VERSION_KEY, APP_VERSION);
         
-        // Optional: Show update message
+        // Show update message
         if (storedVersion) {
             setTimeout(() => {
                 if (window.showToast) {
-                    window.showToast(`App updated to version ${APP_VERSION}! 🎉`);
+                    window.showToast(`Updated to version ${APP_VERSION}! 🎉`, 3000);
                 }
             }, 1000);
         }
@@ -601,6 +842,9 @@ async function initApp() {
         });
     }
     
+    // Show visit notification on every load
+    showVisitNotification();
+    
     // Log app initialization
     console.log("✅ JUZT IPTV App Initialized");
     console.log(`📺 Loaded ${window.channelsData.length} channels`);
@@ -748,3 +992,4 @@ console.log(`%cJUZT IPTV v${APP_VERSION}`, 'color: #f97316; font-size: 14px; fon
 console.log('%c🔥 Firebase Chat & Announcements ready', 'color: #9aa2bf; font-size: 12px;');
 console.log('%c💬 Admin password: JUZT_ADMIN_2026', 'color: #9aa2bf; font-size: 12px;');
 console.log('%c🌐 Network monitoring active', 'color: #9aa2bf; font-size: 12px;');
+console.log('%c🔔 Visit notification enabled', 'color: #9aa2bf; font-size: 12px;');
