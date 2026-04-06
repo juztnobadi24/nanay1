@@ -16,6 +16,8 @@ const firebaseConfig = {
 let firebaseApp = null;
 let firestore = null;
 let analytics = null;
+let firebaseInitPromise = null;
+let firebaseInitResolved = false;
 
 // Function to check if Firebase SDK is loaded
 function isFirebaseSDKLoaded() {
@@ -25,7 +27,7 @@ function isFirebaseSDKLoaded() {
 // Initialize Firebase - called when SDK is ready
 function initializeFirebase() {
     try {
-        console.log("Initializing Firebase with config:", firebaseConfig);
+        console.log("Initializing Firebase with config...");
         
         // Initialize Firebase app if not already initialized
         if (firebase.apps.length === 0) {
@@ -61,6 +63,7 @@ function initializeFirebase() {
         window.firebaseApp = firebaseApp;
         window.firestore = firestore;
         window.firebaseAnalytics = analytics;
+        window.firebaseInitialized = true;
         
         return true;
     } catch (error) {
@@ -69,11 +72,16 @@ function initializeFirebase() {
     }
 }
 
-// Wait for Firebase SDK to load and initialize
+// Wait for Firebase SDK to load and initialize - returns Promise
 function initFirebase() {
-    return new Promise((resolve) => {
+    // Return existing promise if already initializing
+    if (firebaseInitPromise) {
+        return firebaseInitPromise;
+    }
+    
+    firebaseInitPromise = new Promise((resolve) => {
         // If already initialized, resolve immediately
-        if (window.firestore) {
+        if (window.firestore && firebaseInitResolved) {
             console.log("Firebase already initialized");
             resolve(true);
             return;
@@ -82,6 +90,7 @@ function initFirebase() {
         // Check if SDK is already loaded
         if (isFirebaseSDKLoaded()) {
             const success = initializeFirebase();
+            firebaseInitResolved = true;
             resolve(success);
             return;
         }
@@ -99,14 +108,29 @@ function initFirebase() {
                 clearInterval(checkSDK);
                 console.log("Firebase SDK loaded!");
                 const success = initializeFirebase();
+                firebaseInitResolved = true;
                 resolve(success);
             } else if (attempts >= maxAttempts) {
                 clearInterval(checkSDK);
                 console.error("Firebase SDK failed to load after maximum attempts");
+                firebaseInitResolved = true;
                 resolve(false);
             }
         }, 500);
     });
+    
+    return firebaseInitPromise;
+}
+
+// Function to get Firestore instance (waits for init)
+async function getFirestore() {
+    await initFirebase();
+    return window.firestore;
+}
+
+// Function to check if Firebase is ready
+function isFirebaseReady() {
+    return !!(window.firestore && window.firebaseInitialized);
 }
 
 // Export for use in other modules
@@ -114,6 +138,8 @@ window.firebaseApp = firebaseApp;
 window.firestore = firestore;
 window.firebaseAnalytics = analytics;
 window.initFirebase = initFirebase;
+window.getFirestore = getFirestore;
+window.isFirebaseReady = isFirebaseReady;
 
 // Auto-initialize when DOM is ready
 if (document.readyState === 'loading') {
