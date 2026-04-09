@@ -1,11 +1,5 @@
 [
  
- 
- 
- 
- 
- 
- 
   {
     "name": "Abante Radyo",
     "type": "TV",
@@ -1713,7 +1707,7 @@
     "drm": {
       "6f0aeae5779f1dcaef23f0bfbc828220": "7bcef3cf93de00e3daeb190d15b1ec05"
     }
-  }
+  },
  {
     "name": "[adult swim]",
     "type": "TV",
