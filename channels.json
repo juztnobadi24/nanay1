@@ -1392,7 +1392,7 @@
     "name": "Sdtv Network",
     "type": "TV",
     "category": "Movies",
-    "streamUrl": "https://sdtvnetworkph.sanmateocable.workers.dev/playlist.m3u8",
+    "streamUrl": "https://sdtvnetworkph.sanmateocable.workers.dev/master.live.m3u8",
     "logo": "https://tse1.mm.bing.net/th/id/OIP.HVpJv1eFZ90L58njM8sBeQHaHa?pid=Api&h=220&P=0"
   },
   {
