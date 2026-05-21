@@ -1,0 +1,199 @@
+[
+
+  {
+    "name": "Abante Radyo",
+    "type": "TV",
+    "logo": "https://www.abante.com.ph/wp-content/uploads/2023/09/dwar_radio.webp",
+    "category": "News",
+    "streamUrl": "https://amg19223-amg19223c12-amgplt0352.playout.now3.amagi.tv/playlist/amg19223-amg19223c12-amgplt0352/playlist.m3u8"
+  },
+  {
+    "name": "Action Hollywood Movies HD",
+    "type": "TV",
+    "logo": "https://static.wixstatic.com/media/87eafa_cbc7786c484941c585ed9d7afe64c8e1~mv2.png/v1/fill/w_854,h_480,fp_0.50_0.50/87eafa_cbc7786c484941c585ed9d7afe64c8e1~mv2.png",
+    "category": "Movies",
+    "streamUrl": "https://cdn-apse1-prod.tsv2.amagi.tv/linear/amg01076-lightningintern-actionhollywood-samsungnz/playlist.m3u8"
+  },
+  {
+    "name": "AFV",
+    "type": "TV",
+    "logo": "https://logodix.com/logo/1992247.jpg",
+    "category": "Entertainment",
+    "streamUrl": "https://linear-12.frequency.stream/dist/plex/12/hls/master/playlist.m3u8"
+  },
+  {
+    "name": "Alien Nation",
+    "type": "TV",
+    "logo": "https://cdn.creativefabrica.com/2023/05/31/Alien-Nation-SVG-Print-Alien-UFO-logo-Graphics-70778983.jpg",
+    "category": "Entertainment",
+    "streamUrl": "https://linear-888.frequency.stream/dist/xumo/888/hls/master/playlist.m3u8"
+  },
+  {
+    "name": "All Weddings We TV",
+    "type": "TV",
+    "logo": "https://static-us-east-2-fastly-a.www.philo.com/images/channel_logos/ALLWED/large_dark.png?auto=webp&ver=1",
+    "category": "Entertainment",
+    "streamUrl": "https://amc-allweddings-1-us.xumo.wurl.tv/playlist.m3u8"
+  },
+  {
+    "name": "AMC Thrillers",
+    "type": "TV",
+    "logo": "https://static-us-east-2-fastly-a.www.philo.com/images/channel_logos/AMCRSH/large_dark.png?auto=webp&ver=1",
+    "category": "Thriller & Crime",
+    "streamUrl": "https://amc-rushbyamc-1-us.vizio.wurl.tv/playlist.m3u8"
+  },
+  {
+    "name": "American Crimes",
+    "type": "TV",
+    "logo": "https://static.wikia.nocookie.net/logopedia/images/e/e0/NBC_American_Crimes.svg/revision/latest/scale-to-width-down/250?cb=20240904000846",
+    "category": "Documentary",
+    "streamUrl": "https://xumo-xumoent-vc-113-at8kn.fast.nbcuni.com/live/master.m3u8"
+  },
+  {
+    "name": "American Ninja Warrior",
+    "type": "TV",
+    "logo": "https://vectorified.com/image/american-ninja-warrior-logo-vector-14.png",
+    "category": "Entertainment",
+    "streamUrl": "https://xumo-drct-ch812-n4996.fast.nbcuni.com/live/master.m3u8"
+  },
+  {
+    "name": "Angry Bird",
+    "type": "TV",
+    "logo": "https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/2077a187-7b99-4db1-b092-ca4f7f1fc316/djtshgh-1379ba2a-2b3d-4a89-925a-71a269e77d0a.png/v1/fill/w_1280,h_721/cartoon_network_s_angry_birds_toons_logo__wm_au__by_danieltubeisback_djtshgh-fullview.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NzIxIiwicGF0aCI6Ii9mLzIwNzdhMTg3LTdiOTktNGRiMS1iMDkyLWNhNGY3ZjFmYzMxNi9kanRzaGdoLTEzNzliYTJhLTJiM2QtNGE4OS05MjVhLTcxYTI2OWU3N2QwYS5wbmciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.7RTsDIlH6eSUgR1wFJ_DO-koxXKub04U7aWEiFZ3j94",
+    "category": "Kids",
+    "streamUrl": "https://stream-us-east-1.getpublica.com/playlist.m3u8?network_id=547"
+  },
+  {
+    "name": "Ani-blast",
+    "type": "TV",
+    "category": "Anime",
+    "streamUrl": "https://amg19223-amg19223c9-amgplt0019.playout.now3.amagi.tv/playlist/amg19223-amg19223c9-amgplt0019/playlist.m3u8"
+  },
+  {
+    "name": "Ani-One",
+    "type": "TV",
+    "logo": "https://storage.googleapis.com/cdn.vcgamers.com/news/wp-content/uploads/2024/05/Ani-One-Asia.webp",
+    "category": "Anime",
+    "streamUrl": "https://amg19223-amg19223c9-amgplt0019.playout.now3.amagi.tv/playlist/amg19223-amg19223c9-amgplt0019/playlist.m3u8"
+  },
+  {
+    "name": "Animal Planet",
+    "type": "TV",
+    "logo": "https://vectorseek.com/wp-content/uploads/2023/05/Animal-Planet-2019-Logo-Vector-600x600.jpg",
+    "category": "Documentary",
+    "streamUrl": "https://d1g8wgjurz8via.cloudfront.net/bpk-tv/Animalplanethd2/default/index.mpd",
+    "drm": {
+      "df81f15150f74c799fdde64ef49dfb75": "05794a012ae74d77953f2b9fae6804c7"
+    }
+  },
+  {
+    "name": "Anime X Hidive",
+    "type": "TV",
+    "logo": "https://static.wikia.nocookie.net/logopedia/images/3/34/Anime_x_HIDIVE_(White).png/revision/latest?cb=20251205045808",
+    "category": "Anime",
+    "streamUrl": "https://amc-anime-x-hidive-1-us.tablo.wurl.tv/playlist.m3u8"
+  },
+  {
+    "name": "Anime X HiDive2",
+    "type": "TV",
+    "logo": "https://static.wikia.nocookie.net/logopedia/images/3/34/Anime_x_HIDIVE_(White).png/revision/latest?cb=20251205045808",
+    "category": "Anime",
+    "streamUrl": "https://amc-anime-x-hidive-1-us.tablo.wurl.tv/3000.m3u8"
+  },
+  {
+    "name": "AniPlus",
+    "type": "TV",
+    "logo": "https://images.seeklogo.com/logo-png/42/1/aniplus-logo-png_seeklogo-428978.png",
+    "category": "Anime",
+    "streamUrl": "https://amg18481-amg18481c1-amgplt0352.playout.now3.amagi.tv/playlist/amg18481-amg18481c1-amgplt0352/playlist.m3u8"
+  },
+  {
+    "name": "Antiques Road Trip",
+    "type": "TV",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.PB_0V_n4O4Yp2meHNuCGDwHaHa?pid=Api&h=220&P=0",
+    "category": "Food and Lifestyle",
+    "streamUrl": "https://aegis-cloudfront-1.tubi.video/b42ac280-5300-4db0-8a63-2ec2e52c5b5c/720p-cc/index.m3u8"
+  },
+  {
+    "name": "Arirang",
+    "type": "TV",
+    "logo": "https://logowiki.net/wp-content/uploads/imgp/Arirang-Logo-1-9664.png",
+    "category": "News",
+    "streamUrl": "https://amdlive-ch01-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8"
+  },
+  {
+    "name": "Arirang Korea",
+    "type": "TV",
+    "logo": "https://logowiki.net/wp-content/uploads/imgp/Arirang-Logo-1-9664.png",
+    "category": "News",
+    "streamUrl": "https://amdlive-ch03-ctnd-com.akamaized.net/arirang_1ch/smil:arirang_1ch.smil/playlist.m3u8"
+  },
+  {
+    "name": "Astro Awani",
+    "type": "TV",
+    "logo": "https://i0.wp.com/lushiglobal.com/wp-content/uploads/2020/01/Newspaper-Logo-Astro-Awani.png?w=900&ssl=1",
+    "category": "News",
+    "streamUrl": "https://d2idp3hzkhjpih.cloudfront.net/out/v1/4b85d9c2bf97413eb0c9fd875599b837/index_3.m3u8"
+  },
+  {
+    "name": "Authentic History",
+    "type": "TV",
+    "category": "Documentary",
+    "streamUrl": "https://c79f98a182af4cd79e0afe576c99cde9.mediatailor.us-east-1.amazonaws.com/v1/master/04fd913bb278d8775298c26fdca9d9841f37601f/LG-au_AutenticHistory/playlist.m3u8"
+  },
+  {
+    "name": "Authentic Travel",
+    "type": "TV",
+    "category": "Documentary",
+    "streamUrl": "https://2d1ef59f0ad34d14888d8abce1b99264.mediatailor.us-east-1.amazonaws.com/v1/master/04fd913bb278d8775298c26fdca9d9841f37601f/LG-au_AutenticTravel/playlist.m3u8"
+  },
+  {
+    "name": "AVA Family",
+    "type": "TV",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.rSq_MfMvkmyVU30Vdtg-1AHaHa?pid=Api&h=220&P=0",
+    "category": "Movies",
+    "streamUrl": "https://familyhls.avatv.live/hls/stream.m3u8"
+  },
+  {
+    "name": "AVA Series",
+    "type": "TV",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.5D0NiVN4LlXjuFbqsKbkTQAAAA?pid=Api&h=220&P=0",
+    "category": "Movies",
+    "streamUrl": "https://avaserieshls.wns.live/hls/stream.m3u8"
+  },
+  {
+    "name": "AWE Plus",
+    "type": "TV",
+    "logo": "https://tse4.mm.bing.net/th/id/OIP.kZwVrjAGRhuziLhTGn8_JwHaEL?pid=Api&h=220&P=0",
+    "category": "Entertainment",
+    "streamUrl": "https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg00450-herringnetwork-awe-lgau/playlist.m3u8?ads.deviceid=[DEVICE_ID]&ads.ifa=[IFA]&ads.ifatype=[IFA_TYPE]&ads.lat=[LMT]&ads.donotsell=[DNS]&ads.ua=[UA]&ads.ip=[IP]&ads.gdpr=[GDPR]&ads.gdprconsent=[GDPR_CONSENT]&ads.country=[COUNTRY]&ads.appstoreurl=[APP_STORE_URL]&ads.bundleid=[APP_BUNDLE]&ads.appname=[APP_NAME]&ads.appversion=[APP_VERSION]&ads.devicetype=[DEVICE_TYPE]&ads.devicemake=[DEVICE_MAKE]&ads.devicemodel=[DEVICE_MODEL]&ads.coppa=0&ads.targetad=[TARGETAD_ALLOWED]"
+  },
+  {
+    "name": "Azteca International",
+    "type": "TV",
+    "logo": "https://tvazteca.brightspotcdn.com/6b/68/81ba31064811b3aaddf9f576682f/ainternacional-color.png",
+    "category": "Drama",
+    "streamUrl": "https://azt-mun.otteravision.com/azt/mun/mun_1080p.m3u8"
+  },
+  {
+    "name": "Baby Shark TV (720p)",
+    "type": "TV",
+    "logo": "https://play-lh.googleusercontent.com/N7Kf5CZB5yFGddAZxmtjylZuG9ECPJFm1y_sdV7Gx_WrawDP-k-9mpFY_hRL4E3IXPo",
+    "category": "Kids",
+    "streamUrl": "https://newidco-babysharktv-1-eu.rakuten.wurl.tv/playlist.m3u8"
+  },
+  {
+    "name": "BBC Earth",
+    "type": "TV",
+    "logo": "https://tse1.mm.bing.net/th/id/OIP.0Tli1puSkO6sj789h80HmwHaFj?pid=Api&h=220&P=0",
+    "category": "Documentary",
+    "streamUrl": "https://amg00793-amg00793c6-xumo-us-2669.playouts.now.amagi.tv/BBCStudios-BBCEarthA-hls/playlist.m3u8"
+  },
+  {
+    "name": "BBC Impossible",
+    "type": "TV",
+    "logo": "https://m.media-amazon.com/images/I/81geqCyt9KL.png",
+    "category": "Entertainment",
+    "streamUrl": "https://bbc-impossible-1-us.xumo.wurl.tv/playlist.m3u8"
+  }
+  
